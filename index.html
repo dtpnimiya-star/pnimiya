@@ -24,7 +24,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-4";
+const APP_VERSION = "2026-11-02-5";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -352,7 +352,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <details open>
         <summary>ייבוא מקובץ אקסל</summary>
         <div style="display:grid;gap:8px;margin-top:8px">
-          <span class="muted" style="font-size:.9rem">השורה הראשונה בקובץ צריכה להיות כותרות. חובה עמודת "שם" (או "שם פרטי" ו"שם משפחה"). אפשר להוסיף עמודות: כיתה, חדר, טלפון, מייל, כתובת, שם האב, טלפון האב, שם האם, טלפון האם, מייל הורים.</span>
+          <span class="muted" style="font-size:.9rem">השורה הראשונה בקובץ צריכה להיות כותרות. חובה עמודת "שם" (או "שם פרטי" ו"שם משפחה"). אפשר להוסיף עמודות: כיתה, חדר, תאריך לידה, טלפון, מייל, כתובת, שם האב, טלפון האב, שם האם, טלפון האם, מייל הורים.</span>
           <input type="file" id="xlFile" accept=".xlsx,.xls,.csv" aria-label="קובץ אקסל">
           <div id="xlPreview"></div>
         </div>
@@ -455,6 +455,8 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
         <input type="file" id="pfPhoto" accept="image/*" hidden>
         <button class="btn small" type="button" data-act="pfNoPhoto">הסר תמונה</button></div></div>
       <div class="pf-grid">
+        <label>תאריך לידה<input id="pf-birthDate" type="date" max="2030-12-31"></label>
+        <label>גיל<output id="pfAge" style="padding:9px 2px;color:var(--ink);font-weight:600">—</output></label>
         <label>טלפון התלמיד<input id="pf-phone" type="tel" dir="ltr" autocomplete="off"></label>
         <label>מייל התלמיד<input id="pf-email" type="email" dir="ltr" autocomplete="off"></label>
         <label class="full">כתובת מגורים<input id="pf-address" autocomplete="off"></label>
@@ -620,7 +622,14 @@ function renderSheet(){
   renderCard(s);
 }
 /* ---------- student card ---------- */
-const PF=['phone','email','address','fatherName','fatherPhone','motherName','motherPhone','parentEmail'];
+const PF=['phone','email','address','fatherName','fatherPhone','motherName','motherPhone','parentEmail','birthDate'];
+function ageOf(iso){if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||''))return null;const b=new Date(iso+'T12:00'),n=new Date();let a=n.getFullYear()-b.getFullYear();
+  if(n.getMonth()<b.getMonth()||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))a--;return a>=0&&a<120?a:null}
+const fmtDMY=iso=>iso?iso.slice(8)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4):'';
+function parseBirth(v){v=String(v||'').trim();if(!v)return '';let m;
+  if((m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)))return m[1]+'-'+pad(+m[2])+'-'+pad(+m[3]);
+  if((m=v.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/))){let y=+m[3];if(y<100)y+=y>40?1900:2000;return y+'-'+pad(+m[2])+'-'+pad(+m[1])}
+  return ''}
 const digits=p=>String(p||'').replace(/[^\d+]/g,'');
 const waNum=p=>{let d=digits(p).replace(/^\+/,'');if(d.startsWith('0'))d='972'+d.slice(1);return d.length>=11?d:''};
 const telLink=p=>p?`<a href="tel:${esc(digits(p))}">${esc(p)}</a>${waNum(p)?` <a class="sub" href="https://wa.me/${waNum(p)}" target="_blank" rel="noopener">וואטסאפ</a>`:''}`:'';
@@ -636,7 +645,8 @@ function renderCard(s){
   const p=S.profiles.get(s.id)||{},ph=S.photos.get(s.id);loadPhoto(s.id);
   const row=(k,v)=>v?`<dt>${k}</dt><dd>${v}</dd>`:'';
   const parent=(n,t)=>(n||t)?`${esc(n||'')}${n&&t?' · ':''}${telLink(t)}`:'';
-  const body=row('טלפון',telLink(p.phone))+row('מייל',mailLink(p.email))+row('כתובת',esc(p.address||''))+row('אב',parent(p.fatherName,p.fatherPhone))+row('אם',parent(p.motherName,p.motherPhone))+row('מייל הורים',mailLink(p.parentEmail));
+  const ag=ageOf(p.birthDate);
+  const body=row('גיל',ag!=null?`${ag} <span class="sub">(נולד ${fmtDMY(p.birthDate)})</span>`:'')+row('טלפון',telLink(p.phone))+row('מייל',mailLink(p.email))+row('כתובת',esc(p.address||''))+row('אב',parent(p.fatherName,p.fatherPhone))+row('אם',parent(p.motherName,p.motherPhone))+row('מייל הורים',mailLink(p.parentEmail));
   $('shCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>כרטיס תלמיד</h2>${has('students')&&!S.ro?'<button class="btn small" data-act="pfEdit">עריכה</button>':''}</div>
   <div class="card"><div class="photo">${ph===null?'':photoBox(ph,s.name)}</div>
   <div style="display:grid;gap:6px;min-width:0"><b style="font-size:1.1rem">${esc(s.name)}</b><span class="muted">${esc(metaOf(s)||'')}</span>
@@ -644,7 +654,7 @@ function renderCard(s){
 }
 function pfOpen(){
   const s=S.students.get(S.sel),p=S.profiles.get(S.sel)||{};
-  PF.forEach(k=>$('pf-'+k).value=p[k]||'');S.pfPhoto=undefined;
+  PF.forEach(k=>$('pf-'+k).value=p[k]||'');{const a=ageOf(p.birthDate);$('pfAge').textContent=a!=null?a:'—'}S.pfPhoto=undefined;
   $('pfPhotoPrev').innerHTML=photoBox(S.photos.get(S.sel)||'',s.name);
   $('pfForm').hidden=false;$('shCard').hidden=true;$('pf-phone').focus();
 }
@@ -654,6 +664,7 @@ function resizePhoto(file){return new Promise((res,rej)=>{const url=URL.createOb
     const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
     x.drawImage(img,(W-w)/2,(H-h)/2,w,h);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.82))};
   img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('bad image'))};img.src=url})}
+$('pf-birthDate').addEventListener('input',e=>{const a=ageOf(e.target.value);$('pfAge').textContent=a!=null?a:'—'});
 $('pfPhoto').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;
   try{S.pfPhoto=await resizePhoto(f);$('pfPhotoPrev').innerHTML=photoBox(S.pfPhoto,'')}catch{toast('לא הצלחתי לקרוא את התמונה. נסו קובץ JPG או PNG')}});
 $('pfForm').addEventListener('submit',async e=>{e.preventDefault();const id=S.sel;if(!id)return;
@@ -859,7 +870,7 @@ function parseRows(rows){
   const isF=c=>/אב(?!ל)|אבא/.test(c),isM=c=>/אם(?!ת)|אמא/.test(c);
   const col={fatherName:H.findIndex(c=>/שם/.test(c)&&isF(c)),fatherPhone:H.findIndex(c=>/(טל|נייד|פלאפון)/.test(c)&&isF(c)),
     motherName:H.findIndex(c=>/שם/.test(c)&&isM(c)),motherPhone:H.findIndex(c=>/(טל|נייד|פלאפון)/.test(c)&&isM(c)),
-    parentEmail:H.findIndex(c=>/(מייל|אימייל|דוא)/.test(c)&&/הור/.test(c)),address:H.findIndex(c=>/כתובת|יישוב|ישוב/.test(c)&&!/מייל/.test(c)),
+    birthDate:H.findIndex(c=>/לידה/.test(c)),parentEmail:H.findIndex(c=>/(מייל|אימייל|דוא)/.test(c)&&/הור/.test(c)),address:H.findIndex(c=>/כתובת|יישוב|ישוב/.test(c)&&!/מייל/.test(c)),
     email:H.findIndex(c=>/(מייל|אימייל|דוא)/.test(c)&&!/הור|אב|אם/.test(c)),phone:H.findIndex(c=>/(טל|נייד|פלאפון)/.test(c)&&!/הור|אב|אם/.test(c))};
   if(hi<0){full=0;grade=-1;room=-1}
   if(full<0&&first<0&&last<0)full=find(/שם/);
@@ -871,7 +882,7 @@ function parseRows(rows){
     const name=[fn,ln].filter(Boolean).join(' ').replace(/\s+/g,' ');if(!name)continue;
     if(existing.has(name)||seen.has(name)){dup++;continue}seen.add(name);
     const g=grade>=0?normGrade(r[grade]):'';if(!g)noGrade++;
-    const pf={};for(const k in col)if(col[k]>=0&&r[col[k]])pf[k]=r[col[k]];
+    const pf={};for(const k in col)if(col[k]>=0&&r[col[k]])pf[k]=r[col[k]];if(pf.birthDate)pf.birthDate=parseBirth(pf.birthDate);
     out.push({name,first:fn,last:ln,grade:g,room:room>=0?normRoom(r[room]):'',pf});
   }
   const pfCols=Object.entries(col).filter(([,i])=>i>=0).length;
@@ -1074,9 +1085,9 @@ async function buildReport(){
     XLSX.utils.book_append_sheet(wb,sheet(rows,[18,6,6,10,20,16]),'תלמידים');
   }
   if($('rk-contacts').checked&&has('personal')){
-    const rows=[['שם','כיתה','חדר','טלפון','מייל','כתובת','שם האב','טלפון האב','שם האם','טלפון האם','מייל הורים']];
-    st.forEach(s=>{const p=S.profiles.get(s.id)||{};rows.push([...base(s),...PF.map(k=>p[k]||'')])});
-    XLSX.utils.book_append_sheet(wb,sheet(rows,[18,6,6,13,22,26,12,13,12,13,22]),'אנשי קשר');
+    const rows=[['שם','כיתה','חדר','טלפון','מייל','כתובת','שם האב','טלפון האב','שם האם','טלפון האם','מייל הורים','תאריך לידה','גיל']];
+    st.forEach(s=>{const p=S.profiles.get(s.id)||{};rows.push([...base(s),...PF.map(k=>k==='birthDate'?fmtDMY(p[k]):(p[k]||'')),ageOf(p.birthDate)??''])});
+    XLSX.utils.book_append_sheet(wb,sheet(rows,[18,6,6,13,22,26,12,13,12,13,22,11,5]),'אנשי קשר');
   }
   if(!wb.SheetNames.length){toast('בחרו לפחות סוג דוח אחד');return}
   const scope=S.grade?(S.grade==='-'?' ללא כיתה':' כיתה '+S.grade):'';
