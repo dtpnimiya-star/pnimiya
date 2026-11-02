@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1E5A73">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -24,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-15";
+const APP_VERSION = "2026-11-02-16";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1495,6 +1496,7 @@ function addEyes(){document.querySelectorAll('input[type=password]').forEach(inp
 async function checkUpdate(){try{const t=await (await fetch('./?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/APP_VERSION = "([^"]+)"/);
   if(m&&m[1]!==APP_VERSION){const k='pn-upd-'+m[1];let tried=false;try{tried=sessionStorage.getItem(k)}catch{}if(!tried){try{sessionStorage.setItem(k,'1')}catch{}location.replace('./?v='+encodeURIComponent(m[1]))}}}catch{}}
 function start(){
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
   checkUpdate();setInterval(()=>{if(!document.hidden)checkUpdate()},5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
   addEyes();
   $('nightDate').value=S.night;$('mornDate').value=S.mornDate;
