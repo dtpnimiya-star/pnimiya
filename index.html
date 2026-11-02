@@ -41,14 +41,17 @@ img{max-width:100%}
   --bg:#EEF2F1; --surface:#FFFFFF; --ink:#16222A; --muted:#5A6971; --line:#D5DEDB;
   --accent:#1E5A73; --accent-ink:#FFFFFF; --soft:#E1EBEE;
   --ok:#2C7A4B; --ok-bg:#E2F1E7; --bad:#B23A2F; --bad-bg:#F7E3E0; --warn:#9A6514; --warn-bg:#F6EBD6;
+  --cal-s:#D3E6F7; --cal-c:#D6EFE6; --cal-v:#F9D7E7; --cal-l:#F0EDC8; --cal-p:#F6A88F; --cal-e:#FBD3A6; --cal-x:#E6E6E6; --cal-t:#D9C6A0;
   --f-display:"Secular One","Assistant",system-ui,sans-serif;
   --f-body:"Assistant",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --cal-s:#1E3A52; --cal-c:#1C3A30; --cal-v:#4A2337; --cal-l:#3E3A1C; --cal-p:#5A2A1E; --cal-e:#4F371A; --cal-x:#2E3439; --cal-t:#41361F;
   --bg:#0E151A; --surface:#16212A; --ink:#E4ECEE; --muted:#94A4AC; --line:#26353F;
   --accent:#6DB3D1; --accent-ink:#0B1418; --soft:#1C2C36;
   --ok:#62C98E; --ok-bg:#173324; --bad:#EE7B6F; --bad-bg:#3A1C19; --warn:#E5B35A; --warn-bg:#36290F; color-scheme:dark}}
 :root[data-theme="dark"]{
+  --cal-s:#1E3A52; --cal-c:#1C3A30; --cal-v:#4A2337; --cal-l:#3E3A1C; --cal-p:#5A2A1E; --cal-e:#4F371A; --cal-x:#2E3439; --cal-t:#41361F;
   --bg:#0E151A; --surface:#16212A; --ink:#E4ECEE; --muted:#94A4AC; --line:#26353F;
   --accent:#6DB3D1; --accent-ink:#0B1418; --soft:#1C2C36;
   --ok:#62C98E; --ok-bg:#173324; --bad:#EE7B6F; --bad-bg:#3A1C19; --warn:#E5B35A; --warn-bg:#36290F; color-scheme:dark}
@@ -64,8 +67,9 @@ h1{font-family:var(--f-display);font-weight:400;font-size:1.45rem;margin:0;lette
 .sum{display:flex;gap:6px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:.88rem;font-weight:600;background:var(--soft);color:var(--ink)}
 .pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.warn{background:var(--warn-bg);color:var(--warn)}
-nav{display:flex;gap:2px}
-nav button{flex:1;background:none;border:0;border-bottom:3px solid transparent;padding:10px 4px 9px;font:600 1rem var(--f-body);color:var(--muted);cursor:pointer}
+nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:1 0 auto;white-space:nowrap;padding-inline:10px!important;background:none;border:0;border-bottom:3px solid transparent;padding:10px 4px 9px;font:600 1rem var(--f-body);color:var(--muted);cursor:pointer}
 nav button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
 main .wrap{padding-block:16px 40px;display:grid;gap:18px}
 h2{font-family:var(--f-display);font-weight:400;font-size:1.1rem;margin:0}
@@ -155,6 +159,31 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
 .item.wrap{flex-wrap:wrap}
 .seg button[aria-pressed="true"].s{background:var(--warn);color:var(--surface)}
 .tsm{padding:5px 6px;font-variant-numeric:tabular-nums;width:6.2em;flex:none}
+.pw-wrap{position:relative;display:block;min-width:0}
+.pw-wrap input{width:100%;padding-right:46px}
+.pw-eye{position:absolute;top:50%;right:4px;transform:translateY(-50%);width:38px;height:38px;border:0;background:none;color:var(--muted);border-radius:8px;cursor:pointer;display:grid;place-items:center;padding:0}
+.pw-eye:hover{color:var(--ink);background:var(--soft)}
+.pw-eye svg{width:22px;height:22px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.cal-h{text-align:center;font-size:.78rem;font-weight:700;color:var(--muted);padding:2px 0}
+.cal-d{min-height:64px;border-radius:6px;padding:4px 4px 5px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:1px;min-width:0;font-size:.72rem;line-height:1.2}
+.cal-d .hd{font-weight:700;font-size:.9rem;color:var(--ink)}
+.cal-d .gd{color:var(--muted);font-variant-numeric:tabular-nums}
+.cal-d .lb{overflow-wrap:anywhere;color:var(--ink)}
+.cal-d.today{outline:2px solid var(--accent);outline-offset:1px}
+.cal-d.empty{background:none;border:0}
+.k-s{background:var(--cal-s)}.k-c{background:var(--cal-c)}.k-v{background:var(--cal-v)}.k-l{background:var(--cal-l)}.k-p{background:var(--cal-p)}.k-e{background:var(--cal-e)}.k-x{background:var(--cal-x)}.k-t{background:var(--cal-t)}
+.cal-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem;color:var(--muted)}
+.cal-legend span{display:inline-flex;align-items:center;gap:6px}
+.cal-legend i{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid var(--line)}
+.ev{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.ev:first-child{border-top:0}
+.ev i{width:12px;height:12px;border-radius:50%;flex:none;border:1px solid var(--line)}
+.ev .when{direction:ltr;unicode-bidi:isolate;text-align:right;color:var(--muted);font-size:.88rem;font-variant-numeric:tabular-nums;flex:none;min-width:7.5em}
+.ev b{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.calnote{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-weight:600;border:1px solid var(--line)}
+.calnote i{width:12px;height:12px;border-radius:50%;flex:none}
+@media (max-width:460px){.cal-d{min-height:56px;padding:3px}.cal-d .lb{font-size:.66rem}}
 .lg-logo{display:block;width:min(260px,80%);height:auto;margin:4px auto 0;border-radius:8px}
 #login h2{text-align:center}
 .card{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
@@ -203,6 +232,7 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
       <button role="tab" id="t-out" data-tab="out" data-perm="out" aria-selected="false" hidden>יציאות</button>
       <button role="tab" id="t-stu" data-tab="stu" data-perm="stu" aria-selected="false" hidden>תלמידים</button>
       <button role="tab" id="t-mgr" data-tab="mgr" data-perm="mgr" aria-selected="false" hidden>לוח מנהל<span class="badge" id="mgrBadge" hidden></span></button>
+      <button role="tab" id="t-cal" data-tab="cal" data-perm="any" aria-selected="false" hidden>לוח שנה</button>
       <button role="tab" id="t-rep" data-tab="rep" data-perm="reports" aria-selected="false" hidden>דוחות</button>
       <button role="tab" id="t-staff" data-tab="staff" data-perm="owner" aria-selected="false" hidden>צוות</button>
     </nav>
@@ -233,6 +263,7 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
       <input type="date" id="nightDate">
       <span class="muted" style="font-size:.88rem">ספירה אחרי חצות נרשמת ללילה הקודם</span>
     </div>
+    <div id="nightCal"></div>
     <div id="breakdown"></div>
     <div id="countList"></div>
   </section>
@@ -245,6 +276,7 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
       <label for="mornTarget" class="muted">שעת השכמה</label>
       <input type="time" id="mornTarget" value="07:00">
     </div>
+    <div id="mornCal"></div>
     <div id="mornSum" class="sum"></div>
     <div id="mornList"></div>
   </section>
@@ -309,6 +341,22 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
     <div class="panel"><h2>הכי הרבה הערות התנהגות · 30 יום</h2><div id="topStu"></div></div>
     <details><summary>טופלו לאחרונה</summary><div id="handled" style="margin-top:8px"></div></details>
   </section>
+  <!-- לוח שנה -->
+  <section id="tab-cal" hidden style="display:grid;gap:16px">
+    <div id="calNow"></div>
+    <div class="panel"><h2>בקרוב</h2><div id="calNext"></div></div>
+    <div class="panel" style="gap:12px">
+      <div class="row" style="justify-content:space-between">
+        <button class="btn small" type="button" data-act="calPrev" aria-label="החודש הקודם">→</button>
+        <h2 id="calMonthName" style="font-size:1.25rem"></h2>
+        <button class="btn small" type="button" data-act="calNext" aria-label="החודש הבא">←</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend" id="calLegend"></div>
+    </div>
+    <details class="panel"><summary>הלוח המקורי</summary><img src="calendar.webp" alt="לוח שנה לשנה&quot;ל תשפ&quot;ז" loading="lazy" style="width:100%;height:auto;margin-top:10px;border-radius:8px"></details>
+  </section>
+
   <!-- דוחות -->
   <section id="tab-rep" hidden style="display:grid;gap:16px">
     <form id="repForm" class="panel">
@@ -421,7 +469,7 @@ const df=new Intl.DateTimeFormat('he-IL',{day:'numeric',month:'numeric',hour:'2-
 const nf=new Intl.DateTimeFormat('he-IL',{weekday:'long',day:'numeric',month:'long'});
 const when=t=>{if(!t)return'';const d=new Date(t);return ymd(d)===ymd(new Date())?'היום '+tf.format(d):df.format(d)};
 
-const S={students:new Map(),status:new Map(),marks:new Map(),notes:[],moves:[],names:{},me:null,night:nightKey(),tab:'count',sel:null,q:'',grade:'',xl:null,ready:false,wake:new Map(),mornDate:ymd(new Date()),wakeTarget:'07:00',settings:null,perm:null,owner:false,staff:[],requests:[],profiles:new Map(),photos:new Map(),permReady:false,access:false};
+const S={students:new Map(),status:new Map(),marks:new Map(),notes:[],moves:[],names:{},me:null,night:nightKey(),tab:'count',sel:null,q:'',grade:'',xl:null,ready:false,wake:new Map(),mornDate:ymd(new Date()),wakeTarget:'07:00',settings:null,perm:null,owner:false,staff:[],requests:[],calM:null,profiles:new Map(),photos:new Map(),permReady:false,access:false};
 let db=null,user=null,unMarks=null;
 
 function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
@@ -674,14 +722,14 @@ document.addEventListener('change',async e=>{
   const el=e.target;if(!db)return;
   if(el.dataset?.mact==='time'&&el.value){try{await wakeRef(el.dataset.id).update({t:new Date(S.mornDate+'T'+el.value).getTime()});toast('שעת הקימה עודכנה')}catch(err){fail(err)}}
   if(el.id==='mornTarget'&&el.value){try{await db.doc('settings/app').set({...(S.settings||{}),wakeTarget:el.value});toast('שעת ההשכמה נשמרה')}catch(err){fail(err)}}
-  if(el.id==='mornDate'&&el.value){S.mornDate=el.value;S.wake=new Map();subWake();renderMorn()}
+  if(el.id==='mornDate'&&el.value){S.mornDate=el.value;S.wake=new Map();subWake();renderMorn();renderCalNotes()}
 });
 
 /* ---------- staff & permissions ---------- */
 const PERMS=[['count','ספירת לילה'],['morning','השכמת בוקר'],['out','יציאות וחזרות'],['notes','הערות על תלמידים'],['students','ניהול רשימת התלמידים'],['personal','צפייה בפרטים אישיים ואנשי קשר'],['reports','הפקת דוחות'],['mgr','לוח מנהל והתראות התנהגות']];
 const ROLES={'מדריך':['count','morning','out','notes','personal'],'רכז':['count','morning','out','notes','students','personal','reports'],'סגן מנהל':['count','morning','out','notes','students','personal','reports','mgr']};
 const presetPerms=r=>Object.fromEntries(PERMS.map(([k])=>[k,(ROLES[r]||[]).includes(k)]));
-function has(p){if(p==='owner')return !!S.owner;if(p==='stu')return has('notes')||has('students');return !!(S.perm&&S.perm[p])}
+function has(p){if(p==='any')return true;if(p==='owner')return !!S.owner;if(p==='stu')return has('notes')||has('students');return !!(S.perm&&S.perm[p])}
 function applyPerms(){
   const ok=S.permReady&&(S.owner||PERMS.some(([k])=>has(k)));S.access=ok;
   document.querySelectorAll('[data-perm]').forEach(el=>el.hidden=!ok||!has(el.dataset.perm));
@@ -689,7 +737,7 @@ function applyPerms(){
   $('topSum').hidden=!ok;
   const na=$('noAccess');na.hidden=ok;
   if(!ok){
-    ['count','morn','out','stu','mgr','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
+    ['count','morn','out','stu','mgr','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
     const m={removed:['אין לך גישה','החשבון הזה לא רשום כאיש צוות. פנו למנהל הפנימייה.'],
       disabled:['הגישה שלך הושבתה','מנהל הפנימייה השבית את הגישה שלך. לפרטים, פנו אליו.'],
       none:['אין לך עדיין הרשאות','מנהל הפנימייה עוד לא הגדיר מה מותר לך לעשות. פנו אליו.'],
@@ -726,7 +774,7 @@ document.addEventListener('change',async e=>{
     else if(el.dataset.sact==='perm'){const s=S.staff.find(x=>x.id===id);const perms={...(s?.perms||{}),[el.dataset.k]:el.checked};await db.doc('staff/'+id).update({perms});toast('ההרשאות עודכנו')}
   }catch(err){fail(err)}
 });
-function renderAll(){renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep()}
+function renderAll(){renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes()}
 
 /* ---------- sheet ---------- */
 function openSheet(id){const s=S.students.get(id);if(!s)return;S.sel=id;$('edName').value=s.name||'';$('edRoom').value=s.room||'';$('edGrade').value=s.grade||'';$('noteText').value='';resetArm();pfClose();$('sheetBg').hidden=false;renderSheet()}
@@ -802,7 +850,7 @@ document.addEventListener('click',async e=>{
   if(e.target===$('sheetBg')){closeSheet();return}
   if(!b)return;
   if(b.dataset.tab){S.tab=b.dataset.tab;document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-    ['count','morn','out','stu','mgr','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
+    ['count','morn','out','stu','mgr','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
     try{localStorage.setItem('pn-tab',S.tab)}catch{}return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
   if(!db&&b.dataset.act!=='close'&&b.dataset.act!=='open')return;
@@ -818,6 +866,8 @@ document.addEventListener('click',async e=>{
       b.disabled=false;$('bulk').value='';toast(`נוספו ${n} תלמידים`);break}
     case'handle':b.disabled=true;try{await db.doc('notes/'+id).update({handled:{by:S.me,byName:S.myName,at:Date.now()}});toast('סומן כטופל')}catch(e){fail(e);b.disabled=false}break;
     case'reopen':try{await db.doc('notes/'+id).update({handled:null});toast('ההתראה נפתחה מחדש')}catch(e){fail(e)}break;
+    case'calPrev':S.calM=Math.max(0,S.calM-1);renderCal();break;
+    case'calNext':S.calM=Math.min(HMONTHS.length-1,S.calM+1);renderCal();break;
     case'repRange':setRange(b.dataset.d);break;
     case'pfEdit':pfOpen();break;
     case'pfCancel':pfClose();break;
@@ -865,6 +915,58 @@ function subMarks(){
 }
 function onErr(e){console.error(e);if(e&&e.code==='permission-denied')return;sys('חלק מהנתונים לא נטענו. בדקו את החיבור לאינטרנט ורעננו את הדף.')}
 function sys(msg){const n=$('sysNote');n.textContent=msg;n.hidden=!msg}
+
+/* ---------- school calendar (תשפ"ז) ---------- */
+const CAL=new Map([["2026-08-16","l","תחילת זמן אלול"],["2026-09-11","v","ערב ראש השנה"],["2026-09-12","c","ראש השנה א'"],["2026-09-13","c","ראש השנה ב'"],["2026-09-14","v","צום גדליה"],["2026-09-17","p","כנס חיזוק ימים נוראים"],["2026-09-18","v",""],["2026-09-19","v",""],["2026-09-20","v","ערב יום כיפור"],["2026-09-21","c","יום כיפור"],["2026-09-22","v",""],["2026-09-23","v",""],["2026-09-24","v",""],["2026-09-25","v",""],["2026-09-26","c","סוכות"],["2026-09-27","c","חוה\"מ סוכות"],["2026-09-28","c","חוה\"מ סוכות"],["2026-09-29","c","חוה\"מ סוכות"],["2026-09-30","c","חוה\"מ סוכות"],["2026-10-01","c","חוה\"מ סוכות"],["2026-10-02","c","הושענא רבה"],["2026-10-03","c","שמיני עצרת / שמחת תורה"],["2026-10-04","v",""],["2026-10-05","v",""],["2026-10-06","v",""],["2026-10-07","v",""],["2026-10-08","v",""],["2026-10-09","v",""],["2026-10-11","l","תחילת זמן חורף"],["2026-11-04","p","אסיפת הורים מחצית א'"],["2026-12-06","v","חנוכה ב'"],["2026-12-07","v","חנוכה ג'"],["2026-12-08","v","חנוכה ד'"],["2026-12-09","v","חנוכה ה'"],["2026-12-10","v","חנוכה ו'"],["2026-12-11","v","חנוכה ז'"],["2026-12-12","v","חנוכה ח'"],["2026-12-13","l",""],["2026-12-20","e","צום עשרה בטבת"],["2026-12-30","t","טיול חורף"],["2026-12-31","t","טיול חורף"],["2027-02-04","e","חלוקת תעודות מחצית א'"],["2027-02-05","v",""],["2027-02-06","v",""],["2027-02-07","v",""],["2027-02-21","w","פורים קטן"],["2027-02-22","w","שושן פורים קטן"],["2027-02-23","t","מסע פולין"],["2027-02-24","t","מסע פולין"],["2027-02-25","t","מסע פולין"],["2027-02-26","t","מסע פולין"],["2027-02-27","t","מסע פולין"],["2027-02-28","t","מסע פולין"],["2027-03-01","t","מסע פולין"],["2027-03-18","x","סיום מסכת מגילה"],["2027-03-21","e","יריד פורים"],["2027-03-22","v","תענית אסתר"],["2027-03-23","c","פורים"],["2027-03-24","c","שושן פורים"],["2027-03-25","l",""],["2027-04-07","e","מסיבת סיום זמן חורף"],["2027-04-08","v",""],["2027-04-09","v",""],["2027-04-10","v",""],["2027-04-11","v",""],["2027-04-12","v",""],["2027-04-13","v",""],["2027-04-14","v",""],["2027-04-15","v",""],["2027-04-16","v",""],["2027-04-17","v",""],["2027-04-18","v",""],["2027-04-19","v",""],["2027-04-20","v",""],["2027-04-21","v",""],["2027-04-22","c","פסח"],["2027-04-23","c","חוה\"מ פסח"],["2027-04-24","c","חוה\"מ פסח"],["2027-04-25","c","חוה\"מ פסח"],["2027-04-26","c","חוה\"מ פסח"],["2027-04-27","c","חוה\"מ פסח"],["2027-04-28","c","שביעי של פסח"],["2027-04-29","v",""],["2027-04-30","v",""],["2027-05-01","v",""],["2027-05-02","v",""],["2027-05-03","v",""],["2027-05-04","v","יום השואה"],["2027-05-05","v",""],["2027-05-06","v",""],["2027-05-07","v",""],["2027-05-09","l","תחילת זמן קיץ"],["2027-05-11","e","יום הזכרון"],["2027-05-12","v","יום העצמאות"],["2027-05-19","p","אסיפת הורים מחצית ב'"],["2027-05-25","x","ל\"ג בעומר"],["2027-06-04","w","יום ירושלים"],["2027-06-09","p","מעמד הכנה לקבלת התורה"],["2027-06-10","v","ערב שבועות"],["2027-06-11","c","שבועות"],["2027-06-23","t","טיול קיץ"],["2027-06-24","t","טיול קיץ"],["2027-07-21","e","חלוקת תעודות ומסיבת סיום זמן קיץ"],["2027-07-22","c","צום שבעה עשר בתמוז"],["2027-07-23","v",""],["2027-07-24","v",""],["2027-07-25","v",""],["2027-07-26","v",""],["2027-07-27","v",""],["2027-07-28","v",""],["2027-07-29","v",""],["2027-07-30","v",""],["2027-07-31","v",""],["2027-08-01","v",""],["2027-08-02","v",""],["2027-08-03","v",""],["2027-08-04","v",""],["2027-08-05","v",""],["2027-08-06","v",""],["2027-08-07","v",""],["2027-08-08","v",""],["2027-08-09","v",""],["2027-08-10","v",""],["2027-08-11","v",""],["2027-08-12","v","צום תשעה באב"],["2027-08-13","v",""],["2027-08-14","v",""],["2027-08-15","v",""],["2027-08-16","v",""],["2027-08-17","v",""],["2027-08-18","v","ט\"ו באב"],["2027-08-19","v",""],["2027-08-20","v",""],["2027-08-21","v",""],["2027-08-22","v",""],["2027-08-23","v",""],["2027-08-24","v",""],["2027-08-25","v",""],["2027-08-26","v",""],["2027-08-27","v",""],["2027-08-28","v",""],["2027-08-29","v",""],["2027-08-30","v",""],["2027-08-31","v",""],["2027-09-01","v",""],["2027-09-02","v",""]].map(([d,k,l])=>[d,{k,l}]));
+const KIND={s:'שבת',c:'חגים ומועדים',v:'חופשה',l:'תחילת לימודים 12:00',p:'ערב הורים / כנס',e:'סיום לימודים מוקדם',x:'פעילות מיוחדת',t:'טיול'};
+const HMONTHS=[['אלול','2026-08-14',29],['תשרי','2026-09-12',30],['חשון','2026-10-12',30],['כסלו','2026-11-11',30],['טבת','2026-12-11',29],['שבט','2027-01-09',30],['אדר א\'','2027-02-08',30],['אדר ב\'','2027-03-10',29],['ניסן','2027-04-08',30],['אייר','2027-05-08',29],['סיון','2027-06-06',30],['תמוז','2027-07-06',29],['אב','2027-08-04',30]];
+const HL=['','א','ב','ג','ד','ה','ו','ז','ח','ט','י','יא','יב','יג','יד','טו','טז','יז','יח','יט','כ','כא','כב','כג','כד','כה','כו','כז','כח','כט','ל'];
+const hNum=n=>{const s=HL[n];return s.length>1?s.slice(0,-1)+'״'+s.slice(-1):s+'׳'};
+const addD=(k,n)=>{const d=new Date(k+'T12:00');d.setDate(d.getDate()+n);return ymd(d)};
+function heb(k){for(let i=HMONTHS.length-1;i>=0;i--){const [m,st,len]=HMONTHS[i];if(k>=st){const n=Math.round((new Date(k+'T12:00')-new Date(st+'T12:00'))/864e5)+1;return n<=len?{i,m,day:n}:null}}return null}
+function dayInfo(k){const e=CAL.get(k);if(e)return e;return new Date(k+'T12:00').getDay()===6?{k:'s',l:''}:{k:'w',l:''}}
+const offK=new Set(['v','c']);
+const dotC=k=>`var(--cal-${k})`;
+function fmtShort(k){return k.slice(8).replace(/^0/,'')+'/'+k.slice(5,7).replace(/^0/,'')}
+function events(){ // merge consecutive days (bridging a Shabbat) of the same kind
+  const norm=l=>l.replace(/^חנוכה\s+[א-ת]['׳]$/,'חנוכה');const out=[];let cur=null;
+  for(const [d,e] of [...CAL.entries()].sort()){
+    if(e.k==='w'&&!e.l)continue;
+    if(cur&&cur.k===e.k&&e.k!=='w'&&daysBetween(cur.to,d)<=2){cur.to=d;if(e.l&&!cur.ls.includes(norm(e.l)))cur.ls.push(norm(e.l));continue}
+    cur={k:e.k,from:d,to:d,ls:e.l?[norm(e.l)]:[]};out.push(cur)}
+  out.forEach(e=>e.name=e.ls.length?(e.ls.slice(0,2).join(' · ')+(e.ls.length>2?' …':'')):KIND[e.k]);
+  return out}
+const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e5);
+function rangeTxt(a,b){return a===b?fmtShort(a):fmtShort(a)+'–'+fmtShort(b)}
+function calNote(text,k){return `<div class="calnote" style="background:${dotC(k)}"><i style="background:var(--ink);opacity:.35"></i><span>${text}</span></div>`}
+function renderCalNotes(){
+  // night count: night of D -> students home if D+1 is off / late-start
+  const n=S.night,t=dayInfo(addD(n,1)),d=dayInfo(n);let h='';
+  if(offK.has(t.k)||t.k==='l')h=calNote(`לפי לוח השנה התלמידים בבית הלילה${t.k==='l'?' (מחר חוזרים, תחילת לימודים 12:00)':t.l?' · '+esc(t.l):''}`,t.k);
+  else if(d.k==='t'&&t.k==='t')h=calNote(`לפי לוח השנה: ${esc(d.l||'טיול')}`,'t');
+  if($('nightCal'))$('nightCal').innerHTML=h;
+  const m=dayInfo(S.mornDate);let h2='';
+  if(offK.has(m.k))h2=calNote(`לפי לוח השנה היום ${m.k==='c'?'חג':'חופשה'}${m.l?' · '+esc(m.l):''}. אין השכמה.`,m.k);
+  else if(m.k==='l')h2=calNote('היום תחילת לימודים בשעה 12:00. התלמידים חוזרים במהלך היום.','l');
+  else if(m.k!=='w'&&m.k!=='s')h2=calNote(`היום: ${esc(m.l||KIND[m.k])}`,m.k);
+  if($('mornCal'))$('mornCal').innerHTML=h2;
+}
+function renderCal(){
+  if(S.tab!=='cal')return;
+  const today=ymd(new Date()),ti=dayInfo(today),hb=heb(today);
+  if(S.calM==null){const h=heb(today);S.calM=h?h.i:(today<HMONTHS[0][1]?0:HMONTHS.length-1)}
+  const status=offK.has(ti.k)?(ti.k==='c'?'חג':'חופשה – התלמידים בבית'):ti.k==='t'?'טיול':ti.k==='l'?'תחילת לימודים 12:00':ti.k==='s'?'שבת':'יום לימודים';
+  $('calNow').innerHTML=`<div class="calnote" style="background:${dotC(ti.k==='w'?'x':ti.k)};padding:14px"><span style="display:grid;gap:2px"><span style="font-size:1.15rem">היום: ${esc(status)}${ti.l?' · '+esc(ti.l):''}</span><span class="muted" style="font-weight:400">${hb?hNum(hb.day)+' '+hb.m+' · ':''}${nf.format(new Date(today+'T12:00'))}</span></span></div>`;
+  const nx=events().filter(e=>e.to>=today).slice(0,8);
+  $('calNext').innerHTML=nx.length?nx.map(e=>`<div class="ev"><i style="background:${dotC(e.k)}"></i><span class="when">${rangeTxt(e.from,e.to)}</span><b>${esc(e.name)}</b></div>`).join(''):'<span class="muted">אין אירועים נוספים בלוח השנה הזה.</span>';
+  const [m,st,len]=HMONTHS[S.calM];$('calMonthName').textContent=m+' תשפ״'+(S.calM===0?'ו':'ז');
+  const w0=new Date(st+'T12:00').getDay();
+  let g=['א','ב','ג','ד','ה','ו','ש'].map(x=>`<div class="cal-h">${x}</div>`).join('')+'<div class="cal-d empty"></div>'.repeat(w0);
+  for(let i=0;i<len;i++){const k=addD(st,i),e=dayInfo(k);
+    g+=`<div class="cal-d ${e.k!=='w'?'k-'+e.k:''} ${k===today?'today':''}" title="${esc(e.l||KIND[e.k]||'')}"><span class="hd">${hNum(i+1)}</span><span class="gd">${fmtShort(k)}</span>${e.l?`<span class="lb">${esc(e.l)}</span>`:''}</div>`}
+  $('calGrid').innerHTML=g;
+  $('calLegend').innerHTML=Object.entries(KIND).map(([k,v])=>`<span><i style="background:${dotC(k)}"></i>${v}</span>`).join('');
+}
 
 /* ---------- reports ---------- */
 const dmy=k=>k.slice(8)+'.'+k.slice(5,7);
@@ -1029,7 +1131,17 @@ function enterApp(u){
   S.subs.push(db.doc('staff/'+u.uid).onSnapshot(d=>{S.selfDoc=d.exists?d.data():null;S.selfKnown=true;go()},e=>{S.selfDoc=null;S.selfKnown=true;go()}));
 }
 
+const EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+function addEyes(){document.querySelectorAll('input[type=password]').forEach(inp=>{
+  if(inp.parentElement.classList.contains('pw-wrap'))return;
+  const w=document.createElement('span');w.className='pw-wrap';inp.parentNode.insertBefore(w,inp);w.appendChild(inp);
+  const b=document.createElement('button');b.type='button';b.className='pw-eye';b.innerHTML=EYE;b.setAttribute('aria-label','הצג סיסמה');b.setAttribute('aria-pressed','false');
+  b.addEventListener('click',()=>{const show=inp.type==='password';inp.type=show?'text':'password';b.innerHTML=show?EYE_OFF:EYE;
+    b.setAttribute('aria-label',show?'הסתר סיסמה':'הצג סיסמה');b.setAttribute('aria-pressed',String(show));inp.focus()});
+  w.appendChild(b)})}
 function start(){
+  addEyes();
   $('nightDate').value=S.night;$('mornDate').value=S.mornDate;
   try{const g=localStorage.getItem('pn-grade');if(g&&(GRADES.includes(g)||g==='-'))S.grade=g}catch{}
   applyPerms();
