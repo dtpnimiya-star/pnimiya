@@ -67,10 +67,32 @@ h1{font-family:var(--f-display);font-weight:400;font-size:1.45rem;margin:0;lette
 .sum{display:flex;gap:6px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:.88rem;font-weight:600;background:var(--soft);color:var(--ink)}
 .pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.warn{background:var(--warn-bg);color:var(--warn)}
-nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px}
-nav::-webkit-scrollbar{display:none}
-nav button{flex:1 0 auto;white-space:nowrap;padding-inline:10px!important;background:none;border:0;border-bottom:3px solid transparent;padding:10px 4px 9px;font:600 1rem var(--f-body);color:var(--muted);cursor:pointer}
-nav button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+header .wrap{padding-block:10px 12px!important}
+.brand{align-items:center!important;flex-wrap:nowrap!important}
+.title-block{display:grid;flex:1;min-width:0;line-height:1.15}
+.kicker{font-size:.78rem;color:var(--muted);font-weight:600;letter-spacing:.02em}
+#pageTitle{font-size:1.35rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .night{display:none}
+.menu-btn,.menu-close{position:relative;flex:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0}
+.menu-btn svg,.menu-close svg{width:24px;height:24px}
+.menu-btn:hover,.menu-close:hover{background:var(--soft)}
+.badge.dot{position:absolute;top:-4px;left:-4px;margin:0}
+.drawer-bg{position:fixed;inset:0;background:rgba(8,16,20,.45);z-index:40}
+.drawer{position:fixed;top:0;bottom:0;right:0;width:min(300px,86vw);z-index:41;background:var(--surface);border-left:1px solid var(--line);box-shadow:-12px 0 32px rgba(0,0,0,.18);display:flex;flex-direction:column;
+  padding:calc(12px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) 12px;transform:translateX(105%);visibility:hidden}
+.drawer.open{transform:none;visibility:visible}
+@media (prefers-reduced-motion:no-preference){.drawer{transition:transform .22s ease,visibility .22s}}
+.drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:4px 4px 12px;border-bottom:1px solid var(--line)}
+.drawer-head img{width:140px;height:auto;border-radius:8px;background:#fff}
+.drawer-list{display:grid;gap:2px;padding:10px 0;overflow-y:auto;flex:1;align-content:start}
+.drawer-list button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 12px;border:0;border-radius:10px;background:none;color:var(--ink);font:600 1.05rem var(--f-body);text-align:right;cursor:pointer}
+.drawer-list button:hover{background:var(--soft)}
+.drawer-list button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.drawer-list .ni{width:22px;height:22px;flex:none;opacity:.9}
+.drawer-list .lbl{flex:1}
+.drawer-list .badge{margin:0}
+.drawer-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:12px;min-width:0}
+.drawer-foot .muted{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 main .wrap{padding-block:16px 40px;display:grid;gap:18px}
 h2{font-family:var(--f-display);font-weight:400;font-size:1.1rem;margin:0}
 .muted{color:var(--muted)}
@@ -203,7 +225,7 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
 .perm input{width:18px;height:18px;accent-color:var(--accent);margin:0}
 .grid3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px}.grid3>*{min-width:0}
 @media (max-width:460px){.grid3{grid-template-columns:1fr 1fr}.grid3>:first-child{grid-column:1/-1}}
-@media (prefers-reduced-motion:no-preference){.seg button,nav button{transition:background .12s,color .12s}}
+@media (prefers-reduced-motion:no-preference){.seg button,.drawer-list button{transition:background .12s,color .12s}}
 </style>
 </head>
 <body>
@@ -212,7 +234,10 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
 <header>
   <div class="wrap">
     <div class="brand">
-      <h1>נוכחות פנימייה</h1>
+      <button class="menu-btn" id="menuBtn" data-act="menu" type="button" aria-label="פתיחת תפריט" aria-expanded="false" aria-controls="drawer" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg><span class="badge dot" id="menuBadge" hidden></span>
+      </button>
+      <div class="title-block"><span class="kicker">נוכחות פנימייה</span><h1 id="pageTitle">נוכחות פנימייה</h1></div>
       <span class="night" id="nightLabel"></span>
       <button class="btn small" id="acctBtn" data-act="acct" hidden aria-expanded="false" aria-controls="acctPanel"></button>
     </div>
@@ -226,20 +251,25 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
     </div>
     <div class="sum" id="topSum" aria-live="polite"></div>
     <div class="filters" id="gradeFilter" role="group" aria-label="סינון לפי כיתה"></div>
-    <nav role="tablist">
-      <button role="tab" id="t-count" data-tab="count" data-perm="count" aria-selected="false" hidden>ספירת לילה</button>
-      <button role="tab" id="t-morn" data-tab="morn" data-perm="morning" aria-selected="false" hidden>השכמה</button>
-      <button role="tab" id="t-out" data-tab="out" data-perm="out" aria-selected="false" hidden>יציאות</button>
-      <button role="tab" id="t-stu" data-tab="stu" data-perm="stu" aria-selected="false" hidden>תלמידים</button>
-      <button role="tab" id="t-mgr" data-tab="mgr" data-perm="mgr" aria-selected="false" hidden>לוח מנהל<span class="badge" id="mgrBadge" hidden></span></button>
-      <button role="tab" id="t-cal" data-tab="cal" data-perm="any" aria-selected="false" hidden>לוח שנה</button>
-      <button role="tab" id="t-rep" data-tab="rep" data-perm="reports" aria-selected="false" hidden>דוחות</button>
-      <button role="tab" id="t-staff" data-tab="staff" data-perm="owner" aria-selected="false" hidden>צוות</button>
-    </nav>
     <div id="liveAlert" class="live" role="alert" hidden></div>
   </div>
 </header>
 
+<div class="drawer-bg" id="drawerBg" data-act="menuClose" hidden></div>
+<nav class="drawer" id="drawer" aria-label="תפריט ראשי" aria-hidden="true">
+  <div class="drawer-head"><img id="drawerLogo" alt="דעת תבונות, פנימייה" width="150" height="122"><button class="menu-close" type="button" data-act="menuClose" aria-label="סגירת התפריט"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="drawer-list">
+    <button type="button" id="t-count" data-tab="count" data-perm="count" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><span class="lbl">ספירת לילה</span></button>
+    <button type="button" id="t-morn" data-tab="morn" data-perm="morning" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span class="lbl">השכמה</span></button>
+    <button type="button" id="t-out" data-tab="out" data-perm="out" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M9 8l-4 4 4 4M5 12h11"/></svg><span class="lbl">יציאות</span></button>
+    <button type="button" id="t-stu" data-tab="stu" data-perm="stu" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg><span class="lbl">תלמידים</span></button>
+    <button type="button" id="t-mgr" data-tab="mgr" data-perm="mgr" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="lbl">לוח מנהל</span><span class="badge" id="mgrBadge" hidden></span></button>
+    <button type="button" id="t-cal" data-tab="cal" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg><span class="lbl">לוח שנה</span></button>
+    <button type="button" id="t-rep" data-tab="rep" data-perm="reports" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl">דוחות</span></button>
+    <button type="button" id="t-staff" data-tab="staff" data-perm="owner" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="lbl">צוות</span></button>
+  </div>
+  <div class="drawer-foot"><span class="muted" id="drawerUser"></span><button class="btn small" type="button" data-act="logout">יציאה</button></div>
+</nav>
 <main><div class="wrap">
   <div id="sysNote" class="notice" hidden></div>
   <div id="login" class="panel" hidden style="max-width:420px;width:100%;margin:24px auto 0;gap:14px">
@@ -636,7 +666,7 @@ function barPath(x,y,w,base){const r=Math.min(3,w/2,(base-y)/2);return `M${x},${
 function renderMgr(){
   if(!S.mgr)return;
   const allOpen=S.notes.filter(n=>isBeh(n)&&!n.handled&&S.students.has(n.sid)).length;
-  $('mgrBadge').textContent=allOpen;$('mgrBadge').hidden=!allOpen;
+  $('mgrBadge').textContent=allOpen;$('mgrBadge').hidden=!allOpen;$('menuBadge').hidden=!allOpen;
   document.title=(allOpen?`(${allOpen}) `:'')+'נוכחות פנימייה';
   if(S.tab!=='mgr')return;
   const beh=S.notes.filter(n=>isBeh(n)&&stuOk(n));
@@ -730,8 +760,12 @@ const PERMS=[['count','ספירת לילה'],['morning','השכמת בוקר'],[
 const ROLES={'מדריך':['count','morning','out','notes','personal'],'רכז':['count','morning','out','notes','students','personal','reports'],'סגן מנהל':['count','morning','out','notes','students','personal','reports','mgr']};
 const presetPerms=r=>Object.fromEntries(PERMS.map(([k])=>[k,(ROLES[r]||[]).includes(k)]));
 function has(p){if(p==='any')return true;if(p==='owner')return !!S.owner;if(p==='stu')return has('notes')||has('students');return !!(S.perm&&S.perm[p])}
+function menu(open){S.menuOpen=open;const d=$('drawer');d.classList.toggle('open',open);d.setAttribute('aria-hidden',String(!open));$('drawerBg').hidden=!open;
+  $('menuBtn').setAttribute('aria-expanded',String(open));document.body.style.overflow=open?'hidden':'';
+  if(open){($('drawer').querySelector('[aria-selected="true"]:not([hidden])')||$('drawer').querySelector('.drawer-list button:not([hidden])'))?.focus()}else $('menuBtn').focus({preventScroll:true})}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.menuOpen)menu(false)});
 function applyPerms(){
-  const ok=S.permReady&&(S.owner||PERMS.some(([k])=>has(k)));S.access=ok;
+  const ok=S.permReady&&(S.owner||PERMS.some(([k])=>has(k)));S.access=ok;$('menuBtn').hidden=!ok;if(!ok&&S.menuOpen)menu(false);$('drawerUser').textContent=S.myName||'';if(!$('drawerLogo').src)$('drawerLogo').src=document.querySelector('.lg-logo').src;
   document.querySelectorAll('[data-perm]').forEach(el=>el.hidden=!ok||!has(el.dataset.perm));
   S.mgr=ok&&has('mgr');
   $('topSum').hidden=!ok;
@@ -749,7 +783,7 @@ function applyPerms(){
   }
   const cur=$('t-'+S.tab);
   if(!cur||cur.hidden||$('tab-'+S.tab).hidden){let want=null;try{want=localStorage.getItem('pn-tab')}catch{}
-    const btns=[...document.querySelectorAll('nav [data-tab]')].filter(b=>!b.hidden);
+    const btns=[...document.querySelectorAll('.drawer [data-tab]')].filter(b=>!b.hidden);
     (btns.find(b=>b.dataset.tab===want&&want!==S.tab)||btns[0])?.click()}
   renderAll();
 }
@@ -849,7 +883,7 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act],[data-tab]');
   if(e.target===$('sheetBg')){closeSheet();return}
   if(!b)return;
-  if(b.dataset.tab){S.tab=b.dataset.tab;document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  if(b.dataset.tab){S.tab=b.dataset.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
     ['count','morn','out','stu','mgr','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
     try{localStorage.setItem('pn-tab',S.tab)}catch{}return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
@@ -866,6 +900,8 @@ document.addEventListener('click',async e=>{
       b.disabled=false;$('bulk').value='';toast(`נוספו ${n} תלמידים`);break}
     case'handle':b.disabled=true;try{await db.doc('notes/'+id).update({handled:{by:S.me,byName:S.myName,at:Date.now()}});toast('סומן כטופל')}catch(e){fail(e);b.disabled=false}break;
     case'reopen':try{await db.doc('notes/'+id).update({handled:null});toast('ההתראה נפתחה מחדש')}catch(e){fail(e)}break;
+    case'menu':menu(!S.menuOpen);break;
+    case'menuClose':menu(false);break;
     case'calPrev':S.calM=Math.max(0,S.calM-1);renderCal();break;
     case'calNext':S.calM=Math.min(HMONTHS.length-1,S.calM+1);renderCal();break;
     case'repRange':setRange(b.dataset.d);break;
