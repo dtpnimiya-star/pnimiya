@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-22";
+const APP_VERSION = "2026-11-02-23";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -124,6 +124,30 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .nn-cats button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font:600 .92rem var(--f-body);cursor:pointer;color:var(--ink)}
 .nn-cats button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 .nn-list .ev{align-items:flex-start}
+.heat{width:100%;border-collapse:separate;border-spacing:3px;font-variant-numeric:tabular-nums}
+.heat th{font-weight:600;font-size:.8rem;color:var(--muted);padding:2px}
+.heat td{text-align:center;border-radius:6px;padding:7px 2px;font-weight:600;font-size:.9rem}
+.heat td.g{font-weight:700;color:var(--ink);text-align:right;padding-inline:6px}
+.watch{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.watch .name{background:none;border:0;font:inherit;font-weight:700;color:var(--ink);cursor:pointer;display:grid;gap:2px;padding:0}
+.watch .name .meta{font-weight:400;color:var(--muted);font-size:.85rem}
+.watch .why{display:flex;flex-wrap:wrap;gap:4px}
+.watch .why span{font-size:.8rem;background:#fde8e4;color:#8a2d1d;border-radius:999px;padding:2px 8px;font-weight:600}
+.praise{display:flex;flex-wrap:wrap;gap:6px}
+.praise button{border:1px solid #b7dcc4;background:#eef8f1;color:#1d5c34;border-radius:999px;padding:7px 12px;font:600 .88rem var(--f-body);cursor:pointer}
+.rooms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.room-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px}
+.room-card .hd{display:flex;justify-content:space-between;align-items:center}
+.room-card .sc{font-weight:800;font-size:1.1rem;border-radius:8px;padding:2px 10px}
+.chk{display:flex;flex-wrap:wrap;gap:6px}
+.chk button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 9px;font:600 .84rem var(--f-body);cursor:pointer;color:var(--muted)}
+.chk button[aria-pressed="true"]{background:#e3f4e8;border-color:#9fd1b0;color:#1d5c34}
+.chk button[aria-pressed="false"].set{background:#fde8e4;border-color:#f0b4a8;color:#8a2d1d}
+.offnote{background:#fff4d6;border:1px solid #f0d58a;color:#6b4e00;border-radius:10px;padding:10px 12px;font-weight:600}
+.wa-box{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
+.wa-box .btns{display:flex;flex-wrap:wrap;gap:6px}
+.wa-btn{background:#e7f8ee;border:1px solid #9fd8b4;color:#14532d;border-radius:8px;padding:7px 12px;font:600 .9rem var(--f-body);text-decoration:none}
+.audit .item{font-size:.9rem}
 .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
 .seg button{border:0;background:var(--surface);color:var(--muted);font:600 .9rem var(--f-body);padding:8px 12px;cursor:pointer;min-width:58px}
 .seg button+button{border-right:1px solid var(--line)}
@@ -328,6 +352,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <button type="button" id="t-mgr" data-tab="mgr" data-perm="mgr" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="lbl">לוח מנהל</span><span class="badge" id="mgrBadge" hidden></span></button>
     <button type="button" id="t-sched" data-tab="sched" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="lbl">מערכת שבועית</span></button>
     <button type="button" id="t-cal" data-tab="cal" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg><span class="lbl">לוח שנה</span></button>
+    <button type="button" id="t-rooms" data-tab="rooms" data-perm="rooms" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17"/><path d="M2 21h20M12 12h.01M16 7h3a1 1 0 0 1 1 1v13"/></svg><span class="lbl">בדיקת חדרים</span></button>
     <button type="button" id="t-rep" data-tab="rep" data-perm="reports" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl">דוחות</span></button>
     <button type="button" id="t-staff" data-tab="staff" data-perm="owner" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="lbl">צוות</span></button>
   </div>
@@ -336,6 +361,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 </nav>
 <main><div class="wrap">
   <div id="sysNote" class="notice" hidden></div>
+  <div id="offNote" class="offnote" hidden>📴 אין חיבור לאינטרנט. הסימונים נשמרים במכשיר ויסונכרנו אוטומטית כשהחיבור יחזור.</div>
   <div id="login" class="panel" hidden style="max-width:420px;width:100%;margin:24px auto 0;gap:14px">
     <img class="lg-logo" src="data:image/webp;base64,UklGRrZFAABXRUJQVlA4IKpFAACQ5ACdASq4AWYBPj0cjEQiIaGTSU10IAPEpu4XKQ+de/2r8x+6fjnwn92/wn7Q/4L9svmpr79j/uf+I/0X96/aH5RdfPTPmL+RfoP/G/rH+G/8/+h+cv+O/5X9w/vPwN/P//S/t37//QH+nf+i/xP+h/8v9z/////+sj1M/uv+M3wC/nn9x/+f+P91z/Nf97/b/v/8l/67/qv/R/vf9V8gX9q/yP/m9sT/q//////BR/nf/H7Bv8i/4n/7/7fu9f9H9xv+R8p39d/3X7lfA1/Rv8V/7/z////0Af/b2v/4B/8+s36vf178bfBj+8/lB/hf+35nfpf7Z+UP9x53O8z0P/jv2e+7/3n9rv8B+033m/l/9d+X3nf8Xv9D1Bfxv+Qf3X+1fsx/fv2h92/aDgB/Ov6J/lf75/kv+z/hfgg+f/2/5k+6317/zH3L/YB/Ov53/evzW/wn////Pxl+HN91/4PsB/yD+g/7/+4/439tvju/4v8j/qv3E90P6F/if+z/lP89/6foO/lX9b/3n97/0H/2/2P/////3weyz93f//7t37n//8wg5cG2yW0ucybY8EO3RiXCSy28By4NtktroQ5V04s1Ed9GJdtw95cuDbZLa6MS4SWW3eJYq0ywOqlBO7zf+Q7GWZ3ZGqdZMd4DlwbbJbXRfdYjOcVj4teAt3UwR0Hk6NyL3qTUKf/PtvF/vyfY5cJLLbwHLg22SMaLH94PcNdb7/lz27i8VMxrWz/FDmD4zL4Ky2Y8y7VSvyuXBtsltdGJcJKeJ48cad6VHnGPZvPbuXAsn2yi6Iu/rf/5mLv/JxSIM4lmYwsuEllt4DlwbbIrVs8kRULANxOmk77r/LBSY8fyGHPr12QREdv3Cr5iLbP/NYOsmO8By4Ntklq9FRLyXaE7tNGk1IcJJY+DdtIFMwP4OSG//l0lcgGH/1uJNaxB4Fb49wZm1GoDlwbW48G0ILKoF8OWH9ruH62Tj+moDo2Vdncd8X8n78GcdfLo+u3UiSy28By4NtkWFVYRI1V0/h+E9G/uItFbNYmIh0dn0pPVNkX8xLhJZbd6qusE8hvRGf4KWZTyeinMqv1M/3TTY4SoDBQTItM3c5sXlsHk/F/hUA0aDniIjNV9is1QiaUNHbx7LbwHLPbBNnQE1zeiDE699Cx4CZFgYEjp7Ys1cOXBODEgIzkeUGWIs1sQT6OF6FFIy8Hs2hQGwMJ5j2BjIsHb38i7T9q80dkYSFPCSUnzlzDiihWjW/R07fPu4FzUBiQ/1Gl+FKMgq7X9UGPSrhxkPSf3a+j8o11mdHCDbPSj9we+0R9qamOKyViyrtYCk0flVcRpRUF9IZCfVSXjGqfxInLkFBEl2VwrSviKucFS6alGUPJK38BiVc4WKns6cmbUaBrzUPLjHUb8So1htaXIyvljUV004F5G8vDPzCC/L6kiewMcUlTQ/FU+Mvy+9WmrYxAfSrIJQlZrMUJ1I7ZgT9RXI7jov9PFtCq+Mwgb0tdrtflv42EGcnZYIIpsET5McwqmFaFk7CjVV+OZtEbRyznD8Y0A3zN9vmeTV+sYXVBxugnNKPRPZmy8ZlmlIagOuwAVrdGqhsBgeUpObvE8hYQjjp/A1CXcIP1nQETKOqfOnGflqfIHvMdJrB1Pb9/SbNgK8VtN3NIF+bq8F/56S+bomsnd2BgASrWYoBFu+/Rgg5pk6WmFBsDtymJuFO7GxfbCT5KLmfOGyLfmdviAyjQ3R+XlaOdcEZU3rmaARj/Zo2Y5y7KH+ZoKeGcKXPAedzBFeAFzW/OjzV2QOUrVDvKugQpBNf/YwSYUlZUKt1VYNEcrWGGRtlMyGsqvjTRaSM04F1OKyvKil1/q+deIPw2/GhKqZKoJQi2d6oWXfsfOoLfC4NB52MlqVellSQ1Zm6BJVMQoqSOC/INYyMVgaL0loW9AF5oAovMzDrp5C/pDYU8mlSQkwxNRmee89+3W0QfJWWSco87DfLC1OUDBTDMl3iO2ODLqRM8pj9kFuLjt7+z+HEuJi0+WOW8JqPE7kGCMYaWsssG4LiDuIkstu9546tfWKD1+WSkdDl3Xwag+qAm0X6JGI4VMSlazqGapDdF0NORdXONHzsf9o8XKi9i8DjrVk/mcksfIOW/swztlF1LloQjedhPPzMotk7OFwKBHTWtTdWAm11mp9iaX5Ua5JOw5pfiuxys5yVD/yeLSQ2KxAjAu0H07z5MoIwxYiCfUG26FW7lg+1V5FDOpyJKJcLtIYwBm/k/gig/tZCyKewMPH5Yw45KtVSnzarYYIDDzwPUGGkSspA/nduz0QIPkhdbvIws4KBM+n7pzQw3k3kltbBY/MNH6PLT/zPksiCQm7A1FZ72lx8mO8BwxL5PkCOZsGgfPdmcXOmWVfnZM/QjBe97QhjCS6WwIq4Mza6MJBergzNroxLhJZbeA5YgAAP7/uugG+gQwYlW2A0ue6U0yyJHLUJwclO4WPVkmGd8nbGoN1sG8esa8ts0ReWjHzNRXjxe1DCqtmhDr2nsKLbFUvy9LXym+ICIsJwYtA0iwrqC8jpkwq/Y3Qu+xI3/SR/yLmbXBNkgGAKDxbuiFIdrPLDmzAlshRJaxWcPvE4SVSQSKxzMkbFOjFQMqBIYJMTbEQvitT93vPpQfhpmLHvoH6/YOj6T+p1s9ZYrDm7nrQ3TRqEcikhdM5VnRLrbJjuRWawkxXnIV4fkXDDVFGhnSBWfH+1VfbZztfqzGDXCRW3MoagDEdbP05WXAFVcW4J0/gAA85xBtFXn+gh0vXfHB9JuyoMl3mWoAANeZkf5iEO/L/ie9NZ9Ky2mppWU2sm41hIf4zhydOBLHFMKw998vhiJOXoHx51+yJYM4ykBWEFUOoZuzX7C7sPNApdO1Z5G1+oAIcAitHBfsU7bL6QBMhK6pvCRBqbdOtqEgIXOmgAWRD8L8P/3icWliwOREheCZrrc0pk5jmH1Z4567uJ/V2kkrMkf95XR057E8LX2ZMqt/BTMNVpmvMnnWTQdwXgqrP7iFR0JqArHld2bdCJvN+7aeQrMPj03ngZOaF2imZezXzqBPuUWUxPSATTxCUqWj31x00xOMf/DVs7crdBoS94hjLfk/fLkI4tTyeM7t/SOPg/w0TAFAO28J9JvC8SqTxr6FECVJ1ApoExsWDmIVAGd2Otug1n+SPWffMQyhoeJ3i2KNInyJ5q5KIFzQKn3ZmUcVAuQ3Pm0cM3skp1GG0Fq7Kb8BHgIS/ZISRrTrrHVasNYB9Esuk58I50+BYnoMfXE5c+yTDH5NXe0cFS/9nT4kyeyRcvq3VkxhzLR6M803WMCyxl1dGCza6Xj5/YzxJ06W7yJ/dsKA33h+RKQ6FN18cRqoSVhSnTdtjhM3+zm/StcGVFtP50n3xcCcRIaOv64/nEtxkEXS5241sk8Ca/QWxpOLuOKeMDyDoMzJFLrKeHxfAi1Vfwq3uQ18DMLqKjaoleVAtKCt2pDCvivqPYwntLOzLmAm6cknpkWbA0+OJts9T+KXFBLF0oQNriYEOlCCdeBfTmeBtezGYztFDeamJxhvOTaZu4/f2JKAVtgX/svJjufbjrCpX3zk2+VzNjgZqoMw9YmLSqtVeXtHJ6Hu8tQtzebhTCun25eHu+QnF8tsNsqYDjbKY2YjSRKbcyK/MMR/+gA4hB0u+3DqyCi/rVpsYQ4qYOGFui3kv9NqQLG+tM/ptkOr+KEQLWZlFFzBNTHNU1WuSeKOVJbPIdWCc3uELdL7vjBNjTj1Cu/RbMpLItpO2OEvDCA9giEpmDUVAQ3I8+qjsAAImGPaAYtk791avuCUPlu6Lv0h4CisCzP2Zx+ViV0MPAmlgxFR+vwcaNp6Fvgvn3ObelZJMnlwt5OEtRIyr4ZzwmYX04kFX7Ve3zQnr/HgIrLplJNp8B112Z94GQlAb4oJSJ3Dl85DSwEl3/plZ7XS9AcyxIuNJh8YQ71PkqiO7/CPMwscPutRb2B05c06HAw3HqQDne+0J5OQ0d7RL/F6oxe+o3NvbWa7Y3C35XdzghRW2wMoMidroSL/JPsMmfAw1xCVxs2Xx4awvvy89r0SErFZnGAhMcKuieSNUpMh5fE0eTXgKgjjAzsaKuwhR9ONFWOHN5p7f615fRXF1RFEJmkMSf6SvJaTmoXgf3jTY7wQIIXO+XYrBHZgLJm0aBpSwy9HgjdrejBMRPEGVkJcBK/VS+XJSIo800XuLjKXvXmMB0GewXZNyRVEDJ547vzSTXc4iDkqe5iSLu7B6EnkSaAR45Emb2fp2iqsTtIjEBUs6/aybVMsTUiqZmMQaM1Ai6DXOR4F1bjpma5tMzvvNjxGs3H5wIwUrw4vU6O1dS4uH2NAci+X5SZTbxWV+p/bZh8htS2ZwW9zZans6XpvCEwZUyr3gBigp30Bldv5o0wDgxrqStAABDQ8kmVd9R0Ky+JocmPxdqvU0r00z7soBpq0jmCsSRpkojJbWJgU/J9nXaDjnk1d6MADs1ys83ogBDNIflzYnmjRtkBSsMRnK+EBGWTYcStpERbLxip9gFDwDTWZl915wYGPQox9Y9p6+C6zuI/XTDuIE/mm5zcjzkoNjOCPqLrOIZnAlb83KXtrWIpaBBjO5SOOOgypBaGgjTKoXyeSHrMw1WE1OOdBNPJT8vi1tEjYHAu33y9H4tYsrQZQID2Yy2vpoopfd+Wa9l+Q5gn6AiptEF9m+V+q8YIHiGwJMQdremXCH1FsLwU3wMGiqBIVfo6W6F1SGCVMNA8trmQdPFmMiLuTNdfgOFTid8KXMqtmRQoYQjPp0HtorfStvdp8PjaCq5vzMqlJugaVEuyp/zltWGp1usz3YxBMyNgl7vZnS4NH4oUtzFoYTU79RAI6XJBl/qU+E3rBQJGB9HSA8fP1ewjJvkMfyfj1v7CJrefbIfO4+HaUeDkzOP3XdURp7EBKAxDNcBi2QRooEnQ3trXYpjocqcUaNyyl0Zy01BdZhgJdycJQg36weU3ROf1CB15Z+AfOubIAChsbAKZFzSOmW1ROSFPjvsQXpI8o7urJm3yMM2wvH3c4muCBTZW5YFv32+0MvztfvzcXvFHVvdYoovekQrFUpAQQz8I5nsNlCleCawnU4lEbNGrlMaT9G90FIqF2q3+BAECPnI5W5/rt/u7r4h5RZfsITDjPrpfnYUh+gmcq29PG0WP7KFvBSctEoMtJI5JBypyVdoai4QGQR0XaOQ3g20EMxVqMCXaSfFdS03c/51/U/rhAELaNA0AgeJ4FzNV7dXho3PpNMhkKy2jJEbvsSCkmYL8KUCb/gHTXij9iXBbViASdBNrmU5ER3v7h4RG7MHfafRcmCSORs9xYkCkoqOUIUBRuR8KH411yDBgnVmQP1lTtdg+j1yTSWVE0lLjHNyQmCexhR1LKoN2iidq21JRUmoUj0hQ9+G88iMCofYy2985J0Za6VRqzNxFETzRlBBXyZtXK2e6vYLIYKcUCwfsxbwEsBXsb5Z6tkj7PfD293pbacnOY4E23nGGKf2hkyi6arVeQRt5wgfT/kDqBtVmho/Hh2uX2c9xLHwJgVH1WUGxJe2PsIKoCNZrFStG8+X5pjbtRBCgi/Dyozl8FN8CEatd/Mp6YGhlGqeDNVrGt8yu5IbD1DA/Y6DvHtifK3//D5bnnKqnUhC3dCeC87fdc/6/l95owYGUiAAPrJdhwrJ/kbg/ilN2GAfzSwyoULq429ZHMoc+76+JpsKg+MJYX8jKpUEU8mPZw87JpPVgaSmTwIGCyjLGdID3sJ1hViGg3+fnLpO1E5NI0Z2te8yKT69gmrymYyGGJPqnZMdQWp9iwuLqv9gLbyiAodcxz2rPJh+3MFJHZbyT0yr2jdMY9Zf4+eLaf/4LmnM55JgeQ9uaqnkX28qjvO8BTYRKmTLwMIlmOve1oTidjgWLSYNdyt/JD2+s/xgybmid99gBWESOW5j2RLl8QJF9wFotDnmk6StQNIeQK7xSz7KkJXSTwL3EzU1ay0vEwA/N5Aj/iUYqC05ntBvUnxtAq/aSvD9RFXFNr9oOcfUlhsHv9LCLlfS4oVT5bonYYg6zPjSLpWC67i2rsNJ15Ib0IxYaZdU+BgqOi+ZpFpli8UABFJvMKMWm+IncXjgEAmGpdSmpPjYavZxjTB7bvZ7Y053jnoTYeYnjc9IVNnana9N/nrPn54BATSGITsnjzrhewHAoFpWnYygcRnO9SHYOOnRVa9yD8ueo6vrMPdGnCUo//DgZiq71TKlK2+XTFAL0vHe8T10KTSVMrykrUBaKFA8GZykZfj1ZVSP4PyhbIXpPZPWZUi6GOjCxNGQs+LwEvGjiqCofiYsqHf+g/MVdoSZ3dta24D+Mc20lViP/6oxZNseU4rbNnZFkc6S5pL5Dq7BrhwUOpMIJIuuY7vyW5bQOkBPeStxkkc70WMHFcEdazVLHoJjAdsLNZF6rOBPVLk092N7f6sV7uUbeDqzJuXkpaBOOBATjqooaNbqL1uC69Rb4FgSUaDjQarpbogpHCAgKz/koXBHjcSxW7615n9f0O8v4yuwC/y5othmDF5Ib6jUkgrD7Lc9rvoIHhkJ+/eyO3koFO6S4xMF5vP3MsK10RNIUVi0/k0y+velJEXLmD/4lqlmShA73kkKEguTxerOLQyZncLsxZ3JfTBkxBhCuJlWpWJ83pYmcdv71rC/EQIhM8zPNoLPX06kNsZZGbRt8s9CmmkYcE+f3lXJDvLO9TqQ7kR3FUES4xXdo7zdYarpxLI3iuNW5zQBfe5IBmRiSaOD4u9Aug0mjtk/lbLY54z5XHgoAZdAiwlGxE/iD/a1WT8t8wLQphg6apcykOcDZIvylaVsYqSIePgq1HDzbyZ811ddKi7I/UJeNg+0LvH0Ee26ehsoSWo0CzQhRaziwAqXjP4k8Q0AwkUQ52VYcgb2RL9iF1tOUgWCIyx+GBoT7dguHany5cZU3vcw2/YJmSF4EVezjKLs0Es/7WXqQZjzS+CWKELSaqWiEEmsUKdZ13/8BCfPSCgK0M8t3VmwRum13Jh31Yu6LiZfAE5kF/M6CxBEtYb4P3q5cOhnYxWz9T2vSvf+W//rAikN5yJkbQei5todgLF3yRwzPjh3ozg4epNhmlGgeCUdOZcjwA90glarM5bc3ECmOjJBXUtIJHtGj8f9oGqXKZeEnCH4auAA+2oOPchngQ1TNFPez2L7N0G17uC0UEX1MsXMDYWem6A6ufcSxsMfzJexUJttNBMcnay0EfehTTRzq2EIVRXvaeCpD9Fqw3KfGdlqH7B8QWM6ZWSHCOFKB0WGVBnfFIXYI5wCGUlwJJTRN3XV9HxGVPECHlnjMLkftO0yC2hlJRSp3lfeDRkGQmONWm65kCA0Q0yKOB1MssecHb+mlKTc+cxkLj/3cLIAqpubNtdqiAMso48+AZ5thgNGCRfV0ITN3s4Q/6xH5Kl6KAe9wPK+Mn05iOPtHIpi1dUUG2MiLCB0jEePkoUqkr2n15eMt3bX/HPQWdHdfWyhav6y+ZguQP0IxseXgwXOxtqsYlQbMsSnQpQXfcGc8izU7ZEVDQeSmVqtbhk2KFn+WgAABerTvWQWs029NfN0xpfHPXnmPj4NVZYNsOvX7WRMcENYeqCrwAHWEXkvRnx68ZG5YAsmddRAaHO2Nh9hii5nR86//VJmPbkaP+WGXdAWeRv70BM7dWr7uE0XSnguVQOCtcclpPlcKWqkmQLKKv5PmnSjcNE4KGZNn9GVcaFuHZMkMEM760iwi0P2i+3+jOL4zj0y7GYM9S+U848LdbUM+3Zff3302+zLC9OMwor4hyjXsGiAromWxQXqSwO2RTZLMo+IfWkHfSzvmNShsrRFAU9XepGjP4TZCJw3Mwh7qKwA5Ra/xiMPLGia2m3nU7QfH+onTdXTX6Nvy0CRqQD/L9miRucMZG2RXzS1JvigPBPUX5Ig19d8ZjQ80OIUfK/zRHO0P7b9eAJkKNCABf/9kFfp/+q33c/VolLmvM+ItcpnbXifx+tFNKWapke4gy78tJBRRdvcHT5SP7E66pV3eGwY36e/2IP/oRWYcxg2RvHsw+AmLs1ydvR/Ax9s+QjQlo+ESLPNybl9ubnDnUoL982ZbZ6dzu8L5rVvX7twtZP8VM1v8bN3pGxc5cd7OrZrKUoacFk6iNpL3NoSf+tkTuuXgcXItUt96B8xS4mWM2tMiBQ0jMViJiIP96NF7oBNhsaKa9PJ8uEF+oqvDtVknWsqqEUDjvnxr5ASBD3O6pgqBWLLbFaOETFPaVA3t3dk00TJ1Cc4l+T7UYkukbNLphAfF1sAfRE1c/DG/tle+YqQE4XGQi6h/jb0OXjeC4hBkc+2NKP9EFIh+LP/mhBjZV/Aj67PnDKhQontY+BoG32keE+Axy/VDWc1xIvSDrwG4dxYgYPeANfBVRdV+FNmjY0sJv286MlhjD/EEP2X62NDosyy72ZQ4UG7NTepJVUGv/a0u+nxheTzDejWWvWefb1nM7RLB6a3D4CLS9SA0Flne/dcdZpn0Nbz6yFZdz6unJ8QDPfG2N4RIAHbOvUqF0SfYOsDIL6SNvrT0xGqMiBQYPGuMGLSf7gDJ49bXAbp9Xq4JoF2PfWCPNT2yNyChCu33oH/d6rvMxI7Ts14UGVwBOv37nswdO0RUSb4RrnmYBtyiAOBjsq1udCw5V54mzFnbYL9xrhs5URiEM7GDVqbnCETpWmbgBKI71f0/D04dh0MZ3avhYJhpHCoce4ZiQXJAsBJBodsjwz2sOSnyu68MdmTg1YkE9KZle2BwqJN7aRJUX5ghVQaDd5NGa536PBaEVGZ43eR4vg0G4C7EEVmePa7Z1ZgqbI6CY/0NfSNDhrZ5uEdr7Nv4lcVZGxFFfzJGzZztKoj/DWATP6VocdX53PgSgxaID3j5CYuzhLT90a/pniPHtcPSn6X0dyH3+6wN9fFqcZgRZK+3BIDt6pl5X80w+tFBJrgNe02LMgj3aNYHQZYdr6ToE4d+zyfEiFVLZdwfyvKSYxGLrOk9sCnxOGOwkAPV8iLLGsJkTcbiOUNtQX+6jasjbnajYhpDpwi6cB1MlfnBGHX1n3dHcsexlmJ/81o/Q/k6BVe0we+674MQtYxuxrMs5WYz6Oq/WAcRFSgJJY6WlFs3rAUz1aZhtGs6eVLDfqSh55ojjU7dvhOUI/lodLlhox8yj0p5D7rnUQQ3HVJIDaCfbffBr352hsXkLXsFty09jmHYodp8AE5hvI5Mzyjs8RCkabJcFwqGXGAqgq58KgZfAwrpjnbvnwzJkYTIa/zyM63FbgGomAcyXhritdSOO3tlDfx9Xay+/+dDtdLl1bSvyo436zhndt3oX4g2cteFNWQI9eNYrRiryu37cmHyXvBElavsU8aVOnZ/HNxSOxecvvXAZpeWviq8AqPcPPG9Sa1jHpuqFX/mTDY4h919LHxkT8/9SStrjLBgfhKVGBtPitXorDgQ/5oNcJHWr8XxjzYR93Fl/nEpSPpw5PSnzUwT0rf4yev/k19Xdrd8FRSDrZvSoGx6ea9i+k1e9o57mRjaeB09nxK7vCh+j/x9tQL31osyRUilEBtsYHW8qya/0Xp/E1v5oiEfDG/41ir5FdNwvYdgkK9I8v4Oq0cuNHGuv0wtDP+BYZO+H48tynvOmLgMMuw1JSTSQPmMVWqIrqDn1t5Pzmsh9wfD9euN0+SJy4AC2ehfhuVtSlc5d6CrF6Y9LTLceWrsveRi2kCn7QWbtY4dEJPgdbOOmG7HL2THxA56XF76Uz7ip+MKzHCcwTBWZzWdwmwCZXaH+GC9rAju5IGemvDvkw3DG/tEEmbJ1vjkxxzn6gXgV9Xp4/0Ui8ECUqpIijsj5D9fgE+fSZi62G/75XaNb2NgT/f0kxOtwP6YeZVmDqkzt3RSAN6EW9t1In0nk0e91zu4+pBRsOlFh8Q+vZCFWykhp+BjufLzPoPGAQUe7tvpGkB4D6VnuQohBIKbnvX3qT9T4i1FT+OTbL4iHFJUzNSKHRoGXoN8DJHYzZnOpTxUelIYYjqz8pr5v3tw9dEovFD4Bpnco6i1s0hCeRfoz38GTF4kWfkAmCZD9JQV6FALzm5QXpRRz7gORi+hGIrSL4/+YOkvDGVQoRTA6/ez9V7T1gv5bJQm1kkwcTEDbtsvE6W4pT43idxe872L2Y2GLvUBzWhdWNsscl11s480jL/oO2tLipYtV4D4bTImEO/o3PBodhoMZp+Pq2BfZ65sFerf9oVSZ1lRG1Bt+c00f9edrIUWaP78DQH6FfhMLByn3pO43oCjETN7gaejdE7206KOXFt4tUbTo0J7hwHFDUsSD8zknvaLX/zs1zAqn0aYSipJChc4NX7ka7BVI92yijZqXIMiKsQgt54KxQcVKUrRUEIPz3ul+CdnSpn0RvuKZnION4Koy/xxEXpvnUS5AnnyNUquO6UCoYWYhmcjgYbjiDDIiN6S1bJ6ZGyZd/BK/1TSGXxZTdHyZWwyo+764rJuvy3n8KrVJ9WFCvj4JYBY9YoPpNTR2zL5Hfrg2jWVVCQKbqQ5j6JXdU+JIcyQ+hoV2C7TcHLTHOmDI7fpk5t7IxvJcF37TgQXy8jZVcHSgKnEXwEoC7m8HEzY0nwRxJlkWguLe/d4IW3Eb/KKwT9wEBI7N0wrd3A7+nv/ERpFxbmZjKZq2ARD6CybLm23HIQCxZ7Ex0fpnCUl/AgcH6bJefSmFD9JSuQWTEYnQQKu1UTsm+qjurA2VJOG/CmBzWiPAf0MNupQ6H9GNbe1YO7H6RgZifLM+zlliZSadzgSuM3YinKdxH9Cz6QarlmRNazVeHhUT57SYLScvHQFwHsWMLAmAbL8nmElwZd9PSJLla4IxmgyjbzxZed59B3+9zYeCFOYoStx5nEySzP6kyZLEJlmP5SVUHCTFj3ZZ0X+Vce8DTgi+FUmIxLK9wyUBisGswYrjdjm8O23Qv4zmpZ29yI1W5754kB93eqSnu24pxdoxF+3baGkMFo8STkaS9BPwP7Ntou3lU6SywMMQ8O0qo78AU3JVt/2e0J9plZlLlHPP9+k0+xlRSm40rpydOq0fmAoPoO/BPKaGt+71nMcy+IvrSuVUPGKMLu1x4yurN3R2sMZeI1Pqvck5+ghYtH/fGBnpYAMUzQ7bJS6ZW9n8dtpa7vIBXwPa5m122eAtbm2luaczgYRmKPdNXXbjLBEWsHk4BM8sLWOBFuefzTtx9nvRBJfDp94zYns4nNdBEwgsBuGcWNvTn58P2ChYxExsKjH/9D9AX4vS+/5iHBDw2ZRatA1FqUXvCLSyt19RhIEZKNv6VWMUaDMA5CYBw9Sd0XuH2G4Q5W2JtLHb4BaxoNz4tQi915axuEA0LTTTqCfgfmJIol6Ulq1o5bIqD1yWspf9zXJcsKeoGciMcbf/MPf3vFR4kGqI4LO+ftNeSQC7Slqqc1Gc5wtdR4/LEVUEi7xJx5ubxHc+7HuUkTiz+mdrAoFmWhsV/hcJJVzKZ5pq17MfASguefE9D+B3zBalhhDFfpotFmI1U897RILG1GXPVCurd1HozNohmlsxSAbf8yKdsu5Zb4Vjx2xCrtnElaltK8EXPYUhbniFtQseowIGixkxCKfIL88u2nGiFa2JKhjxaZnJb9wAHBrPjAdLF+ZUGJNQ5CHuNuvhj8CSdaGJdcbp0ho8MGLlEKjNuEkBAyzkJdBWgohlZPLVEkwDuEh/ezkkZikReW0j4mWSUpFR+zHNYG21QXzQJNgwQwPkyp8PlUfmo+bBwcgwJP3Q6dlokk3RNW5HllMUChZpmSXWRsFfoEbQAygyyeT90m2XQlt7oJj2xIFOGdNd9SCWXneJ5PJj6SyDkx0IU0TMfP5f9DJn036FAdLZx4g6W2kFw6oK5yon1tracAnkggxX9VEx/SLGJK0wVzLgJ17pDsZFj2wBmzOYW5n/CQI/+O1nUEm5B0wqpquiZtRkwlmFLKu3QlXKKkahIDrqdEnMagSuTo8hSCKDP0u4bEMPfYbLPysAKbzi8wXmClQKci9snEdA36lLVaDzcH9e+0gR/zz7EJvoyVy4fNx8GUKhy9s1ZYkwVjwHobtwsgd5p48c3fNLIZ0j5IDAntk5bJTpGRiOz88afDjvOM0Xv05Ha0GhGH+yv0FNjOwcLMoJdM9B40GeQG+zUh1v1oXt8LWH5873Wz2xE7XpcVquxjP2sbrgjyXpDXGnqrQocCxP2iK/R2r1Ve4V5/Qynnl6arDdYtxs1z6QSr6Oh1kg+IULrz72KpHV2gW6HMZIbKR0cZ3IylFfFNusaUb16yOgPeZK0Xv3Z4YEsZaJJOhHwyV73y6MJXNsjuAL5ncM6e7IquUkQSyDK2dN+IJsxjThk96KZB9GEjMMf9uF2dmCIAcCxVqR2puJCyw8wb7QPBExJsWijKrXkIpnpdNw1LESanClbGZXY1RadwPZ1ryjYR2bGmj1V6oo8NAXPDKecqVJBh5UAVlwu42m+uTqM2iZH1jfssJWN7EZgQRHzgDLFX0+CjC5GD768lkV5muRIV55J6olBlcXSeHORmA37mb9M+omWbCHFMYSk1H2EkA3Vp604q7PdUTpPhVJUxRChvJIR8kgLb39yeww1zRnazNi3uVg+3vzk/z9/iG0dZFHl7+2oxtt42kRHL6v7KF64d8XoeLaR7wLPe6d6gpq8Y3Wq1cpNpKYBnxM3DWE3WLaR3nD7kVSnsEMv0GOiYgZ3OjiZ3gq+cOJsAlT0F+KTHBalXWw3r9meFW0k4inBhnQRZHTa0H2O7W6KWxUQrBzfzGIzR/khPiUPnTIWhT399uQQW2L5Bpl7UBKQS58tSJQS0SyFPeW4Ludk1owGVFnl3nxEUjcMSGB3YoYHpp/eep2cCrB0cQ4SEWNlZF3JUeA8xdpzBHKdhHeElJS7iy9+GW6S83ogPemL5jw6QwPUh4LJ6MJ0f7mwQuv0lMvtlGnjMRxvuJyO9jIwtp5mN/gkGkIJcm+r/vNVeJbOkmW2zTHynJqd+SQiIhs577tiQTZPDPEduWkoewkUjkvxn0FoGmiB9R6heJftRp4qZACezkRFX7rUivTvEguTyxM4vwSgzSf7QyAMmc6dDZW9/IpvxBqEzTlw2CSkpVzTeAGk+EClOehJ3/5w0SDufRgJZ6nvoESEMKuxbCC9R5vI1QAUYYA3VlNbfMFHJrLiaHYfKkNy+rNgUUWj4vkAeWYaLK4pShihebinFBRl9hPcDW5nVmD/TTTnbyXE1z+cZDWOrSxlcn8/0xNtY2CSQxrTRtiYH89H7kwzVHpjgnya/ku8a5JvAO7Lbs4p7tIo6Js1AAzb7M3MJkNYi+rSwt53t+oqJbsSR5koQDA0B6PzXuZKYp7ajtqNnBzCN3k7N3KkG9kqp3dg/BqC/hPe6UtoW2sAZ1G9TJ/xgCzCHuJFJLZKA8JOC8S8HsFlO7thD5m4EfGiDCEgtyFOe4DAspN/rw+1qNWF7R/vnKtpr3yztI4M5BHWqzUoLzDX8dDx4NCMdIMXx3MKQIo+28bCYU5LL8phQcQxCHqHSGqoFEbItjm8pWVeFsCaA5XN1RIV4lR9Yv+1SXjViYGYzCuGDNXmEOYJUHlmFCiQ1OXZXb+PJ4H+pnYFBB3CBCqoxOmkqKf8LWDEID0myztK5eBOU7Sm0i9X1ta5fO/etn2jtLFYd1RzxYLtMgar98ntXT9cylBfX1pXzuzwhOTYIPIgnmtGZ2DR6JsE0CzSvRdtOftHTSyqeyCT4UB2g8aDTUUGMgUxQq8NdpmKxt5+f8INxUy/WfmbzW+hpPcIFgWvW26jdAPOj2PaU5YbHo/2xh1DAwqiW0cVrxz2i5hdLZUXRJ/7OIF+MebEsFn4FLJiXZ5gBCk9deBYzdIJtNpedXAR9ntrvUrz5Lcha0ljVCUeRrDjLLqRA7+wtFIuEsI9V1qTrelrt3ow59iP05bbNjNNFrhZU5IX4eVi983xhjzHJxGjjrdA3MC6D/mnAnGlPTEsNXVgSWPp0Wk1PBUlesnNs3OK+5CnkffAEZ0NZHRy6IUXtVntgN2vuFmg/pQhVw4SRkfxmgbk/gm7d4svitST3UnXnHe2qwSt5zNJ47LfulT9wdRtL3jpWbr9/AKNmrINPM/XF/hKsG4v0HhTVC4sTa3fY3KkOiqKHAdPvXhTuSEXUkGgSb1qX3kbPrI5yBgYZ1pSdcUhQXmay9proZp154ZllRqzTs+bYaOmorlXGHZ7wmTwPXjWziLtfvuwneB/dezhOj+qrvgAFYRHS7peZG5tpN2mnq/0WSJ3+Z6uIyABfCnc7Nbap21p3M1fcf5Map7fFnDDWoHwYFE759WzKseW4fd0HH0fZqjtx4j+LlqLkdS/lPggt+7DsVCC8+pciw6UAJ1UWI7zKKfOberoKKomP6QCzbk16dVpwNRIrhdBjRkmuUGPkHNjLm0p0J57OrI0zqArhplWwkAG7HO3mEChA23EEt2i4eAx9WRphyKIeiu4FgdfNG8KuEx8KCaY8iSCqE2s7TBYvcu8+x1ezSheevuSVuvZio2yI4zm6eN6kbkBXKFTvMRg5fnsVL5stUSPXNgdRMEl3Wynb+ZaHYgoRxDq7I0dwm2XBCMb42FyUEFf24BMXcV0VoJT4bx55vfBaA2/WX7Q51ZbZ+MOxK0wmC/tSs9JElXe86cm5dIFOChde4wKRhxKPGSHF0aiUF6YIOe38zoSNpOjWw2tMHyzBExuwvnA88TAZQqXlc1iE4lpZ92ZarIZOxocAvgxuzIwpq5wvE5hmTL/+uk0oEyM7lubgZqir3bNR5ZBbg6B9v2IDKhc2V1s6C43nrTYqjyFNloKYlBCvJEZvDul5+k0vB+AwNF8nHPPAxRjaDOGvrWUlcZoy5XOnPXyUbTFNJ49VQfOPO8cJFrCpKqpPGjLK+3y+NpgercJWimMKaR7YGpKY+nICgQdHSecMPVn7J4K5bZPBXlaACCr+m5QLataKewM+bveADDOx/hkxLQ7K2HUJDsf25MFPBJcqytq++GDKBXoiHGufKsQhaJsozOqGuFcKkc1yS8mgXIfhe9v5nVE8m1eEScYBaTWwLv5DqooC6Fc1Crp9OLj2DXTzKo1dUCnoriZ4ABvv47YKRRv9EUF39QszeZl8XzlXwjIQUKOhObDKgAf/bmVcj4/TmC0ahnzYFX3ok3hrrOnAhyxXHWcxgBkm+tEwwKyJ+zV/KIE6SkIKxWLqO/8fDwZafS3dvdZvOzcNwBLMPLlqHWR9q2A8ZGonVXvW/+dU/QSR8VhwcptCdm+wb1md8WWDXRinW8X1VMTgCxQaycR5RwMVkUEhEiLtqMWxWfpLwSJRRThp5Zz7cBOlR/Xx9DriTl+rgF+dU4XKQsg681hCnWD7pntZ0SHWBN8bDZjDPKWRoPDy5QERXv4SzGTih1YHKX8ZXcTrcBXVSm9H28iH0141ZcvSu1TIfLhF2isrVUOfx8e1TFoiwY9Sm5OsyC518dwwZGCjQchLm05Jj5PKEHTyeCtUoMRdjwjEPo79txx6B7sXoZexSYT8EBsWP6p0+lfm0m0xD5tTyS1J4uX2QlJ/I1uKLyuwLiKlCiqtkolNdWkyKrLtUDN0zi535oT3zQRoMaOOcgM3NClrzXL6NK+sBnbr7X6cl/kfzfjnkHXkiurZtlcyfyqL8HmvOuuWBC151k/S4kqU3OmpJ7Xy2LgDFDC+vptpTqjkA4/iDbXLKoauDeP9EPoP1WfPd8K8Pd7Ic9iG/lVUBnH6m5xuEMQLLwluZitVibTR42BZnezcwC3yhbq2PQZe0iKFZPNxbHVxfPAa0/naAUWbpKgWZcp26E4mE28mAIqHReSLRhVXM5sNtNagP/lKfrfbTvtgDzGRun9Kdo4Dd0Or4sW08ctGh0YSA7Ww+ZNBPmvpYSg7LnyPShQ1t78MyOaIZ5ZlybAHFpADa8JzPjWqWkZvwyp3EUa/BnQa6n+IR3bjQLB2pXoeeViiJ998FJaZZi3lctlYcfPq7phHeHL1ngCOxN7/YEEembLwGW9uX4JHZdAX8snu04Rie7nvK1ZXPlC7ndIrJ2Rj2/BsEC489cL/ADysjFi/6RcfQS59656eOIknZAhdcBjWqy1P4RCA3jFvbIMBu9K9nr00Wy/lL5xUTcMY1MCpQbP8JDaL1+J4i/kWNDtA0iscU9HVLAdYucY8n1rx59c/ueAZh7yXrnEAW9Xrbh51m8NKMCnXBd32gkGZNczmzDciRmUftRXFyd4T2skFaR1Kd5YQeWAaaDIkwXMLmOaMECWpXZ/bNi4yPApANgi2ISF2/o1iWINVD3zZ10yPM9p0S1bnyYP1//les77xHQFBMYThQD1DI0ZM0BC78E4cigNWLSF4yBJu9dLzgWEMFjD5MVMpB0yEN/cDtijNVE74NUO3x0rUnpk0zG7YC4iaOnKlj93FEtIF/7iXS2t71mQLCuccrwiXi89gEUIT76oFoslwfAEeDUAHaYRP/k3C/MQzaTr3JMdsKI4DL9hqg86u93L+91PVOTzhKGilekg2fvJWCLo4Emka6nhBBX5muOj+prVl7I2sgjpqsFe2N7cG2YCJvtU4f96hlJ9KfYn+OjHbjF91VolrLaRm03+XDWot9YZOg/8X5JqzZn3CzDVnVu56Vax3wpd9EhbujN9Wdku9VfOrv5kQn0CGLj7Vs9QGCrslb80SF+7E2607Iy+eI400bYOAmyphCpWzITsUaKYf8X7Nka6OTDCahcn78SzX92Pz6OEZbC1Tosqgew81X4Mk3rOID3Uqg9lBJrIlPLatVJVuj+3S6MXLSheHEq+g6XeZIM8yNDakeSvDNNcNtja9VsmGVciaHwPB0oolsO3dvmM/qkz8WRi4dxPvsUoSMdWW8DP6sxy1X39cOWReNWkEWfsHIL5+GoFWDZ4sMZIz+Y8MSueT/zSMpyWO5qhkuBCnaZovHlfh2IXNtagvXuz5gZniJ8NJesSKDOfSAAWsodttJp+CLun/AzpPP2qzOudfuEwqOPVI1eiBxGpLdKWJx1kEB3L1hZmbkZGm3ZkrJk5mjtTX6lX3+Nghswqv7gLw++w1bZj63I5mwQdutj2Kz/uqa87qWJA/BQXUkP2tiW4QGNvIL1BYSe3tJ2a1OeWbOPfJ0NOPUl910SZyeHZRgngQ4Af9GUyuqLjKBSFfUks4qcR0jXxbT7ei/4ly1wvaX1ZHflZXkFz/E6MxNHBKpGZ7MYZ2SZ5bzVIfaKJayyBGM40vbIBkIa/uifW+Fc/9rsUB2/ndBDnLoD09BA4eDlTFsdcu03nWBdR/kG8xhavkkrXhWCipLYn7qvlMrGMieSz9odc6dxJZbpqcFwZ9pC2RDe1mCxf5JZlfdgVSkgf28HeFeDvi6TGMtntxGDe6A+5AYYXYpZuKVoKmPYwct58I8/E39X0z60Q80hfq4Y3ggw3BtjujFAh5o8qdQ5A8Qz35orTajX0/WL5dzz2ZN8eG0lhNmzuy6FC6EY80yd95NSWD/ulfCuUqwv/XCEcfPfsWuAMArFSyompee9zzYufPGS+XFbhQ9JmrBwI6KgdngdNeOO1jVYuBOseNhdjLFcQ+e7iF+Mtt7lGAlzCamX2yRmtCyEgbGBNiWpX+o7OTZH7KDlXJxuS3WPpLYhgENNg6btf1mv3RxowdkgAEtliqwV8tNBg5u7kjI0+BrsUINulS3ZuB8Xfklw/9fDBtkzMKBWLCpXSFIXupUfBOCkLDlvoj4PyYdlFGxN+8yUlr1XY8dxI3xKEJ0bHB7u9PT+FpWEofJXlpumYpnez2Dtle7J1K0vjpie0jYJ1/AK7jD8M9rsT8JfMpPwJIaK8+cyi+f0p3heXaZayezqiRfrUR9JUusBI87shaxjFXHym6WBW+3vCQnkWOXLQ8ayKO1/kmdxtDNKGhGUeb+biJqvA3z6DeAIiJFUU8tnfIL+rD0+tBveqsolQqra+F53zDmiD7FutoxBBeYTBuENCD9IQYUtebzcm5n3eyWAv1oimAm/vOph4n4KyNroKZNpS63BMRYalgXR7b3aNp8AQoJb2ALgspirsmBfWDGISyhBHTlrXU4GOXVE52z6/Ogdqw+1H00VyIrCNnXd5Rgurvaz+3pxwbkj9ZQVGfS22UCouXr9+jVIGHODFQLcyuawV+nZjJ19j5UWdunvnozRpo37UKnj2bJkqDB3cgr9ciXe1g9xUduLa5qNd7OLIcjbAUJ9iR23ylB39PV/RHp/sy+IzDOaFaFCpdl9qdsm1B4cXwyRVnlR0oIqnwUSR6sRrbfSet7BWvxzvaax0dL14paSVtFhXqdd7kZcYTnR0C9FAt8Aa0DJyqz73+fhHx7YqlmC72YGgtmYBi1YWUkeSjx0mNn2tVhhtj/j9wCLJZUQp00MjzE/IkIxccI4B3goURhT0CDxBwwAilSEq9Sn/cq2Cn49uWLI2VD/BhfJVAbzXbF+BREoB0fzQo6IvhI08716+Ikro1Na109iCQr3fHUDo0aCLJmPUg5eyYEz57S2UflJ79gOyE1tk9ytkCgrvwp5gCrvMb1VT7Jbd1/7m1CBAYU9psMziZgGI/ohk08DWjOYNJEl0g6H4EcwhKG3dZP4ngnFDNaYSqJY9u5fcAYgwtaEHcIEKqALVr9YoIatASNyLlC2m9fYEM9XFcETEPq45LngtrEGz6JRzsME24Xqs/sHrNd94u8+Yxvkjas/Pk8MRS70TBIhMmXpsM0+9wJJdvVkwSCGzSWYU4bbJuibXYaProDr1uTw436VXZkshaAr6qFzJQwHvN5GSUKaNaEdg9iMFFCPcxgDD0E/mJ/cBNhx7/JkJLg/Owl1BMqU9U98lrDBk6Q5xMo7/KZd6dSh0L6uQ4ata5z9/WN/Am+qo97SSXQQ/9gxyVFzguxdEuC+FYLG/lJfhiuOQhJGyBBQS6sEptLuNvkZ/euSFUQQdvRU3I96Tw1tK22JDzilZIHRdwQABt99bxSNd3/IBVlrmnm/TIPcke5xHDvgNOK3czltWWMdRpLUrWGBSO1tdmnyVsrYorCln5eOUkOeUSBZ3uxLQZIcQhjNiPpk7z/jEVoSIihuxpN5Vq1geY4eGDkLltAECiK7XbOkqa73ypfOuRWEz+Xlmj/niCGkFTvztOjZFFHAu2b7rM9uTSiqf/DqfZZF2hcgjdVWrGSwQbb1qkf7roAmKjWAzcbi1o6PI4IiLnjNF2+XaURcVBwUQyaeGRe8GfbaU3BI4MGWMRM4YH2B4vh0+1io7BGriJeXFxerPHMDk0IGFfqQimTkhDHmGYNymqzjeC60dRQV88gVYxvaRRgh8hXzI/T9HhlO1hOeC5VPYvFWSq8ocgIm3SmjSUjNEMAMSACgnkVZndq+yhPnTyFl9dmjEEHmZknC+zwzUT5EeSfW1vgYyLOcR9fFyXAuXDQ8jS8rYtpy1exCiHtQw0Lp3ePV1pgoMb71hw6I11CpDV3Ykh5+HuadzhY6QO9DKQoF4UHZ9hGFNvxYPCD7FRSJtbpfFSKr7U1TdDSTxUvSJ74llnpO+Tjs1+CmbSWH1IEiv7fO1K3xsuHpjzgghh6a7j2eZY9GRRb8+AlegNFELlJb0v5Dw5bgCoEetBPeIU4wLiHC2QUopqFSnccSdzLl7ybE85hM9GCN5b3MNCLGPu83Cz4JKFamNkLXvbiBQuWWHepvgPhGlPy/8HQWtlfixr46KxzfBb/+/JWJ7Z7+EaghvBbuawZ/jDPerIAS29/S+suQAHvq73vAV/rhTqlpTWYl930QRFaWJrDtLBoE0GYAokTp2NjTwlAFx3vKrLTkV/GVo9j1pcCRcAfYA85wEvJJkee5m8SoGZsK1vFVflJHTeVnEMUE2nYqU1VDquVL5nk8KEis+S8K3XjsLYe/PsYD5ABGpXMk5kHLlOd26uw2PgjKh6SJBdnpl9rDR6TjPw6VnQx/mnvS9HiDoyW3W9s/b9AQEZMuNxauv0hZqfGw5ZPYLQVMaNrYgNTRn4kt8yKWLfijIFJQR8YJmR6qcmWl3Td+SXEK9FJBRltuDvj1VVvRKLUiKo9zEBbJP2ojTls6aTzCPCllRDcvaAtM0rz1p3Ycpa/QUZqDLv8WwTuvNiX4LBEnHZLQMo4jARzmJDs2TVg78bOMTNw8/STsHx86Ry67IO0ozytg3UdkXtmxQvdYAHPgxYJKLgWIBMSam09I6g3BV9xPHdmymNc3AUgTvh/URz2CcFsbS7oxRdaJdZzQwHI7Dx7HBOQg723AsQRyIW8DKOzUVC+nfz6wdSMjQ88BSwEdJFhr/njHN20Y3F/JxqEFGaOArZ1kHFxTmKPpvzAkEQwPaBAjpFfQbrmOqUOxA33h9qBWHrUrcM5tVryOzMDGp3J7KTKlg38jYT0ZVYKwnX1RELl9BmOSbJ5O02FK9By3V15nn3inqiCGSTSV8+cHtpqGHxLh4dcMoKpAessZOjLlXXj3jXmh318wYR23mmgza7hqF00hEwnYKQXztMTleN0O2dRnLqkyza7msPF0DTwTFXVBLfNQL5bVxovf/QjgaicRgCEMyUzGcB3DdXmWKwDlXXl/Mw/zn9JeapFVheirFVTJ6UGxsblBtbqOdRtcUuHfAVAmkgDB9jYznsioAMsusZ4R2cx29gldGsNkEldbtsJou3s2zlq4FYEr+A7OUw0PhCK8m+RFlm7jSrqaRPRB/wvs2qipceqezIB0aigUf1APIfSgInpb+nnf/vr7mZv/Srrvf6iABr9jfa7FdbYbrbcPX0Zjhu8DLl0dqBLKF8W2p/gl58wsHIqH+3ejPaP1qUo6u82vcU5D0pGI/IiKi9F3QQY6cKpNztnxKoU+IrsAdkTx9GGgMIAkwRS5mhja1xb5UrtbdEyTFiW+yIUjPVYtAn+LhyJmWuwOcrYDfBuvJ/7/2appkbhbPKQBvxyyhUW1Jle51ovV9H9tbriys3+BkZIRiE/kUg18WRaFNEoNHUW12YdxMQzKdsGaDsSv+qbwQdCfcb/6dyc28F4iejzGpCFSKKIEPXa7hWM+pgNe3lGrIqHRQgdA/CrNDpgakBnMSu0rDqaRqKJWYtTEKI2x/glC6HpJ9BuRv6b5ANH/UVdx5MqEnQJL/nWwbw/q3mulFLm1hv3xIy7mzSgwHNp5+sU0muvqleiof6XuRrL7l8OmSy8S57Zuy30M5WQl5sFJ9KJho+GrGo8bnj0JNHohMrcg0uKEN5MgbX/MOum/54x6U14C5t+ewkjMUwZW/+wwPwgte4YrqquFl9ZIEuR0t00my9VOIQ5MJjLsJQ0ECsXuHdcYejdCIY8YjlVY8pCbp/uGbWFqMt4IQDrPtucYtYVmtapHq6wgbVgHfF6OkGj1zuWFWfI6qX7J20vhmEQYO+q5JoW2XoI6uY+T/PcI8KByf/Oe8z/BM5Xs5MNkWKYa5Re1LRI4WKvDQXH6V43AT2znFA+5bPiXvUlXaEQ+I7QFoj5IxoX+Y3i1k3fc0mk2w+9Ih7/8Kw/jhChOt8eRFiEsVrqEZ1ssK+o1tAjgkduUtas/dzYZGJ2Truz8Wrqn10vsH/g1Z3TO1okhneKPHn8I6SJoDQfPCnEE8rQ0RWdczt4KY3UadENzlLlhM331EV87oFipVYktwMBz8nVKUNj6+48u63rGLRlOo+fJmRrUICkg6TLjgLlwHpGlWC1p9+N/yVfJmdwTP5sjd6LnBkzAGjjGCOqCNcrX605VpwKFKBxL1k8ZWxAwEWVCQeeGAdHlgcw26GuXS9swJQ+IrOukXfm/Cr2TLe0GYjVLW9jqBinaEDTeQxmv3EfUwyEr9pcQF2l8I06recH5J/ZQrTU87mXok/l4ZyM0HzlThg3lEEgyWt3QqUtHQmzORHnEKCfXB2uS9O+QPWAp/68RR+c66nUDwQZrjwYe3sDKgiItfGlkYAOWPN/Hir2sDwnQ81T0nCc4PAgBw+gVHimQA12K7dt89/1IyoDI94laVfn5sF4xj6XBTf+NDYt5at1Op4bt54sWJKc0ibOnHDUerFyvZldot3F8UWtDwvNPfEq6jRd8LaODZEeq7qghHr4VagQyiTajQ9nIufNx2gqGM+p35QEkSP9vdi26jYbXbEDAKSm6RfzjOaZCZyDvIYURe68QGzIhsBU0efstHqy1f2P/L0Iulqf1NzmXqUo1cwQiPc+TeaUgX6Q4ltKeFh2nwauLDY/LHbujTh4mL+5Fcv3LqT3uLoDouuu2ukZ63LhtJtRiRHz9FZ8wwfXGOgfwarNEXJX8XdOL+ces9OKv/lepm3uJ76n8JL8LlDq5KcZuRGxzgpUhpOFo6z9fLmJPu5Kku5kUkmNiSZWqFJ+kK7tndmgOIzlaGdOE/6JmSC1zGCPuE3GAnr3ybHf3m6jP9hi/uaQJGv3V08/HDViiLP6Vb2DSGI+A7ClGdjVftSkYgnsf0SifdZJHNy39gMGiTOSlKr/PfuutDnG+xnOU1GMjR0kH7qi0bAxWxWmjIHur4+dSyW4v4UyjYTjR6pbG+Re4kZJWcV2TglfrUUUTM5EavBqzZfHphKAoRXafKzBpMLd0KB4Eiqvfd01jjjf3ulDsapO/kIpuT5MrR/Tmxc7cyt4OfwWGF/f87cV4xUX2Miq0J/VSQYmbR1f8lz5n0E7jP/9cAyF3koYv8yGAkNCyuoJ/AcGSrs+9DkPZCyhYCqviA+uouv8loEx43dmIj7tI7WQJmB2Mq2ZeTk15YVRANQFL55rVwH48BPlPftW/RDCgcpFUCsupiVQ/OU+uxahFQuEN2OPxC+vdlNF7zG/VDsfO50scHvA/ezIZpTsNDV6oXDndbwZizpBWmfTXhmfhaj2Klz/BwcZdd8iRjKhtWCI+MFZLqZ7jcQzfdh1Z3QI1GsrWJNCBkod+aA2rBMExctj8ex00sfnXpZIvkcSMbUgXINxVWD+wSi0b6lwZH6V/91vmTiFTusPjKYocPXY/JMCYNw+7GUQpFyBIMQCizz6dniIxRCMX78eyC7O1KonE0xMxLDOliz0fBf3zOvqKaLyrRVnxM2FMd2fwFUIcPEyd5iY9f4lho7B7I/57uF90zcew2/nDetH+ooDsx4yBpctxJV4+s2fVPehm6EbQym6tH2xrA8iJwJi+XoHzF8ef3j/GRVP2fMEZNwPgWd/CLx2wacbmRoSZs2AMvhzcJJ9i0K5gzu8Z6POkHySc770nGpZyRGhZEkw8MhoIdQJ8KpLS6asc0jeGMA8Ay8qBGe3H3N0QWLsEq4jUeVL2x9ZvRWbvlIP8M/59WPOshChiyJnnPKJ5H3w6ea3gJc14bkBKRiEmJ2A6oAOV+uJEuhHSFSopq9EYZdXQeXrI2wfALTv8s2JFU+ogCK52lABxHoPGIDUcmPzPESOlhfxHVxo1l4nviENmiFBZUhJJERZVtfV4V6lqPsTO+wnBf059k/Iysyq1zOduJDxrNli+KcYRPADawmg59GDTpPD7BSY9fIWvzSN+4os/5Ox5TCvD/MseuV3NoAzqAKeJuFKCB+t8Ejg3btIbzuyxIDmyJhxYWpjwPUTLMpP4x3PD50nrdNMAkvRYHjXTFPGVbtUkA2ZKdYbDzNd/7ANtJUuWU5jBPJPEUHCMCINl25AliFKMfwr7C5hUI5VhlGFfax3JxDb7+HPTSGN4/lWH+XgL6pMjP8X+u8C6UpvCRmhUoStzn/+7IAAAAAAAAAAAAA==" alt="ישיבה לצעירים דעת תבונות, פנימייה" width="440" height="358">
     <h2 id="lgTitle">כניסה</h2>
@@ -355,6 +381,8 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
   <section id="tab-home" hidden style="display:grid;gap:16px">
     <div class="home-hero" id="hmHero"></div>
     <div id="hmNow"></div>
+    <div id="hmBackup"></div>
+    <div id="hmNotif"></div>
     <div class="home-tiles" id="hmTiles"></div>
     <div class="panel" id="hmBdP" hidden><h2>🎂 ימי הולדת</h2><div id="hmBd"></div></div>
     <div class="panel" id="hmNextP"><h2>בקרוב בלוח השנה</h2><div id="hmNext"></div></div>
@@ -489,6 +517,9 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <div class="panel"><h2>הערות התנהגות · 14 ימים</h2><div id="chDays"></div></div>
       <div class="panel"><h2>לפי כיתה · 30 יום</h2><div id="chGrades"></div></div>
     </div>
+    <div class="panel"><h2>⚠️ תלמידים למעקב · 14 יום</h2><div id="watchList"><span class="muted">מחשב…</span></div></div>
+    <div class="panel"><h2>מגמות לפי שבוע וכיתה · 8 שבועות</h2><div id="trends"><span class="muted">מחשב…</span></div></div>
+    <div class="panel"><h2>👍 שבחים ונקודות · החודש</h2><div id="praiseTop"></div></div>
     <div class="panel"><h2>הכי הרבה הערות התנהגות · 30 יום</h2><div id="topStu"></div></div>
     <details><summary>טופלו לאחרונה</summary><div id="handled" style="margin-top:8px"></div></details>
   </section>
@@ -517,6 +548,17 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <div class="cal-legend" id="calLegend"></div>
     </div>
     <details class="panel"><summary>הלוח המקורי</summary><img src="calendar.webp" alt="לוח שנה לשנה&quot;ל תשפ&quot;ז" loading="lazy" style="width:100%;height:auto;margin-top:10px;border-radius:8px"></details>
+  </section>
+
+  <!-- בדיקת חדרים -->
+  <section id="tab-rooms" hidden style="display:grid;gap:14px">
+    <div class="row" style="justify-content:space-between">
+      <button class="btn small" type="button" data-act="insPrev" aria-label="השבוע הקודם">→</button>
+      <h2 id="insTitle" style="font-size:1.15rem"></h2>
+      <button class="btn small" type="button" data-act="insNext" aria-label="השבוע הבא">←</button>
+    </div>
+    <div id="insSum"></div>
+    <div class="rooms-grid" id="insGrid"></div>
   </section>
 
   <!-- דוחות -->
@@ -561,6 +603,12 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <div id="nsMsg" class="notice" hidden></div>
     </form>
     <div style="display:grid;gap:8px"><h2>אנשי צוות</h2><div id="staffList"></div></div>
+    <div class="panel"><h2>💾 גיבוי נתונים</h2>
+      <span class="muted" style="font-size:.9rem">קובץ אקסל אחד עם כל הנתונים: תלמידים, פרטים אישיים, יציאות, הערות, נוכחות לילה והשכמה (90 יום אחרונים), בדיקות חדרים וצוות. מומלץ פעם בשבוע; האתר יזכיר לך.</span>
+      <div class="row" style="gap:8px"><button class="btn primary" type="button" data-act="backup" id="bkBtn">הורד גיבוי מלא</button><span class="muted" id="bkLast" style="font-size:.9rem"></span></div></div>
+    <div class="panel audit"><div class="row" style="justify-content:space-between"><h2>🕓 יומן פעילות</h2><button class="btn small" type="button" data-act="auditLoad">רענן</button></div>
+      <span class="muted" style="font-size:.9rem">מי שינה או מחק מה ומתי: תלמידים, הרשאות, הערות, יציאות ופרטים אישיים.</span>
+      <div id="auditList"></div></div>
   </section>
 </div></main>
 
@@ -582,7 +630,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <span class="row" style="gap:6px"><button class="btn small" data-act="stuRep" data-perm="reports">📊 דוח תלמיד</button><button class="btn small" data-act="close">סגור</button></span>
     </div>
     <div id="shStatus"></div>
-    <form id="seForm" class="panel" data-perm="out" hidden>
+    <div data-perm="out"><form id="seForm" class="panel" hidden>
       <h2 id="seTitle">עריכת יציאה</h2>
       <div class="grid2">
         <select id="seReason" aria-label="סיבה"></select>
@@ -595,7 +643,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <label class="muted" id="seShort" style="display:grid;gap:4px;font-size:.9rem">חזרה צפויה<input type="datetime-local" id="seBack"></label>
       <label class="perm"><input type="checkbox" id="seIsLong"> היעדרות ממושכת (בבית)</label>
       <div class="row" style="gap:8px"><button class="btn primary" type="submit">שמור שינויים</button><button class="btn small" type="button" data-act="seCancel">ביטול</button></div>
-    </form>
+    </form></div>
     <div data-perm="personal" class="panel" id="shCard"></div>
     <form id="pfForm" class="panel" hidden>
       <h2>עריכת פרטים אישיים</h2>
@@ -618,6 +666,8 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       </div>
       <div class="row"><button class="btn primary" type="submit">שמור פרטים</button><button class="btn" type="button" data-act="pfCancel">ביטול</button></div>
     </form>
+    <div data-perm="notes" class="panel writer" id="prP"><h2>👍 שבח מהיר <span class="muted" id="prPts" style="font-size:.9rem;font-weight:400"></span></h2>
+      <div class="praise" id="prBtns"></div></div>
     <div data-perm="notes" style="display:grid;gap:14px"><form id="noteForm" class="panel writer">
       <h2>הערה חדשה</h2>
       <div class="grid2">
@@ -769,7 +819,7 @@ $('nnForm').addEventListener('submit',async e=>{e.preventDefault();const sid=S.n
   const cats=[...S.nnCats],extra=$('nnText').value.trim();if(!cats.length&&!extra){toast('בחרו סיבה או כתבו פירוט');return}
   const text='הערת לילה: '+[cats.join(', '),extra].filter(Boolean).join(' – ');
   const b=$('nnBtn');b.disabled=true;
-  try{await db.collection('notes').add({sid,kind:'התנהגות',sev:+$('nnSev').value,text,night:S.night,cats,at:Date.now(),by:S.me,byName:S.myName});closeNN();toast('הערת הלילה נשמרה ונשלחה למנהל')}catch(err){fail(err)}
+  try{await OW(db.collection('notes').add({sid,kind:'התנהגות',sev:+$('nnSev').value,text,night:S.night,cats,at:Date.now(),by:S.me,byName:S.myName}));closeNN();toast('הערת הלילה נשמרה ונשלחה למנהל')}catch(err){fail(err)}
   b.disabled=false});
 
 function renderOut(){
@@ -822,7 +872,7 @@ function renderSheet(){
   const ns=S.notes.filter(x=>x.sid===s.id);
   $('shNotes').innerHTML=ns.length?`<div class="list">`+ns.map(n=>`<div class="note"><div class="row" style="justify-content:space-between"><span class="row" style="gap:6px"><span class="chip ${n.kind==='שבח'?'ok':''}" style="${n.kind==='שבח'?'':'background:var(--soft);color:var(--ink)'}">${esc(n.kind)}</span>${isBeh(n)?sevChip(n.sev)+(n.handled?'<span class="chip ok">טופל</span>':''):''} <span class="time">${when(n.at)} · ${esc(byName(n.by))}</span></span>${S.ro?'':`<button class="btn small" data-act="delNote" data-id="${n.id}">מחק</button>`}</div><p>${esc(n.text)}</p></div>`).join('')+`</div>`:`<div class="empty">אין הערות על ${esc(s.name)}.</div>`;
   $('shMoves').innerHTML=moveList(S.moves.filter(x=>x.sid===s.id).slice(0,10),false);
-  renderCard(s);
+  renderPraise(s);renderCard(s);
 }
 /* ---------- student card ---------- */
 const PF=['phone','email','address','fatherName','fatherPhone','motherName','motherPhone','parentEmail','birthDate'];
@@ -854,7 +904,7 @@ function renderCard(s){
   $('shCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>כרטיס תלמיד</h2>${has('students')&&!S.ro?'<button class="btn small" data-act="pfEdit">עריכה</button>':''}</div>
   <div class="card"><div class="photo">${ph===null?'':photoBox(ph,s.name)}</div>
   <div style="display:grid;gap:6px;min-width:0"><b style="font-size:1.1rem">${esc(s.name)}</b><span class="muted">${esc(metaOf(s)||'')}</span>
-  ${body?`<dl class="kv">${body}</dl>`:`<span class="muted">עדיין לא הוזנו פרטים אישיים.${has('students')?' לחצו "עריכה" כדי להוסיף.':''}</span>`}</div></div>`;
+  ${body?`<dl class="kv">${body}</dl>`:`<span class="muted">עדיין לא הוזנו פרטים אישיים.${has('students')?' לחצו "עריכה" כדי להוסיף.':''}</span>`}</div></div>${waBox(s,p)}`;
 }
 function pfOpen(){
   const s=S.students.get(S.sel),p=S.profiles.get(S.sel)||{};
@@ -925,6 +975,7 @@ function renderMgr(){
   const gc=GRADES.map(g=>[g,behAll.filter(n=>S.students.get(n.sid).grade===g).length]);
   const gm=Math.max(1,...gc.map(x=>x[1]));
   $('chGrades').innerHTML=`<div class="hbars">`+gc.map(([g,c])=>`<div class="hbar ${c?'':'zero'}" title="כיתה ${g}: ${c} הערות"><b>${g}</b><div class="track"><div class="fill" style="width:${c/gm*100}%"></div></div><span>${c}</span></div>`).join('')+`</div>`;
+  renderPraiseTop();if(S.trend)renderTrends();loadTrends();
   // top students
   const per=new Map();beh.filter(n=>n.at>=mo).forEach(n=>per.set(n.sid,(per.get(n.sid)||0)+1));
   const tops=[...per].sort((a,b)=>b[1]-a[1]).slice(0,5);
@@ -1013,7 +1064,7 @@ function subPrevNight(){if(S.unPrev)S.unPrev();S.unPrev=null;if(!db||!S.access)r
 const defaultWakeTime=()=>S.mornDate===ymd(new Date())?Date.now():new Date(S.mornDate+'T'+(S.wakeTarget||'07:00')).getTime();
 async function wake(id,v){
   const cur=S.wake.get(id);
-  try{if(cur&&cur.s===v)await wakeRef(id).delete();else await wakeRef(id).set({s:v,t:v==='up'?defaultWakeTime():null,at:Date.now(),by:S.me,byName:S.myName})}catch(e){fail(e)}
+  try{if(cur&&cur.s===v)await OW(wakeRef(id).delete());else await OW(wakeRef(id).set({s:v,t:v==='up'?defaultWakeTime():null,at:Date.now(),by:S.me,byName:S.myName}))}catch(e){fail(e)}
 }
 function subWake(){
   if(S.unWake)S.unWake();if(!db)return;
@@ -1028,8 +1079,8 @@ document.addEventListener('change',async e=>{
 });
 
 /* ---------- staff & permissions ---------- */
-const PERMS=[['count','ספירת לילה'],['morning','השכמת בוקר'],['out','יציאות וחזרות'],['notes','הערות על תלמידים'],['students','ניהול רשימת התלמידים'],['personal','צפייה בפרטים אישיים ואנשי קשר'],['reports','הפקת דוחות'],['mgr','לוח מנהל והתראות התנהגות']];
-const ROLES={'עו"ס':['notes','personal','reports','mgr'],'מדריך':['count','morning','out','notes','personal'],'רכז':['count','morning','out','notes','students','personal','reports'],'סגן מנהל':['count','morning','out','notes','students','personal','reports','mgr']};
+const PERMS=[['count','ספירת לילה'],['morning','השכמת בוקר'],['out','יציאות וחזרות'],['notes','הערות על תלמידים'],['students','ניהול רשימת התלמידים'],['personal','צפייה בפרטים אישיים ואנשי קשר'],['reports','הפקת דוחות'],['mgr','לוח מנהל והתראות התנהגות'],['rooms','בדיקת חדרים']];
+const ROLES={'עו"ס':['notes','personal','reports','mgr'],'מדריך':['count','morning','out','notes','personal','rooms'],'רכז':['count','morning','out','notes','students','personal','reports','rooms'],'סגן מנהל':['count','morning','out','notes','students','personal','reports','mgr','rooms']};
 const presetPerms=r=>Object.fromEntries(PERMS.map(([k])=>[k,(ROLES[r]||[]).includes(k)]));
 function has(p){if(p==='any')return true;if(p==='owner')return !!S.owner;if(p==='stu')return has('notes')||has('students');return !!(S.perm&&S.perm[p])}
 function menu(open){S.menuOpen=open;const d=$('drawer');d.classList.toggle('open',open);d.setAttribute('aria-hidden',String(!open));$('drawerBg').hidden=!open;
@@ -1043,7 +1094,7 @@ function applyPerms(){
   $('topSum').hidden=!ok;
   const na=$('noAccess');na.hidden=ok;
   if(!ok){
-    ['home','count','morn','out','stu','mgr','sched','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
+    ['home','count','morn','out','stu','mgr','sched','cal','rooms','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
     const m={removed:['אין לך גישה','החשבון הזה לא רשום כאיש צוות. פנו למנהל הפנימייה.'],
       disabled:['הגישה שלך הושבתה','מנהל הפנימייה השבית את הגישה שלך. לפרטים, פנו אליו.'],
       none:['אין לך עדיין הרשאות','מנהל הפנימייה עוד לא הגדיר מה מותר לך לעשות. פנו אליו.'],
@@ -1060,6 +1111,7 @@ function applyPerms(){
   renderAll();
 }
 function renderStaff(){
+  if($('bkLast')){const a=bkAge();$('bkLast').textContent=a==null?'עוד לא נעשה גיבוי':a===0?'גיבוי אחרון: היום':'גיבוי אחרון: לפני '+a+' ימים'}
   if(!S.owner||S.tab!=='staff')return;
   const nm=s=>s.name||s.username||'';
   const roleSel=(id,cur,act)=>`<select id="${id}" data-sact="${act}" aria-label="תפקיד">${Object.keys(ROLES).map(r=>`<option ${r===cur?'selected':''}>${r}</option>`).join('')}${cur&&!ROLES[cur]?`<option selected>${esc(cur)}</option>`:''}</select>`;
@@ -1081,7 +1133,7 @@ document.addEventListener('change',async e=>{
     else if(el.dataset.sact==='perm'){const s=S.staff.find(x=>x.id===id);const perms={...(s?.perms||{}),[el.dataset.k]:el.checked};await db.doc('staff/'+id).update({perms});toast('ההרשאות עודכנו')}
   }catch(err){fail(err)}
 });
-function renderAll(){renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes();renderSched();renderHome()}
+function renderAll(){netState();renderIns();renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes();renderSched();renderHome()}
 
 /* ---------- sheet ---------- */
 function setRoomSel(sel,v){if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o)}sel.value=v}
@@ -1135,14 +1187,14 @@ function armed(btn,label){if(btn.dataset.armed){return true}resetArm();btn.datas
 /* ---------- actions ---------- */
 async function mark(id,v){
   const cur=S.marks.get(id);const ref=db.collection('nightcount/'+S.night+'/marks').doc(id);
-  try{if(cur&&cur.s===v)await ref.delete();else await ref.set({s:v,at:Date.now(),by:S.me,byName:S.myName})}catch(e){fail(e)}
+  try{if(cur&&cur.s===v)await OW(ref.delete());else await OW(ref.set({s:v,at:Date.now(),by:S.me,byName:S.myName}))}catch(e){fail(e)}
 }
 async function roomAll(room){
   const list=sorted().filter(s=>(s.room||'ללא חדר')===room&&!isOut(s.id)&&!S.marks.get(s.id));
-  for(const s of list){try{await db.collection('nightcount/'+S.night+'/marks').doc(s.id).set({s:'p',at:Date.now(),by:S.me,byName:S.myName})}catch(e){fail(e);break}}
+  for(const s of list){try{await OW(db.collection('nightcount/'+S.night+'/marks').doc(s.id).set({s:'p',at:Date.now(),by:S.me,byName:S.myName}))}catch(e){fail(e);break}}
 }
 async function goBack(id){
-  try{await db.doc('status/'+id).set({state:'in',at:Date.now(),by:S.me,byName:S.myName});await db.collection('moves').add({sid:id,type:'back',at:Date.now(),by:S.me,byName:S.myName});toast('נרשמה חזרה')}catch(e){fail(e)}
+  try{await OW(db.doc('status/'+id).set({state:'in',at:Date.now(),by:S.me,byName:S.myName}));await OW(db.collection('moves').add({sid:id,type:'back',at:Date.now(),by:S.me,byName:S.myName}));toast('נרשמה חזרה')}catch(e){fail(e)}
 }
 const normRoom=r=>{const d=String(r||'').trim().match(/\d+/);return d?d[0]:String(r||'').trim()};
 const normName=n=>String(n||'').replace(/["'״׳`]/g,'').replace(/\s+/g,' ').trim();
@@ -1209,7 +1261,7 @@ document.addEventListener('click',async e=>{
   if(e.target===$('nnBg')){closeNN();return}
   if(!b)return;
   if(b.dataset.tab){S.tab=b.dataset.tab;document.body.dataset.page=S.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
-    ['home','count','morn','out','stu','mgr','sched','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='home')renderHome();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
+    ['home','count','morn','out','stu','mgr','sched','cal','rooms','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='home')renderHome();if(S.tab==='rooms')subIns();if(S.tab==='staff')loadAudit();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
     try{localStorage.setItem('pn-tab',S.tab)}catch{}return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
   if(!db&&!['close','open','nnClose','nnCat','absLen'].includes(b.dataset.act))return;
@@ -1221,6 +1273,14 @@ document.addEventListener('click',async e=>{
     case'open':openSheet(id);break;
     case'nn':openNN(id);break;
     case'seOpen':seOpen();break;
+    case'praise':{const sid=S.sel;if(!sid)break;b.disabled=true;try{await OW(db.collection('notes').add({sid,kind:'שבח',pts:1,text:'שבח: '+b.dataset.c,at:Date.now(),by:S.me,byName:S.myName}));toast('+1 נקודה ל'+(S.students.get(sid)?.name||''))}catch(e){fail(e)}b.disabled=false;break}
+    case'insPrev':S.insWeek=addD(S.insWeek,-7);subIns();break;
+    case'insNext':S.insWeek=addD(S.insWeek,7);subIns();break;
+    case'insChk':{const r=b.dataset.room,k=b.dataset.k,cur=S.ins.get(r);const v=cur?!(cur.checks||{})[k]:false;
+      const checks=cur?{[k]:v}:Object.fromEntries(INS.map(([x])=>[x,x!==k]));await insSave(r,{checks});break}
+    case'backup':await doBackup(b);break;
+    case'auditLoad':loadAudit();break;
+    case'notifOn':{try{const r=await Notification.requestPermission();if(r==='granted'){toast('ההתראות הופעלו');notify('ההתראות פועלות','מעכשיו תקבלו כאן התראות מהפנימייה','test-'+Date.now())}else toast('ההתראות לא אושרו בדפדפן')}catch{}renderNotifBtn();break}
     case'seCancel':$('seForm').hidden=true;break;
     case'absLen':setAbsLen(b.dataset.d);absDaysTxt();break;
     case'nnClose':closeNN();break;
@@ -1413,6 +1473,165 @@ function renderSched(){
   $('schLegend').innerHTML=Object.values(SK).map(([l,c])=>`<span><i style="background:${c}"></i>${l}</span>`).join('');
 }
 
+/* ---------- offline ---------- */
+// When offline, Firestore keeps the write on the device and syncs later; don't block the UI waiting for the server.
+const OW=p=>{if(navigator.onLine)return p;p.catch(fail);return Promise.resolve()};
+function netState(){$('offNote').hidden=navigator.onLine||!S.access}
+window.addEventListener('online',()=>{netState();toast('החיבור חזר. הנתונים מסונכרנים')});
+window.addEventListener('offline',netState);
+
+/* ---------- activity log ---------- */
+const AUD_COL={students:'תלמיד',status:'יציאה / חזרה',profiles:'פרטים אישיים',photos:'תמונת תלמיד',notes:'הערה',staff:'עובד והרשאות',staffProfiles:'כרטיס עובד',settings:'הגדרות',schedule:'מערכת שבועית',config:'מנהל ראשי',inspections:'בדיקת חדר'};
+const AUD_RE=/^(students|status|profiles|photos|notes|staff|staffProfiles|settings|schedule|config|inspections)\/[^/]+$/;
+function audLabel(col,id,data){
+  if(['students','status','profiles','photos'].includes(col))return S.students.get(id)?.name||data?.name||'';
+  if(col==='notes'){const n=S.notes.find(x=>x.id===id)||data||{};return S.students.get(n.sid)?.name||''}
+  if(col==='staff'||col==='staffProfiles')return (S.staff.find(x=>x.uid===id||x.id===id)||{}).name||data?.name||'';
+  if(col==='inspections')return 'חדר '+(data?.room||id.split('_')[1]||'');
+  return id}
+function audDetail(col,op,d){if(op==='delete'||!d)return'';
+  if(col==='staff'&&d.perms)return (d.active===false?'מושבת · ':'')+'הרשאות: '+PERMS.filter(([k])=>d.perms[k]).map(([,l])=>l).join(', ');
+  if(col==='status')return d.state==='out'?(d.long?'היעדרות ממושכת':'יציאה')+(d.reason?': '+d.reason:''):'חזר';
+  if(col==='notes'&&d.handled)return 'סומן כטופל';
+  if(col==='notes')return (d.kind||'')+(d.text?': '+String(d.text).slice(0,60):'');
+  if(col==='students')return [d.name,d.grade?'כיתה '+d.grade:'',d.room?'חדר '+d.room:''].filter(Boolean).join(' · ');
+  if(col==='inspections')return 'ציון '+(d.score??'');
+  return Object.keys(d).filter(k=>!['by','byName','at','updatedAt','editedAt','editedBy','editedByName'].includes(k)).slice(0,6).join(', ')}
+function setupAudit(){const DR=firebase.firestore.DocumentReference;if(!DR||DR.prototype.__aud)return;DR.prototype.__aud=true;
+  ['set','update','delete'].forEach(m=>{const o=DR.prototype[m];DR.prototype[m]=function(...a){
+    const path=this.path,r=o.apply(this,a);
+    if(AUD_RE.test(path)&&S.me){const [col,id]=path.split('/');
+      if(!(col==='notes'&&m==='set')&&!(col==='photos'&&m!=='delete')){
+        const e={at:Date.now(),by:S.me,byName:S.myName||'',op:m,col,id,label:audLabel(col,id,a[0]),detail:audDetail(col,m,a[0])};
+        r.then(()=>db.collection('audit').add(e).catch(()=>{}),()=>{})}}
+    return r}})}
+async function loadAudit(){if(!S.owner||S.tab!=='staff'||!db)return;const el=$('auditList');
+  try{const q=await db.collection('audit').orderBy('at','desc').limit(120).get();const L=q.docs.map(d=>d.data());
+    const OP={set:'שמירה',update:'עדכון',delete:'מחיקה'};
+    el.innerHTML=L.length?`<div class="list log">`+L.map(e=>`<div class="item"><span class="time">${when(e.at)}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(e.byName||'')}</b> · ${OP[e.op]||e.op} ${esc(AUD_COL[e.col]||e.col)}${e.label?' · <b>'+esc(e.label)+'</b>':''}${e.detail?`<span class="meta">${esc(e.detail)}</span>`:''}</span><span class="chip ${e.op==='delete'?'bad':''}">${OP[e.op]||e.op}</span></div>`).join('')+`</div>`:'<div class="empty">עדיין אין רישומים. מעכשיו כל שינוי יירשם כאן.</div>'}
+  catch(e){el.innerHTML=`<div class="notice">לא ניתן לטעון את היומן (${esc(e.code||'')}). ייתכן שחוקי האבטחה עוד לא עודכנו.</div>`}}
+
+/* ---------- phone notifications ---------- */
+const canNotify=()=>'Notification' in window;
+function renderNotifBtn(){const el=$('hmNotif');if(!el)return;
+  if(!canNotify()||Notification.permission==='granted'||!(S.mgr||has('out'))){el.innerHTML='';return}
+  el.innerHTML=Notification.permission==='denied'?'':`<div class="calnote" style="display:flex;gap:10px;align-items:center;justify-content:space-between"><span>🔔 קבלו התראה בטלפון על הערת התנהגות חמורה ועל תלמיד שלא חזר בזמן</span><button class="btn small primary" type="button" data-act="notifOn">הפעל התראות</button></div>`}
+async function notify(title,body,tag){if(!canNotify()||Notification.permission!=='granted')return;
+  try{let k='pn-ntf-'+tag;if(localStorage.getItem(k))return;localStorage.setItem(k,'1')}catch{}
+  const opt={body,tag,icon:'icon-192.png',badge:'icon-192.png',lang:'he',dir:'rtl'};
+  try{const reg=await navigator.serviceWorker?.getRegistration();if(reg){await reg.showNotification(title,opt);return}}catch{}
+  try{new Notification(title,opt)}catch{}}
+function notifyNote(n){if(!S.mgr||!isBeh(n)||sevOf(n)<3)return;const s=S.students.get(n.sid);notify('הערת התנהגות חמורה',`${s?.name||''}: ${String(n.text||'').slice(0,120)}`,'note-'+(n.id||n.at))}
+function checkLateReturns(){if(!(S.mgr||has('out')))return;const now=Date.now();
+  for(const s of S.students.values()){const t=S.status.get(s.id);if(t&&t.state==='out'&&t.backBy&&t.backBy<now&&now-t.backBy<12*36e5)
+    notify('תלמיד לא חזר בזמן',`${s.name} היה אמור לחזור ב-${hm(t.backBy)}${t.reason?' ('+t.reason+')':''}`,'late-'+s.id+'-'+t.backBy)}}
+
+/* ---------- WhatsApp to parents ---------- */
+const WA_T=[['back','חזר לפנימייה',f=>`חזר לפנימייה בשלום.`],['night','לא ישן בזמן / הפריע',f=>`רצינו לעדכן שאתמול בלילה ${f} לא הלך לישון בזמן והפריע לחבריו בחדר. נשמח אם תדברו איתו על כך.`],
+  ['sick','לא מרגיש טוב',f=>`רצינו לעדכן ש${f} לא מרגיש טוב היום ונשאר לנוח. אנחנו עוקבים ונעדכן.`],['late','איחר להשכמה',f=>`רצינו לעדכן ש${f} איחר היום להשכמה ולתפילה. נשמח לחיזוק מהבית.`],
+  ['praise','שבח',f=>`רצינו לשתף ש${f} התנהג השבוע בצורה מצוינת ואנחנו גאים בו!`],['free','הודעה כללית',f=>``]];
+function waText(k,s,parentName){const f=(s.firstName||String(s.name||'').split(' ')[0]);const t=WA_T.find(x=>x[0]===k)||WA_T[0];
+  let body=t[2](f);if(k==='back')body=`${f} ${body}`;
+  return `שלום${parentName?' '+parentName:''},\nכאן ${S.myName||'צוות הפנימייה'} מפנימיית דעת תבונות.\n${body}`.trim()+'\nבברכה'}
+function waBox(s,p){const ps=[[p.fatherName,p.fatherPhone,'הורה 1'],[p.motherName,p.motherPhone,'הורה 2']].filter(x=>waNum(x[1]));if(!ps.length)return'';
+  const k=S.waT||'back';
+  return `<div class="wa-box"><b>💬 הודעה להורים בוואטסאפ</b><select id="waSel" aria-label="סוג הודעה">${WA_T.map(([v,l])=>`<option value="${v}" ${v===k?'selected':''}>${l}</option>`).join('')}</select>
+    <div class="btns">${ps.map(([n,ph,l])=>`<a class="wa-btn" target="_blank" rel="noopener" href="https://wa.me/${waNum(ph)}?text=${encodeURIComponent(waText(k,s,n))}">שלח ל${esc(n||l)}</a>`).join('')}</div>
+    <span class="muted" style="font-size:.85rem">ההודעה נפתחת בוואטסאפ ואפשר לערוך אותה לפני השליחה.</span></div>`}
+document.addEventListener('change',e=>{if(e.target.id==='waSel'){S.waT=e.target.value;renderCard(S.students.get(S.sel))}});
+
+/* ---------- praise & points ---------- */
+const PRAISE=['עזר לחבר','התנהגות מופתית','סדר וניקיון בחדר','השכמה בזמן','השקעה בלימוד','קם לתפילה בזמן'];
+const isPraise=n=>n.kind==='שבח';
+const ptsOf=n=>+n.pts||1;
+const monthStart=()=>{const d=new Date();d.setDate(1);d.setHours(0,0,0,0);return d.getTime()};
+const ptsMonth=sid=>S.notes.filter(n=>isPraise(n)&&n.sid===sid&&n.at>=monthStart()).reduce((a,n)=>a+ptsOf(n),0);
+function renderPraise(s){if(!$('prBtns'))return;$('prBtns').innerHTML=PRAISE.map(c=>`<button type="button" data-act="praise" data-c="${esc(c)}">+1 ${esc(c)}</button>`).join('');
+  const p=ptsMonth(s.id);$('prPts').textContent=p?`· ${p} נקודות החודש`:''}
+function renderPraiseTop(){const el=$('praiseTop');if(!el)return;const ms=monthStart(),per=new Map();
+  S.notes.filter(n=>isPraise(n)&&n.at>=ms&&stuOk(n)).forEach(n=>per.set(n.sid,(per.get(n.sid)||0)+ptsOf(n)));
+  const tops=[...per].sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const gr=GRADES.map(g=>[g,[...per].filter(([sid])=>S.students.get(sid)?.grade===g).reduce((a,x)=>a+x[1],0)]);
+  el.innerHTML=tops.length?`<div class="row" style="gap:6px;margin-bottom:8px">${gr.map(([g,c])=>`<span class="pill">${g}: ${c}</span>`).join('')}</div><div class="list">`+tops.map(([sid,c],i)=>{const s=S.students.get(sid);return `<div class="top"><span class="n" style="background:#e3f4e8;color:#1d5c34">${c}</span><button class="name" data-act="open" data-id="${sid}" style="flex:1">${i===0?'🏆 ':''}${esc(s.name)}<span class="meta">${esc(metaOf(s))}</span></button></div>`}).join('')+`</div>`
+    :`<div class="muted">עוד אין שבחים החודש. אפשר לתת שבח מהיר מכרטיס התלמיד.</div>`}
+
+/* ---------- trends & students to watch ---------- */
+async function loadTrends(force){if(!S.mgr||!db)return;const today=ymd(new Date());if(!force&&S.trendDay===today&&S.trend)return renderTrends();
+  if(S.trendBusy)return;S.trendBusy=true;
+  try{const days=[];for(let i=55;i>=0;i--)days.push(addD(today,-i));
+    const get=(c,k)=>db.collection(c+'/'+k+'/marks').get().then(q=>new Map(q.docs.map(d=>[d.id,d.data()]))).catch(()=>new Map());
+    const morn=await Promise.all(days.map(k=>get('morning',k)));const night=await Promise.all(days.slice(-14).map(k=>get('nightcount',k)));
+    S.trend={days,morn,night};S.trendDay=today}finally{S.trendBusy=false}
+  renderTrends()}
+function renderTrends(){if(!S.trend||!$('trends'))return;const {days,morn,night}=S.trend;
+  const weeks=[];for(let w=0;w<8;w++)weeks.push(days.slice(w*7,w*7+7));
+  const lateW=GRADES.map(g=>weeks.map((wk,wi)=>wk.reduce((a,k,i)=>{const m=morn[wi*7+i];let c=0;m.forEach((x,sid)=>{if(S.students.get(sid)?.grade===g&&isLate(x))c++});return a+c},0)));
+  const behW=GRADES.map(g=>weeks.map(wk=>{const a=new Date(wk[0]+'T00:00').getTime(),b=new Date(wk[6]+'T00:00').getTime()+864e5;return S.notes.filter(n=>isBeh(n)&&n.at>=a&&n.at<b&&S.students.get(n.sid)?.grade===g).length}));
+  const heat=(title,M,rgb)=>{const mx=Math.max(1,...M.flat());return `<div style="overflow-x:auto"><b style="font-size:.95rem">${title}</b><table class="heat"><thead><tr><th></th>${weeks.map((wk,i)=>`<th>${i===7?'השבוע':fmtShort(wk[0])}</th>`).join('')}</tr></thead><tbody>${GRADES.map((g,gi)=>`<tr><td class="g">${g}</td>${M[gi].map(v=>`<td style="background:rgba(${rgb},${v?0.15+0.75*v/mx:0.04});color:${v/mx>0.6?'#fff':'var(--ink)'}">${v||''}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`};
+  $('trends').innerHTML=heat('איחורים להשכמה',lateW,'214,120,30')+'<div style="height:12px"></div>'+heat('הערות התנהגות (כולל הערות לילה)',behW,'200,60,60')+'<span class="muted" style="font-size:.85rem">כל עמודה היא שבוע (מתחיל בתאריך שבראש העמודה). צבע כהה יותר = יותר מקרים.</span>';
+  // students to watch (last 14 days)
+  const t14=Date.now()-14*864e5,mi=morn.slice(-14),W=[];
+  for(const s of allSorted()){if(!inFilter(s))continue;const why=[];
+    const b=S.notes.filter(n=>n.sid===s.id&&isBeh(n)&&n.at>=t14).length;if(b>=3)why.push(b+' הערות התנהגות');
+    const nn=S.notes.filter(n=>n.sid===s.id&&n.night&&n.at>=t14).length;if(nn>=2)why.push(nn+' הערות לילה');
+    const l=mi.filter(m=>isLate(m.get(s.id))).length;if(l>=3)why.push(l+' איחורים להשכמה');
+    const nw=mi.filter(m=>m.get(s.id)?.s==='no').length;if(nw>=2)why.push(nw+' פעמים לא קם');
+    const a=night.filter(m=>m.get(s.id)?.s==='a').length;if(a>=2)why.push(a+' לילות חסר');
+    if(why.length)W.push([s,why])}
+  W.sort((a,b)=>b[1].length-a[1].length);
+  $('watchList').innerHTML=W.length?W.map(([s,why])=>`<div class="watch"><button class="name" data-act="open" data-id="${s.id}" style="flex:1;text-align:right">${esc(s.name)}<span class="meta">${esc(metaOf(s))}</span></button><span class="why">${why.map(w=>`<span>${esc(w)}</span>`).join('')}</span></div>`).join('')
+    :'<div class="muted">אין תלמידים שחצו את סף המעקב בשבועיים האחרונים 👏</div>'}
+
+/* ---------- room inspection ---------- */
+const INS=[['order','סדר כללי'],['beds','מיטות מסודרות'],['floor','רצפה נקייה'],['trash','פח ריק, בלי אוכל'],['damage','ללא נזק']];
+const weekOf=k=>{const d=new Date(k+'T12:00');d.setDate(d.getDate()-d.getDay());return ymd(d)};
+S.insWeek=weekOf(ymd(new Date()));S.ins=new Map();
+function roomsList(){const r=new Set();for(let i=101;i<=115;i++)r.add(String(i));for(const s of S.students.values())if(s.room)r.add(String(s.room));return [...r].sort((a,b)=>a.localeCompare(b,'he',{numeric:true}))}
+function subIns(){if(!db||!has('rooms'))return;if(S.unIns&&S.insSubWeek===S.insWeek){renderIns();return}if(S.unIns)S.unIns();S.insSubWeek=S.insWeek;
+  S.unIns=db.collection('inspections').where('week','==',S.insWeek).onSnapshot(q=>{S.ins=new Map(q.docs.map(d=>[d.data().room,d.data()]));renderIns()},onErr);renderIns()}
+const scoreCol=v=>v==null?'var(--soft)':v>=4?'#e3f4e8':v>=3?'#fff4d6':'#fde8e4';
+function renderIns(){if(S.tab!=='rooms')return;const w=S.insWeek;
+  $('insTitle').textContent=`בדיקת חדרים · שבוע ${fmtShort(w)}–${fmtShort(addD(w,6))}`;
+  const R=roomsList(),done=R.filter(r=>S.ins.has(r)),sc=done.map(r=>S.ins.get(r).score);const avg=sc.length?(sc.reduce((a,b)=>a+b,0)/sc.length):null;
+  const best=done.slice().sort((a,b)=>S.ins.get(b).score-S.ins.get(a).score).filter(r=>S.ins.get(r).score===5);
+  $('insSum').innerHTML=`<div class="row" style="gap:8px"><span class="pill">${done.length}/${R.length} חדרים נבדקו</span>${avg!=null?`<span class="pill">ממוצע ${avg.toFixed(1)} מתוך 5</span>`:''}${best.length?`<span class="pill ok">🏆 מצטיינים: ${best.map(r=>'חדר '+r).join(', ')}</span>`:''}</div>`;
+  const ro=S.ro||!has('rooms');
+  $('insGrid').innerHTML=R.map(r=>{const x=S.ins.get(r),c=x?.checks||{};const who=allSorted().filter(s=>String(s.room)===r).map(s=>s.name);
+    return `<div class="room-card"><div class="hd"><b>חדר ${esc(r)}</b><span class="sc" style="background:${scoreCol(x?.score)}">${x?x.score+'/5':'—'}</span></div>
+      ${who.length?`<span class="muted" style="font-size:.82rem">${esc(who.join(', '))}</span>`:''}
+      <div class="chk">${INS.map(([k,l])=>`<button type="button" class="${x?'set':''}" aria-pressed="${!!c[k]}" data-act="insChk" data-room="${esc(r)}" data-k="${k}" ${ro?'disabled':''}>${x?(c[k]?'✓':'✗'):'○'} ${l}</button>`).join('')}</div>
+      <input data-room="${esc(r)}" class="insNote" placeholder="הערה (לא חובה)" value="${esc(x?.note||'')}" ${ro?'disabled':''}>
+      ${x?`<span class="muted" style="font-size:.8rem">נבדק ע"י ${esc(x.byName||'')} · ${when(x.at)}</span>`:''}</div>`}).join('')}
+async function insSave(room,patch){const id=S.insWeek+'_'+room,cur=S.ins.get(room)||{checks:Object.fromEntries(INS.map(([k])=>[k,true]))};const checks={...(cur.checks||{}),...(patch.checks||{})};
+  const d={week:S.insWeek,room,checks,note:patch.note!=null?patch.note:(cur.note||''),score:INS.filter(([k])=>checks[k]).length,at:Date.now(),by:S.me,byName:S.myName};
+  try{await OW(db.doc('inspections/'+id).set(d))}catch(e){fail(e)}}
+document.addEventListener('change',e=>{if(e.target.classList?.contains('insNote'))insSave(e.target.dataset.room,{note:e.target.value.trim()})});
+
+/* ---------- backup ---------- */
+function bkAge(){const t=S.settings?.backupAt;return t?Math.floor((Date.now()-t)/864e5):null}
+function renderBackupNote(){const el=$('hmBackup');if(!el)return;if(!S.owner){el.innerHTML='';return}const a=bkAge();
+  el.innerHTML=a==null||a>=7?`<div class="calnote" style="display:flex;gap:10px;align-items:center;justify-content:space-between;background:#fff4d6"><span>💾 ${a==null?'עדיין לא נעשה גיבוי של הנתונים':'עברו '+a+' ימים מהגיבוי האחרון'}. מומלץ להוריד גיבוי פעם בשבוע.</span><button class="btn small primary" type="button" data-act="backup">הורד גיבוי</button></div>`:''}
+async function doBackup(b){if(!window.XLSX){toast('רכיב האקסל לא נטען');return}if(b){b.disabled=true;b.dataset.t=b.textContent;b.textContent='מכין גיבוי…'}
+  try{const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};const fd=t=>t?new Date(t).toLocaleString('he-IL'):'';const nm=id=>S.students.get(id)?.name||id;
+    const add=(name,rows)=>{if(rows.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),name)};
+    const st=allSorted();
+    add('תלמידים',[['מזהה','שם','שם פרטי','שם משפחה','כיתה','חדר','יום הולדת עברי'],...st.map(s=>[s.id,s.name,s.firstName||'',s.lastName||'',s.grade||'',s.room||'',s.hb?hbTxt(s.hb):''])]);
+    if(has('personal')){const P=await db.collection('profiles').get();add('פרטים אישיים',[['תלמיד',...PF],...P.docs.map(d=>[nm(d.id),...PF.map(k=>d.data()[k]||'')])])}
+    add('מצב נוכחי',[['תלמיד','מצב','סיבה','מתאריך','עד','חזרה צפויה'],...st.map(s=>{const t=S.status.get(s.id)||{};return [s.name,t.state==='out'?(t.long?'בבית':'בחוץ'):'בפנימייה',t.reason||'',t.from||'',t.to||'',fd(t.backBy)]})]);
+    const M=await db.collection('moves').orderBy('at').get();add('יציאות וחזרות',[['זמן','תלמיד','סוג','סיבה','נרשם ע"י'],...M.docs.map(d=>{const m=d.data();return [fd(m.at),nm(m.sid),m.type==='out'?'יציאה':'חזרה',m.reason||'',m.byName||'']})]);
+    const N=await db.collection('notes').orderBy('at').get();add('הערות',[['זמן','תלמיד','סוג','חומרה','נקודות','תוכן','נכתב ע"י','טופל'],...N.docs.map(d=>{const n=d.data();return [fd(n.at),nm(n.sid),n.kind||'',isBeh(n)?SEV[sevOf(n)]:'',isPraise(n)?ptsOf(n):'',n.text||'',n.byName||'',n.handled?'כן':'']})]);
+    const days=[];for(let i=89;i>=0;i--)days.push(addD(ymd(new Date()),-i));
+    const g=(c,k)=>db.collection(c+'/'+k+'/marks').get().then(q=>q.docs.map(d=>[k,d.id,d.data()])).catch(()=>[]);
+    const NC=(await Promise.all(days.map(k=>g('nightcount',k)))).flat(),MO=(await Promise.all(days.map(k=>g('morning',k)))).flat();
+    add('ספירת לילה',[['לילה','תלמיד','מצב','נבדק ע"י'],...NC.map(([k,id,x])=>[k,nm(id),x.s==='p'?'נוכח':'חסר',x.byName||''])]);
+    add('השכמה',[['תאריך','תלמיד','מצב','שעה','נרשם ע"י'],...MO.map(([k,id,x])=>[k,nm(id),x.s==='up'?'קם':x.s==='no'?'לא קם':'חולה',x.t?hm(x.t):'',x.byName||''])]);
+    try{const I=await db.collection('inspections').get();add('בדיקות חדרים',[['שבוע','חדר','ציון',...INS.map(x=>x[1]),'הערה','נבדק ע"י'],...I.docs.map(d=>{const x=d.data();return [x.week,x.room,x.score,...INS.map(([k])=>x.checks?.[k]?'✓':'✗'),x.note||'',x.byName||'']})])}catch{}
+    add('צוות',[['שם','שם משתמש','תפקיד','פעיל','הרשאות'],...S.staff.map(s=>[s.name||'',s.username||'',s.role||'',s.active===false?'לא':'כן',PERMS.filter(([k])=>s.perms?.[k]).map(x=>x[1]).join(', ')])]);
+    XLSX.writeFile(wb,`גיבוי פנימייה ${ymd(new Date())}.xlsx`);
+    try{await db.doc('settings/app').set({...(S.settings||{}),backupAt:Date.now()})}catch{}
+    toast('הגיבוי הורד')}catch(e){fail(e)}
+  if(b){b.disabled=false;b.textContent=b.dataset.t}}
+
 /* ---------- birthdays ---------- */
 const HBM=['תשרי','חשון','כסלו','טבת','שבט','אדר','אדר א\'','אדר ב\'','ניסן','אייר','סיון','תמוז','אב','אלול'];
 const HBM_EN={Tishri:'תשרי',Heshvan:'חשון',Kislev:'כסלו',Tevet:'טבת',Shevat:'שבט',Adar:'אדר','Adar I':'אדר א\'','Adar II':'אדר ב\'',Nisan:'ניסן',Iyar:'אייר',Sivan:'סיון',Tamuz:'תמוז',Av:'אב',Elul:'אלול'};
@@ -1458,7 +1677,7 @@ function renderHome(){
     {const hn=outs.filter(s=>isHome(s.id)).length;tile('out','מחוץ לפנימייה',outs.length,[hn?`<b>${hn}</b> בבית (היעדרות)`:'',late.length?`<b>${late.length}</b> באיחור בחזרה`:'אין איחורים בחזרה'].filter(Boolean).join(' · '),late.length>0)}}
   if(has('mgr')){const open=S.notes.filter(n=>isBeh(n)&&!n.handled&&S.students.has(n.sid)).length;tile('mgr','התראות התנהגות',open,open?'ממתינות לטיפול':'אין התראות פתוחות',open>0)}
   $('hmTiles').innerHTML=tiles.join('');
-  renderBirthdays();
+  renderBirthdays();renderBackupNote();renderNotifBtn();
   const nx=events().filter(e=>e.to>=today).slice(0,3);
   $('hmNextP').hidden=!nx.length;
   $('hmNext').innerHTML=nx.map(e=>`<div class="ev"><i style="background:${dotC(e.k)}"></i><span class="when">${rangeTxt(e.from,e.to)}</span><b>${esc(e.name)}</b></div>`).join('');
@@ -1659,7 +1878,7 @@ function subscribeAll(){
   S.subs.push(db.collection('students').onSnapshot({includeMetadataChanges:true},snap=>{S.students=new Map(snap.docs.map(d=>[d.id,{id:d.id,...d.data()}]));if(!snap.metadata.fromCache){S.ready=true;clearTimeout(timer);sys('')}renderAll()},e=>{clearTimeout(timer);S.ready=true;onErr(e);renderAll()}));
   S.subs.push(db.collection('status').onSnapshot(snap=>{S.status=new Map(snap.docs.map(d=>[d.id,d.data()]));resolveNames(snap.docs.map(d=>d.data()));renderAll()},onErr));
   if(has('notes')||has('mgr'))S.subs.push(db.collection('notes').orderBy('at','desc').limit(500).onSnapshot(snap=>{S.notes=snap.docs.map(d=>({id:d.id,...d.data()}));
-    if(S.mgr)snap.docChanges().forEach(ch=>{if(ch.type!=='added')return;const n=ch.doc.data();if(n.kind==='התנהגות'&&n.at>S.loadAt&&n.by!==S.me)showLive(n)});resolveNames(S.notes);renderAll()},onErr));
+    if(S.mgr)snap.docChanges().forEach(ch=>{if(ch.type!=='added')return;const n=ch.doc.data();if(n.kind==='התנהגות'&&n.at>S.loadAt&&n.by!==S.me){showLive(n);notifyNote({...n,id:ch.doc.id})}});resolveNames(S.notes);renderAll()},onErr));
   else S.notes=[];
   S.subs.push(db.collection('moves').orderBy('at','desc').limit(300).onSnapshot(snap=>{S.moves=snap.docs.map(d=>({id:d.id,...d.data()}));resolveNames(S.moves);renderAll()},onErr));
   S.subs.push(db.doc('schedule/week').onSnapshot(d=>{S.sched=d.exists?d.data():null;renderSched();renderHome()},onErr));
@@ -1717,6 +1936,7 @@ function start(){
   firebase.initializeApp(FIREBASE_CONFIG);
   auth=firebase.auth();db=firebase.firestore();
   db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+  setupAudit();setInterval(()=>{if(S.access)checkLateReturns()},60000);
   // keep the owner/self listeners separate from data listeners
   let boot=[];
   auth.onAuthStateChanged(u=>{
