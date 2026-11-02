@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-17";
+const APP_VERSION = "2026-11-02-18";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -241,6 +241,8 @@ body[data-page="home"] #topSum,body[data-page="home"] #gradeFilter,body[data-pag
 .ev i{width:12px;height:12px;border-radius:50%;flex:none;border:1px solid var(--line)}
 .ev .when{direction:ltr;unicode-bidi:isolate;text-align:right;color:var(--muted);font-size:.88rem;font-variant-numeric:tabular-nums;flex:none;min-width:7.5em}
 .ev b{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.ev.today{background:#fff4d6;border-radius:10px;padding:8px 10px;border-top-color:transparent}
+.ev .sub{color:var(--muted);font-weight:400;font-size:.88rem}
 .calnote{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-weight:600;border:1px solid var(--line)}
 .calnote i{width:12px;height:12px;border-radius:50%;flex:none}
 @media (max-width:460px){.cal-d{min-height:56px;padding:3px}.cal-d .lb{font-size:.66rem}}
@@ -348,6 +350,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <div class="home-hero" id="hmHero"></div>
     <div id="hmNow"></div>
     <div class="home-tiles" id="hmTiles"></div>
+    <div class="panel" id="hmBdP" hidden><h2>🎂 ימי הולדת</h2><div id="hmBd"></div></div>
     <div class="panel" id="hmNextP"><h2>בקרוב בלוח השנה</h2><div id="hmNext"></div></div>
     <div><h2 style="margin-bottom:8px">מעבר מהיר</h2><div class="home-links" id="hmLinks"></div></div>
   </section>
@@ -499,6 +502,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
         <button class="btn small" type="button" data-act="repRange" data-d="30">30 יום</button>
         <button class="btn small" type="button" data-act="repRange" data-d="month">החודש</button>
       </div>
+      <label class="muted" style="display:grid;gap:4px;font-size:.9rem">דוח עבור<select id="repStu"><option value="">כל התלמידים (דוח כללי)</option></select></label>
       <div class="perm-grid" id="repKinds">
         <label class="perm"><input type="checkbox" id="rk-night" checked> ספירת לילה</label>
         <label class="perm"><input type="checkbox" id="rk-morn" checked> השכמת בוקר וזמני קימה</label>
@@ -534,7 +538,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shName">
     <div class="sheet-top">
       <h2 id="shName" style="font-size:1.3rem"></h2>
-      <button class="btn small" data-act="close">סגור</button>
+      <span class="row" style="gap:6px"><button class="btn small" data-act="stuRep" data-perm="reports">📊 דוח תלמיד</button><button class="btn small" data-act="close">סגור</button></span>
     </div>
     <div id="shStatus"></div>
     <div data-perm="personal" class="panel" id="shCard"></div>
@@ -546,6 +550,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
         <button class="btn small" type="button" data-act="pfNoPhoto">הסר תמונה</button></div></div>
       <div class="pf-grid">
         <label>תאריך לידה<input id="pf-birthDate" type="date" max="2030-12-31"></label>
+        <label>יום הולדת עברי<span style="display:flex;gap:6px"><select id="pf-hbD" style="flex:1"></select><select id="pf-hbM" style="flex:2"></select></span></label>
         <label>גיל<output id="pfAge" style="padding:9px 2px;color:var(--ink);font-weight:600">—</output></label>
         <label>טלפון התלמיד<input id="pf-phone" type="tel" dir="ltr" autocomplete="off"></label>
         <label>מייל התלמיד<input id="pf-email" type="email" dir="ltr" autocomplete="off"></label>
@@ -763,7 +768,8 @@ function renderCard(s){
   const row=(k,v)=>v?`<dt>${k}</dt><dd>${v}</dd>`:'';
   const parent=(n,t)=>(n||t)?`${esc(n||'')}${n&&t?' · ':''}${telLink(t)}`:'';
   const ag=ageOf(p.birthDate);
-  const body=row('גיל',ag!=null?`${ag} <span class="sub">(נולד ${fmtDMY(p.birthDate)})</span>`:'')+row('טלפון',telLink(p.phone))+row('מייל',mailLink(p.email))+row('כתובת',esc(p.address||''))+row('הורה 1',parent(p.fatherName,p.fatherPhone))+row('הורה 2',parent(p.motherName,p.motherPhone))+row('מייל הורים',mailLink(p.parentEmail));
+  const hb=hbOf(s);
+  const body=row('יום הולדת עברי',hb?hbTxt(hb):'')+row('גיל',ag!=null?`${ag} <span class="sub">(נולד ${fmtDMY(p.birthDate)})</span>`:'')+row('טלפון',telLink(p.phone))+row('מייל',mailLink(p.email))+row('כתובת',esc(p.address||''))+row('הורה 1',parent(p.fatherName,p.fatherPhone))+row('הורה 2',parent(p.motherName,p.motherPhone))+row('מייל הורים',mailLink(p.parentEmail));
   $('shCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>כרטיס תלמיד</h2>${has('students')&&!S.ro?'<button class="btn small" data-act="pfEdit">עריכה</button>':''}</div>
   <div class="card"><div class="photo">${ph===null?'':photoBox(ph,s.name)}</div>
   <div style="display:grid;gap:6px;min-width:0"><b style="font-size:1.1rem">${esc(s.name)}</b><span class="muted">${esc(metaOf(s)||'')}</span>
@@ -772,6 +778,7 @@ function renderCard(s){
 function pfOpen(){
   const s=S.students.get(S.sel),p=S.profiles.get(S.sel)||{};
   PF.forEach(k=>$('pf-'+k).value=p[k]||'');{const a=ageOf(p.birthDate);$('pfAge').textContent=a!=null?a:'—'}S.pfPhoto=undefined;
+  {const b=s.hb||(p.birthDate?hDate(p.birthDate):null);$('pf-hbD').value=b?b.d:'';$('pf-hbM').value=b?b.m:'';S.pfHbY=b?.y||null}
   $('pfPhotoPrev').innerHTML=photoBox(S.photos.get(S.sel)||'',s.name);
   $('pfForm').hidden=false;$('shCard').hidden=true;$('pf-phone').focus();
 }
@@ -781,12 +788,15 @@ function resizePhoto(file){return new Promise((res,rej)=>{const url=URL.createOb
     const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
     x.drawImage(img,(W-w)/2,(H-h)/2,w,h);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.82))};
   img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('bad image'))};img.src=url})}
-$('pf-birthDate').addEventListener('input',e=>{const a=ageOf(e.target.value);$('pfAge').textContent=a!=null?a:'—'});
+$('pf-birthDate').addEventListener('input',e=>{const a=ageOf(e.target.value);$('pfAge').textContent=a!=null?a:'—';
+  const b=/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)?hDate(e.target.value):null;if(b){$('pf-hbD').value=b.d;$('pf-hbM').value=b.m;S.pfHbY=b.y}});
 $('pfPhoto').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;
   try{S.pfPhoto=await resizePhoto(f);$('pfPhotoPrev').innerHTML=photoBox(S.pfPhoto,'')}catch{toast('לא הצלחתי לקרוא את התמונה. נסו קובץ JPG או PNG')}});
 $('pfForm').addEventListener('submit',async e=>{e.preventDefault();const id=S.sel;if(!id)return;
   const data={};PF.forEach(k=>data[k]=$('pf-'+k).value.trim());data.updatedAt=Date.now();data.by=S.me;data.byName=S.myName;
   try{await db.doc('profiles/'+id).set(data);
+    {const d=+$('pf-hbD').value,m=$('pf-hbM').value,old=S.students.get(id)?.hb;const hb=d&&m?{d,m,y:S.pfHbY||old?.y||null}:null;
+     if(JSON.stringify(hb)!==JSON.stringify(old||null))await db.doc('students/'+id).update({hb:hb||firebase.firestore.FieldValue.delete()})}
     if(S.pfPhoto!==undefined){if(S.pfPhoto)await db.doc('photos/'+id).set({data:S.pfPhoto,at:Date.now()});else await db.doc('photos/'+id).delete();S.photos.set(id,S.pfPhoto)}
     pfClose();renderCard(S.students.get(id));toast('הפרטים נשמרו')}catch(err){fail(err)}});
 /* ---------- manager dashboard ---------- */
@@ -1131,6 +1141,7 @@ document.addEventListener('click',async e=>{
       await schSave(b,to);break}
     case'mrCopy':{const t=S.mrTexts?.[b.dataset.g]||'';try{await navigator.clipboard.writeText(t);toast('הדוח הועתק')}catch{toast('לא הצלחתי להעתיק')}break}
     case'go':$('t-'+b.dataset.to)?.click();break;
+    case'stuRep':{const sid=S.sel;closeSheet();$('t-rep')?.click();renderRep();$('repStu').value=sid;repStuChg();$('repForm').scrollIntoView({behavior:'smooth'});break}
     case'calPrev':S.calM=Math.max(0,S.calM-1);renderCal();break;
     case'calNext':S.calM=Math.min(HMONTHS.length-1,S.calM+1);renderCal();break;
     case'repRange':setRange(b.dataset.d);break;
@@ -1283,6 +1294,29 @@ function renderSched(){
   $('schLegend').innerHTML=Object.values(SK).map(([l,c])=>`<span><i style="background:${c}"></i>${l}</span>`).join('');
 }
 
+/* ---------- birthdays ---------- */
+const HBM=['תשרי','חשון','כסלו','טבת','שבט','אדר','אדר א\'','אדר ב\'','ניסן','אייר','סיון','תמוז','אב','אלול'];
+const HBM_EN={Tishri:'תשרי',Heshvan:'חשון',Kislev:'כסלו',Tevet:'טבת',Shevat:'שבט',Adar:'אדר','Adar I':'אדר א\'','Adar II':'אדר ב\'',Nisan:'ניסן',Iyar:'אייר',Sivan:'סיון',Tamuz:'תמוז',Av:'אב',Elul:'אלול'};
+let hbF=null;try{hbF=new Intl.DateTimeFormat('en-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'})}catch{}
+const hdC=new Map();
+function hDate(k){if(hdC.has(k))return hdC.get(k);let r=null;
+  if(hbF)try{const p={};hbF.formatToParts(new Date(k+'T12:00Z')).forEach(x=>p[x.type]=x.value);const m=HBM_EN[p.month];if(m)r={d:+p.day,m,y:+String(p.year||p.relatedYear||'').replace(/\D/g,'')||null}}catch{}
+  hdC.set(k,r);return r}
+const hbOf=s=>s?.hb||(()=>{const p=S.profiles.get(s?.id);return p?.birthDate&&/^\d{4}-\d{2}-\d{2}$/.test(p.birthDate)?hDate(p.birthDate):null})();
+const hbTxt=b=>hNum(b.d)+' ב'+b.m;
+function hbHit(b,k){const h=hDate(k);if(!h||!b||!b.d||!b.m)return false;
+  const mOk=b.m===h.m||(h.m==='אדר ב\''&&b.m==='אדר')||(h.m==='אדר'&&(b.m==='אדר א\''||b.m==='אדר ב\''));
+  if(!mOk)return false;if(+b.d===h.d)return true;
+  return +b.d===30&&h.d===29&&hDate(addD(k,1))?.d===1}
+function birthdays(days){const today=ymd(new Date()),out=[];const st=allSorted().map(s=>[s,hbOf(s)]).filter(x=>x[1]);
+  for(let i=0;i<days;i++){const k=addD(today,i),h=hDate(k);st.forEach(([s,b])=>{if(hbHit(b,k))out.push({s,b,k,i,age:b.y&&h?.y?h.y-b.y:null})})}return out}
+function renderBirthdays(){const st=allSorted(),any=st.some(s=>hbOf(s));$('hmBdP').hidden=!any;if(!any)return;
+  const list=birthdays(14),wdf=new Intl.DateTimeFormat('he-IL',{weekday:'short',day:'numeric',month:'numeric'});
+  $('hmBd').innerHTML=list.length?list.map(x=>`<div class="ev ${x.i===0?'today':''}"><span class="when">${x.i===0?'היום 🎉':x.i===1?'מחר':wdf.format(new Date(x.k+'T12:00'))}</span><b>${esc(x.s.name)}${x.age?` <span class="sub">· בן ${x.age}</span>`:''}</b><span class="sub" style="margin-inline-start:auto">${hbTxt(x.b)}${x.s.grade?' · '+esc(x.s.grade):''}</span></div>`).join(''):'<span class="muted">אין ימי הולדת בשבועיים הקרובים.</span>';
+  const nb=birthdays(1).length;return nb}
+$('pf-hbD').innerHTML='<option value="">יום</option>'+HL.slice(1).map((x,i)=>`<option value="${i+1}">${hNum(i+1)}</option>`).join('');
+$('pf-hbM').innerHTML='<option value="">חודש</option>'+HBM.map(m=>`<option>${m}</option>`).join('');
+
 /* ---------- home ---------- */
 function renderHome(){
   if(S.tab!=='home')return;
@@ -1305,6 +1339,7 @@ function renderHome(){
     tile('out','מחוץ לפנימייה',outs.length,late.length?`<b>${late.length}</b> באיחור בחזרה`:'אין איחורים בחזרה',late.length>0)}
   if(has('mgr')){const open=S.notes.filter(n=>isBeh(n)&&!n.handled&&S.students.has(n.sid)).length;tile('mgr','התראות התנהגות',open,open?'ממתינות לטיפול':'אין התראות פתוחות',open>0)}
   $('hmTiles').innerHTML=tiles.join('');
+  renderBirthdays();
   const nx=events().filter(e=>e.to>=today).slice(0,3);
   $('hmNextP').hidden=!nx.length;
   $('hmNext').innerHTML=nx.map(e=>`<div class="ev"><i style="background:${dotC(e.k)}"></i><span class="when">${rangeTxt(e.from,e.to)}</span><b>${esc(e.name)}</b></div>`).join('');
@@ -1319,12 +1354,22 @@ function renderRep(){
   if(S.tab!=='rep')return;
   if(!$('repFrom').value)setRange(7);
   const canNotes=has('notes')||has('mgr');$('rk-notes-l').hidden=!canNotes;$('rk-contacts-l').hidden=!has('personal');
+  {const sel=$('repStu'),v=sel.value,st=[...S.students.values()].sort((a,b)=>GRADES.indexOf(a.grade)-GRADES.indexOf(b.grade)||(a.name||'').localeCompare(b.name||'','he'));
+   let html='<option value="">כל התלמידים (דוח כללי)</option>',g=null;
+   st.forEach(s=>{if(s.grade!==g){if(g!==null)html+='</optgroup>';g=s.grade;html+=`<optgroup label="${g?'כיתה '+esc(g):'ללא כיתה'}">`}html+=`<option value="${s.id}">${esc(s.name)}</option>`});if(g!==null)html+='</optgroup>';
+   sel.innerHTML=html;sel.value=S.students.has(v)?v:''}
+  repStuChg();
+}
+function repStuChg(){const sid=$('repStu').value,s=S.students.get(sid);$('rk-stu').closest('label').hidden=!!s;
+  if(s){$('repScope').textContent='דוח אישי עבור '+s.name+': סיכום, יומן יומי (ספירת לילה והשכמה), יציאות והערות. עד 93 ימים.';return}
   $('repScope').textContent='הדוח יכלול '+(S.grade?(S.grade==='-'?'תלמידים ללא כיתה':'את כיתה '+S.grade):'את כל הכיתות')+', לפי הסינון בראש המסך. עד 93 ימים בדוח אחד.';
 }
+$('repStu').addEventListener('change',repStuChg);
 function sheet(rows,widths){const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=widths.map(w=>({wch:w}));if(rows.length>1)ws['!autofilter']={ref:XLSX.utils.encode_range({s:{c:0,r:0},e:{c:rows[0].length-1,r:rows.length-1}})};return ws}
 async function buildReport(){
   if(!window.XLSX){toast('רכיב האקסל לא נטען. בדקו חיבור ורעננו');return}
   const from=$('repFrom').value,to=$('repTo').value;if(!from||!to||from>to){toast('בדקו את טווח התאריכים');return}
+  if($('repStu').value)return buildStudentReport($('repStu').value,from,to);
   const days=datesBetween(from,to),st=sorted().sort((a,b)=>GRADES.indexOf(a.grade)-GRADES.indexOf(b.grade)||(a.name||'').localeCompare(b.name||'','he'));
   const ids=new Set(st.map(s=>s.id)),wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};
   const base=s=>[s.name||'',s.grade||'',s.room||''];
@@ -1373,6 +1418,46 @@ async function buildReport(){
   const scope=S.grade?(S.grade==='-'?' ללא כיתה':' כיתה '+S.grade):'';
   XLSX.writeFile(wb,`דוח פנימייה${scope} ${dmy(from)}-${dmy(to)}.xlsx`);
   toast('הדוח הורד');
+}
+async function buildStudentReport(sid,from,to){
+  const s=S.students.get(sid);if(!s){toast('התלמיד לא נמצא');return}
+  const days=datesBetween(from,to),wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};
+  const t0=new Date(from+'T00:00').getTime(),t1=new Date(to+'T00:00').getTime()+864e5;
+  const fmtD=t=>{const d=new Date(t);return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear()};
+  const by=o=>o?.byName||byName(o?.by)||'';
+  const wNight=$('rk-night').checked,wMorn=$('rk-morn').checked,wMoves=$('rk-moves').checked,wNotes=$('rk-notes').checked&&(has('notes')||has('mgr'));
+  const get1=p=>db.doc(p).get().then(d=>d.exists?d.data():null).catch(()=>null);
+  const [nights,morns,moves,notes]=await Promise.all([
+    wNight?Promise.all(days.map(k=>get1('nightcount/'+k+'/marks/'+sid))):null,
+    wMorn?Promise.all(days.map(k=>get1('morning/'+k+'/marks/'+sid))):null,
+    wMoves?db.collection('moves').where('at','>=',t0).where('at','<',t1).orderBy('at').get().then(q=>q.docs.map(d=>d.data()).filter(m=>m.sid===sid)):null,
+    wNotes?db.collection('notes').where('at','>=',t0).where('at','<',t1).orderBy('at').get().then(q=>q.docs.map(d=>d.data()).filter(n=>n.sid===sid)):null]);
+  const wdf=new Intl.DateTimeFormat('he-IL',{weekday:'long'});
+  let np=0,na=0,nu=0,up=0,late=0,no=0,sick=0;const mins=[];
+  const log=[['תאריך','יום','תאריך עברי','לוח השנה',...(wNight?['ספירת לילה','נבדק על ידי']:[]),...(wMorn?['השכמה','שעת קימה','נרשם על ידי']:[])]];
+  days.forEach((k,i)=>{const hd=hDate(k),ci=dayInfo(k);const cal=ci.k==='w'?'':(ci.l||KIND[ci.k]||'');const r=[fmtD(new Date(k+'T12:00')),wdf.format(new Date(k+'T12:00')),hd?hbTxt(hd):'',cal];
+    if(wNight){const x=nights[i];if(!x){nu++;r.push('','')}else{if(x.s==='p')np++;else na++;r.push(x.s==='p'?'נוכח':'חסר',by(x))}}
+    if(wMorn){const x=morns[i];if(!x)r.push('','','');else{let st;const tm=x.t?hm(x.t):'';if(x.s==='up'){up++;if(tm)mins.push(toMin(tm));if(isLate(x)){late++;st='קם באיחור'}else st='קם'}else if(x.s==='no'){no++;st='לא קם'}else{sick++;st='חולה'}r.push(st,x.s==='up'?tm:'',by(x))}}
+    log.push(r)});
+  const avg=mins.length?Math.round(mins.reduce((a,b)=>a+b,0)/mins.length):null;
+  const cur=S.status.get(sid),o=isOut(sid),hb=hbOf(s);
+  const sum=[['דוח תלמיד',s.name||''],['כיתה',s.grade||''],['חדר',s.room||''],['תקופה',fmtD(t0)+' – '+fmtD(t1-864e5)+` (${days.length} ימים)`],['מצב נוכחי',o?'בחוץ'+(cur?.reason?' · '+cur.reason:''):'בפנימייה'],...(hb?[['יום הולדת עברי',hbTxt(hb)]]:[]),[]];
+  if(wNight)sum.push(['ספירת לילה',''],['  לילות נוכח',np],['  לילות חסר',na],['  לא נבדק',nu],[]);
+  if(wMorn)sum.push(['השכמת בוקר',''],['  קם',up],['  מתוכם באיחור',late],['  לא קם',no],['  חולה',sick],['  שעת קימה ממוצעת',avg==null?'':pad(Math.floor(avg/60))+':'+pad(avg%60)],['  שעת השכמה שנקבעה',S.wakeTarget||'07:00'],[]);
+  if(wMoves)sum.push(['יציאות מהפנימייה',moves.filter(m=>m.type==='out').length],['חזרות',moves.filter(m=>m.type!=='out').length]);
+  if(wNotes){const beh=notes.filter(isBeh);sum.push(['הערות',notes.length],['  מתוכן התנהגות',beh.length],['  התנהגות שלא טופלה',beh.filter(n=>!n.handled).length])}
+  sum.push([],['הופק',fmtD(Date.now())+' '+hm(Date.now())+(S.myName?' · '+S.myName:'')]);
+  XLSX.utils.book_append_sheet(wb,sheet(sum,[22,40]),'סיכום');
+  if(wNight||wMorn)XLSX.utils.book_append_sheet(wb,sheet(log,[11,8,12,18,...(wNight?[10,14]:[]),...(wMorn?[10,8,14]:[])]),'יומן יומי');
+  if(wMoves){const rows=[['תאריך','שעה','סוג','סיבה','חזרה צפויה','נרשם על ידי']];moves.forEach(m=>rows.push([fmtD(m.at),hm(m.at),m.type==='out'?'יציאה':'חזרה',m.reason||'',m.backBy?fmtD(m.backBy)+' '+hm(m.backBy):'',by(m)]));
+    XLSX.utils.book_append_sheet(wb,sheet(rows,[11,6,7,24,16,14]),'יציאות וחזרות')}
+  if(wNotes){const rows=[['תאריך','שעה','סוג','חומרה','תוכן','נכתב על ידי','טופל']];notes.forEach(n=>rows.push([fmtD(n.at),hm(n.at),n.kind||'',isBeh(n)?SEV[sevOf(n)]:'',n.text||'',by(n),isBeh(n)?(n.handled?'כן':'לא'):'']));
+    XLSX.utils.book_append_sheet(wb,sheet(rows,[11,6,9,8,55,14,6]),'הערות')}
+  if($('rk-contacts').checked&&has('personal')){const p=S.profiles.get(sid)||{};
+    const rows=[['שדה','ערך'],['טלפון',p.phone||''],['מייל',p.email||''],['כתובת',p.address||''],['שם הורה 1',p.fatherName||''],['טלפון הורה 1',p.fatherPhone||''],['שם הורה 2',p.motherName||''],['טלפון הורה 2',p.motherPhone||''],['מייל הורים',p.parentEmail||''],['תאריך לידה',fmtDMY(p.birthDate)||''],['גיל',ageOf(p.birthDate)??'']];
+    XLSX.utils.book_append_sheet(wb,sheet(rows,[16,34]),'פרטים אישיים')}
+  XLSX.writeFile(wb,`דוח תלמיד ${(s.name||'').replace(/[\\/:*?"<>|]/g,'')} ${dmy(from)}-${dmy(to)}.xlsx`);
+  toast('הדוח האישי הורד');
 }
 $('repForm').addEventListener('submit',async e=>{e.preventDefault();const b=$('repBtn');b.disabled=true;b.textContent='מכין דוח…';
   try{await buildReport()}catch(ex){fail(ex)}b.disabled=false;b.textContent='הורד דוח אקסל'});
