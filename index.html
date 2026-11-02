@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1E5A73">
+<meta name="theme-color" content="#0E5DB4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="פנימייה">
@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-29";
+const APP_VERSION = "2026-11-03-01";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -41,8 +41,8 @@ body{margin:0}
 img{max-width:100%}
 /* Layout: one-column staff tool, sticky header with night summary + three tabs; rows grouped by room */
 :root{
-  --bg:#EEF2F1; --surface:#FFFFFF; --ink:#16222A; --muted:#5A6971; --line:#D5DEDB;
-  --accent:#1E5A73; --accent-ink:#FFFFFF; --soft:#E1EBEE;
+  --bg:#EEF2F7; --surface:#FFFFFF; --ink:#16222A; --muted:#5A6971; --line:#D5DEDB;
+  --accent:#0E5DB4; --accent-ink:#FFFFFF; --soft:#E3ECF7; --brand:#1F82F9; --brand2:#783601;
   --ok:#2C7A4B; --ok-bg:#E2F1E7; --bad:#B23A2F; --bad-bg:#F7E3E0; --warn:#9A6514; --warn-bg:#F6EBD6;
   --cal-s:#D3E6F7; --cal-c:#D6EFE6; --cal-v:#F9D7E7; --cal-l:#F0EDC8; --cal-p:#F6A88F; --cal-e:#FBD3A6; --cal-x:#E6E6E6; --cal-t:#D9C6A0;
   --f-display:"Secular One","Assistant",system-ui,sans-serif;
@@ -51,12 +51,12 @@ img{max-width:100%}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --cal-s:#1E3A52; --cal-c:#1C3A30; --cal-v:#4A2337; --cal-l:#3E3A1C; --cal-p:#5A2A1E; --cal-e:#4F371A; --cal-x:#2E3439; --cal-t:#41361F;
   --bg:#0E151A; --surface:#16212A; --ink:#E4ECEE; --muted:#94A4AC; --line:#26353F;
-  --accent:#6DB3D1; --accent-ink:#0B1418; --soft:#1C2C36;
+  --accent:#5AA7FF; --accent-ink:#06121F; --soft:#1A2A3A; --brand:#5AA7FF; --brand2:#D9A066;
   --ok:#62C98E; --ok-bg:#173324; --bad:#EE7B6F; --bad-bg:#3A1C19; --warn:#E5B35A; --warn-bg:#36290F; color-scheme:dark}}
 :root[data-theme="dark"]{
   --cal-s:#1E3A52; --cal-c:#1C3A30; --cal-v:#4A2337; --cal-l:#3E3A1C; --cal-p:#5A2A1E; --cal-e:#4F371A; --cal-x:#2E3439; --cal-t:#41361F;
   --bg:#0E151A; --surface:#16212A; --ink:#E4ECEE; --muted:#94A4AC; --line:#26353F;
-  --accent:#6DB3D1; --accent-ink:#0B1418; --soft:#1C2C36;
+  --accent:#5AA7FF; --accent-ink:#06121F; --soft:#1A2A3A; --brand:#5AA7FF; --brand2:#D9A066;
   --ok:#62C98E; --ok-bg:#173324; --bad:#EE7B6F; --bad-bg:#3A1C19; --warn:#E5B35A; --warn-bg:#36290F; color-scheme:dark}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
@@ -148,6 +148,28 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .wa-box .btns{display:flex;flex-wrap:wrap;gap:6px}
 .wa-btn{background:var(--ok-bg);border:1px solid var(--ok);color:var(--ok);border-radius:8px;padding:7px 12px;font:600 .9rem var(--f-body);text-decoration:none}
 .audit .item{font-size:.9rem}
+/* ---- v26: brand, board, card summary, feedback ---- */
+header{border-top:4px solid var(--brand);box-shadow:inset 0 -3px 0 0 color-mix(in srgb,var(--brand2) 55%,transparent)}
+.kicker{color:var(--brand2)!important}
+.home-hero h2.hi{color:var(--accent)}
+.board{display:grid;gap:8px}
+.bmsg{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-inline-start:5px solid var(--brand2);border-radius:12px;padding:10px 12px}
+.bmsg .tx{flex:1;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.bmsg .by{display:block;color:var(--muted);font-size:.82rem;margin-top:4px}
+.ssum{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.ssum .st{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:grid;gap:2px}
+.ssum .st b{font:400 1.35rem var(--f-display);font-variant-numeric:tabular-nums}
+.ssum .st span{font-size:.82rem;color:var(--muted)}
+.ssum .st.ok b{color:var(--ok)}.ssum .st.bad b{color:var(--bad)}.ssum .st.warn b{color:var(--warn)}
+.ssum .last{grid-column:1/-1;font-size:.9rem}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.03)}100%{transform:scale(1)}}
+@keyframes flash{0%{background:color-mix(in srgb,var(--accent) 18%,var(--surface))}100%{background:transparent}}
+@keyframes cheer{0%{opacity:0;transform:translateY(6px) scale(.9)}20%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
+.prog.done{border-color:var(--ok);animation:pop .5s ease}
+.prog.done .row b{color:var(--ok)}
+.item.flash{animation:flash .9s ease}
+.cheer{position:fixed;left:50%;top:40%;transform:translateX(-50%);z-index:60;background:var(--ok);color:#fff;font:700 1.1rem var(--f-body);padding:14px 22px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.2);animation:cheer 1.8s ease forwards;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.prog.done,.item.flash,.cheer{animation:none}}
 /* ---- UI v25 ---- */
 :root{--home-bg:#E8E2F7;--hl-bg:#FFF4D6}
 :root[data-theme="dark"]{--home-bg:#2E2747;--hl-bg:#3A2F12}
@@ -433,6 +455,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
   <section id="tab-home" hidden style="display:grid;gap:16px">
     <div class="home-hero" id="hmHero"></div>
     <div id="hmNow"></div>
+    <div class="board" id="hmBoard"></div>
     <div id="hmBackup"></div>
     <div id="hmNotif"></div>
     <div class="home-tiles" id="hmTiles"></div>
@@ -654,6 +677,8 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
         <input id="nsName" placeholder="שם מלא" required aria-label="שם מלא">
         <select id="nsRole" aria-label="תפקיד"><option>מדריך</option><option>רכז</option><option>עו"ס</option><option>סגן מנהל</option></select>
         <input id="nsUser" placeholder="שם משתמש (באנגלית)" required dir="ltr" autocapitalize="none" spellcheck="false" aria-label="שם משתמש">
+        <input id="nsEmail" type="email" dir="ltr" placeholder="מייל של העובד (לשליחת פרטי הכניסה)" aria-label="מייל העובד" autocomplete="off">
+        <input id="nsPhone" type="tel" dir="ltr" placeholder="טלפון (לא חובה, לוואטסאפ)" aria-label="טלפון העובד" autocomplete="off">
         <input id="nsPass" placeholder="סיסמה (6 תווים לפחות)" required minlength="6" dir="ltr" autocomplete="off" aria-label="סיסמה">
       </div>
       <span class="muted" style="font-size:.88rem">שם משתמש: אותיות באנגלית, מספרים, נקודה או מקף. מסרו לעובד את שם המשתמש והסיסמה; הוא יוכל להחליף סיסמה בעצמו.</span>
@@ -688,6 +713,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <span class="row" style="gap:6px"><button class="btn small" data-act="stuRep" data-perm="reports">📊 דוח תלמיד</button><button class="btn small" data-act="close">סגור</button></span>
     </div>
     <div id="shStatus"></div>
+    <div class="ssum" id="shSum"></div>
     <div data-perm="out"><form id="seForm" class="panel" hidden>
       <h2 id="seTitle">עריכת יציאה</h2>
       <div class="grid2">
@@ -850,7 +876,7 @@ function progBar(el,parts,total,label){const done=parts.reduce((a,x)=>a+x[0],0);
 function renderCount(){
   const all=sorted();if(!all.length){$('countList').innerHTML=emptyStudents();$('cProg').hidden=true;return}
   {const inn=all.filter(s=>!isOut(s.id));let p=0,l=0,a=0;inn.forEach(s=>{const m=S.marks.get(s.id);if(m?.s==='p'){if(m.late)l++;else p++}else if(m?.s==='a')a++});
-   progBar('cProg',[[p,'var(--ok)','נוכחים'],[l,'var(--warn)','באיחור'],[a,'var(--bad)','חסרים']],inn.length,(d,tt)=>d===tt?'✓ כולם סומנו':`סומנו ${d} מתוך ${tt}`)}
+   progBar('cProg',[[p,'var(--ok)','נוכחים'],[l,'var(--warn)','באיחור'],[a,'var(--bad)','חסרים']],inn.length,(d,tt)=>d===tt?'✓ כולם סומנו':`סומנו ${d} מתוך ${tt}`);markDone('cProg',inn.length>0&&p+l+a===inn.length)}
   $('cOpen').setAttribute('aria-pressed',!!S.onlyOpen);
   const st=all.filter(qMatch(S.cq)).filter(s=>!S.onlyOpen||(!isOut(s.id)&&!S.marks.get(s.id)));
   if(!st.length){$('countList').innerHTML=`<div class="empty">${S.onlyOpen?'כל התלמידים סומנו 👏':'אין תלמידים שמתאימים לחיפוש.'}</div>`;renderNightNotes();return}
@@ -946,7 +972,7 @@ function renderSheet(){
   const ns=S.notes.filter(x=>x.sid===s.id);
   $('shNotes').innerHTML=ns.length?`<div class="list">`+ns.map(n=>`<div class="note"><div class="row" style="justify-content:space-between"><span class="row" style="gap:6px"><span class="chip ${n.kind==='שבח'?'ok':''}" style="${n.kind==='שבח'?'':'background:var(--soft);color:var(--ink)'}">${esc(n.kind)}</span>${isBeh(n)?sevChip(n.sev)+(n.handled?'<span class="chip ok">טופל</span>':''):''} <span class="time">${when(n.at)} · ${esc(byName(n.by))}</span></span>${S.ro?'':`<button class="btn small" data-act="delNote" data-id="${n.id}">מחק</button>`}</div><p>${esc(n.text)}</p></div>`).join('')+`</div>`:`<div class="empty">אין הערות על ${esc(s.name)}.</div>`;
   $('shMoves').innerHTML=moveList(S.moves.filter(x=>x.sid===s.id).slice(0,10),false);
-  renderPraise(s);renderCard(s);
+  renderPraise(s);renderCard(s);renderStuSum(s.id);loadStuSum(s.id);
 }
 /* ---------- student card ---------- */
 const PF=['phone','email','address','fatherName','fatherPhone','motherName','motherPhone','parentEmail','birthDate'];
@@ -1075,7 +1101,7 @@ function renderMorn(){
   const avg=mins.length?Math.round(mins.reduce((a,b)=>a+b,0)/mins.length):null;
   $('mornSum').innerHTML=`${nAbs?`<span class="pill bad">${nAbs} לא נכחו בערב</span>`:''}<span class="pill ok">${up} קמו</span>${late?`<span class="pill warn">${late} באיחור</span>`:''}<span class="pill bad">${no} לא קמו</span>${sick?`<span class="pill warn">${sick} חולים</span>`:''}<span class="pill">${un} לא נבדקו</span>${out?`<span class="pill">${out} בחוץ</span>`:''}${avg!=null?`<span class="pill">ממוצע ${pad(Math.floor(avg/60))}:${pad(avg%60)}</span>`:''}`;
   {const inn=st.filter(s=>!isOut(s.id));let u2=0,l2=0,n2=0,s2=0;inn.forEach(s=>{const m=S.wake.get(s.id);if(m?.s==='up'){if(isLate(m))l2++;else u2++}else if(m?.s==='no')n2++;else if(m)s2++});
-   progBar('mProg',[[u2,'var(--ok)','קמו בזמן'],[l2,'var(--warn)','באיחור'],[n2,'var(--bad)','לא קמו'],[s2,'var(--muted)','חולים']],inn.length,(d,tt)=>d===tt?'✓ כולם סומנו':`סומנו ${d} מתוך ${tt}`)}
+   progBar('mProg',[[u2,'var(--ok)','קמו בזמן'],[l2,'var(--warn)','באיחור'],[n2,'var(--bad)','לא קמו'],[s2,'var(--muted)','חולים']],inn.length,(d,tt)=>d===tt?'✓ כולם סומנו':`סומנו ${d} מתוך ${tt}`);markDone('mProg',inn.length>0&&u2+l2+n2+s2===inn.length)}
   $('mOpen').setAttribute('aria-pressed',!!S.onlyOpenM);
   const vis=st.filter(qMatch(S.mq)).filter(s=>!S.onlyOpenM||(!isOut(s.id)&&!S.wake.get(s.id)));
   let h='';if(!vis.length)h=`<div class="empty">${S.onlyOpenM?'כל התלמידים סומנו 👏':'אין תלמידים שמתאימים לחיפוש.'}</div>`;
@@ -1144,7 +1170,7 @@ function subPrevNight(){if(S.unPrev)S.unPrev();S.unPrev=null;if(!db||!S.access)r
 const defaultWakeTime=()=>S.mornDate===ymd(new Date())?Date.now():new Date(S.mornDate+'T'+(S.wakeTarget||'07:00')).getTime();
 async function wake(id,v){
   const cur=S.wake.get(id);
-  const ref=wakeRef(id),nm=S.students.get(id)?.name||'';try{if(cur&&cur.s===v)await OW(ref.delete());else await OW(ref.set({s:v,t:v==='up'?defaultWakeTime():null,at:Date.now(),by:S.me,byName:S.myName}));toast(cur&&cur.s===v?`הסימון של ${nm} בוטל`:`${nm}: ${({up:'קם',no:'לא קם',sick:'חולה'})[v]}`,undoRef(ref,cur?{...cur}:null))}catch(e){fail(e)}
+  const ref=wakeRef(id),nm=S.students.get(id)?.name||'';buzz();try{if(cur&&cur.s===v)await OW(ref.delete());else await OW(ref.set({s:v,t:v==='up'?defaultWakeTime():null,at:Date.now(),by:S.me,byName:S.myName}));toast(cur&&cur.s===v?`הסימון של ${nm} בוטל`:`${nm}: ${({up:'קם',no:'לא קם',sick:'חולה'})[v]}`,undoRef(ref,cur?{...cur}:null))}catch(e){fail(e)}
 }
 function subWake(){
   if(S.unWake)S.unWake();if(!db)return;
@@ -1232,9 +1258,10 @@ function renderStaffCard(){
   const row=(k,v)=>v?`<dt>${k}</dt><dd>${v}</dd>`:'';const ag=p?ageOf(p.birthDate):null;
   const canEdit=S.owner||uid===S.me;
   const body=p?row('תפקיד',esc(role))+row('שם משתמש',s?.username?`<span dir="ltr">${esc(s.username)}</span>`:'')+row('גיל',ag!=null?`${ag} <span class="sub">(נולד ${fmtDMY(p.birthDate)})</span>`:'')+row('טלפון',telLink(p.phone))+row('מייל',mailLink(p.email))+row('כתובת',esc(p.address||''))+row('תחילת עבודה',p.startDate?fmtDMY(p.startDate):'')+row('חירום',(p.emergencyName||p.emergencyPhone)?`${esc(p.emergencyName||'')}${p.emergencyName&&p.emergencyPhone?' · ':''}${telLink(p.emergencyPhone)}`:'')+row('הערות',esc(p.notes||'')):'';
+  const resend=S.owner&&uid!==S.me&&s?.username&&p!==null?`<div class="wa-box"><b>📨 שליחת פרטי כניסה לעובד</b><span class="muted" style="font-size:.85rem">נשלחים הקישור לאתר ולאפליקציה ושם המשתמש. הסיסמה לא נשמרת במערכת מטעמי אבטחה, ולכן לא נכללת בהודעה.</span>${welcomeBtns({name:nm,un:s.username,pw:'',email:p?.email||'',phone:p?.phone||''})}</div>`:'';
   $('stCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>כרטיס עובד</h2>${canEdit?'<button class="btn small" type="button" data-act="stEdit">עריכה</button>':''}</div>
   <div class="card"><div class="photo">${photoBox(ph||'',nm)}</div><div style="display:grid;gap:6px;min-width:0"><b style="font-size:1.1rem">${esc(nm)}</b>
-  ${p===null?'<span class="muted">טוען…</span>':`<dl class="kv">${body}</dl>${Object.keys(p).filter(k=>SF.includes(k)&&p[k]).length?'':`<span class="muted">עדיין לא הוזנו פרטים.${canEdit?' לחצו "עריכה" כדי להוסיף.':''}</span>`}`}</div></div>`;
+  ${p===null?'<span class="muted">טוען…</span>':`<dl class="kv">${body}</dl>${Object.keys(p).filter(k=>SF.includes(k)&&p[k]).length?'':`<span class="muted">עדיין לא הוזנו פרטים.${canEdit?' לחצו "עריכה" כדי להוסיף.':''}</span>`}`}</div></div>${resend}`;
 }
 function stOpenForm(){const p=S.stProf||{};SF.forEach(k=>$('sf-'+k).value=p[k]||'');S.stNewPhoto=undefined;$('stPhotoPrev').innerHTML=photoBox(S.stPhotos.get(S.stSel)||'',staffName(S.stSel));$('stForm').hidden=false;$('stCard').hidden=true}
 $('stPhoto').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{S.stNewPhoto=await resizePhoto(f);$('stPhotoPrev').innerHTML=photoBox(S.stNewPhoto,'')}catch{toast('לא הצלחתי לקרוא את התמונה. נסו קובץ JPG או PNG')}e.target.value=''});
@@ -1270,6 +1297,7 @@ async function mark(id,v){
   const same=cur&&(v==='l'?!!cur.late:cur.s===v&&!cur.late);
   const d=v==='l'?{s:'p',late:true,lt:Date.now(),at:Date.now(),by:S.me,byName:S.myName}:{s:v,at:Date.now(),by:S.me,byName:S.myName};
   const nm=S.students.get(id)?.name||'';
+  buzz();flashRow(id);
   try{if(same)await OW(ref.delete());else await OW(ref.set(d));toast(same?`הסימון של ${nm} בוטל`:`${nm}: ${v==='l'?'הגיע באיחור':v==='p'?'נוכח':'חסר'}`,undoRef(ref,cur?{...cur}:null))}catch(e){fail(e)}
 }
 async function roomAll(room){
@@ -1348,14 +1376,18 @@ document.addEventListener('click',async e=>{
     ['home','count','morn','out','stu','mgr','sched','cal','rooms','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='home')renderHome();if(S.tab==='rooms')subIns();if(S.tab==='staff')loadAudit();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
     try{localStorage.setItem('pn-tab',S.tab)}catch{}renderBnav();window.scrollTo(0,0);return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
-  if(!db&&!['close','open','nnClose','nnCat','absLen','onlyOpen','onlyOpenM','mtab','insSel','theme','bigText','go','menuOpen'].includes(b.dataset.act))return;
+  if(!db&&!['close','open','nnClose','nnCat','absLen','onlyOpen','onlyOpenM','mtab','insSel','theme','bigText','go','menuOpen','bRead','bShowAll'].includes(b.dataset.act))return;
   const id=b.dataset.id;
   switch(b.dataset.act){
-    case'mark':b.disabled=true;await mark(id,b.dataset.v);b.disabled=false;break;
+    case'mark':b.disabled=true;await mark(id,b.dataset.v);b.disabled=false;flashRow(id);break;
     case'roomAll':b.disabled=true;await roomAll(b.dataset.room);break;
     case'back':b.disabled=true;await goBack(id);break;
     case'open':openSheet(id);break;
     case'nn':openNN(id);break;
+    case'copyWelcome':try{await navigator.clipboard.writeText(S.lastWelcome||'');toast('ההודעה הועתקה')}catch{toast('לא הצלחתי להעתיק')}break;
+    case'bRead':{const r=bRead();r.add(b.dataset.id);try{localStorage.setItem('pn-bread',JSON.stringify([...r]))}catch{}renderBoard();break}
+    case'bShowAll':try{localStorage.removeItem('pn-bread')}catch{}S.bOpen=true;renderBoard();break;
+    case'bDel':{if(!armed(b,'למחוק?'))return;try{await OW(db.doc('settings/board').set({items:(S.board||[]).filter(m=>m.id!==b.dataset.id)}))}catch(e){fail(e)}break}
     case'onlyOpen':S.onlyOpen=!S.onlyOpen;renderCount();break;
     case'onlyOpenM':S.onlyOpenM=!S.onlyOpenM;renderMorn();break;
     case'mtab':S.mtab=b.dataset.t;applyMtab();if(S.mtab==='trends')loadTrends();break;
@@ -1418,7 +1450,7 @@ document.addEventListener('click',async e=>{
     case'removeStaff':if(!armed(b,'בטוח? שם המשתמש לא יהיה זמין שוב'))return;try{await db.doc('staff/'+id).delete();toast('הוסר מהצוות')}catch(e){fail(e)}break;
     case'goMgr':$('liveAlert').hidden=true;$('t-mgr').click();break;
     case'dismissLive':$('liveAlert').hidden=true;break;
-    case'wake':b.disabled=true;await wake(id,b.dataset.v);b.disabled=false;break;
+    case'wake':b.disabled=true;await wake(id,b.dataset.v);b.disabled=false;flashRow(id);break;
     case'roomWake':{b.disabled=true;const list=sorted().filter(s=>(s.room||'ללא חדר')===b.dataset.room&&!isOut(s.id)&&!S.wake.get(s.id));
       const refs=[];for(const s of list){const r=wakeRef(s.id);try{await OW(r.set({s:'up',t:defaultWakeTime(),at:Date.now(),by:S.me,byName:S.myName}));refs.push(r)}catch(e){fail(e);break}}
       if(refs.length)toast(`${refs.length} סומנו שקמו`,async()=>{for(const r of refs)await OW(r.delete())});break}
@@ -1734,6 +1766,68 @@ async function doBackup(b){if(!window.XLSX){toast('רכיב האקסל לא נט
     toast('הגיבוי הורד')}catch(e){fail(e)}
   if(b){b.disabled=false;b.textContent=b.dataset.t}}
 
+
+/* ---------- welcome message for new staff ---------- */
+const SITE_URL='https://dtpnimiya-star.github.io/pnimiya/',APK_URL=SITE_URL+'pnimiya.apk';
+const welcomeSubj=()=>'פרטי כניסה למערכת הנוכחות – פנימיית דעת תבונות';
+function welcomeText({name,un,pw}){return `שלום ${name||''},
+נפתח לך חשבון במערכת הנוכחות של פנימיית דעת תבונות.
+
+🔗 כניסה לאתר: ${SITE_URL}
+👤 שם משתמש: ${un}
+🔑 סיסמה: ${pw?pw:'(הסיסמה תימסר לך בנפרד)'}
+
+📱 אפליקציה לאנדרואיד: ${APK_URL}
+(אחרי ההורדה פותחים את הקובץ ומאשרים התקנה)
+🍏 באייפון: פותחים את קישור האתר ב-Safari ← כפתור שיתוף ← "הוסף למסך הבית".
+
+אחרי הכניסה הראשונה אפשר להחליף סיסמה: לוחצים על השם שלך בראש המסך ← החלפת סיסמה.
+בהצלחה!
+${S.myName||'מנהל הפנימייה'}`}
+const mailHref2=(to,subj,body)=>'mailto:'+encodeURIComponent(to||'')+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+function welcomeBtns(o){const tx=welcomeText(o);S.lastWelcome=tx;
+  return `<div class="row" style="gap:6px;margin-top:8px"><a class="btn small primary" href="${mailHref2(o.email,welcomeSubj(),tx)}">📧 שלח במייל${o.email?'':' (לבחור נמען)'}</a>${waNum(o.phone)?`<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/${waNum(o.phone)}?text=${encodeURIComponent(tx)}">💬 שלח בוואטסאפ</a>`:''}<button class="btn small" type="button" data-act="copyWelcome">העתק הודעה</button></div>`}
+
+/* ---------- staff announcements board ---------- */
+S.board=[];
+const bRead=()=>{try{return new Set(JSON.parse(localStorage.getItem('pn-bread')||'[]'))}catch{return new Set()}};
+function renderBoard(){const el=$('hmBoard');if(!el)return;const rd=bRead(),canPost=S.owner||has('mgr');
+  const msgs=(S.board||[]).slice().sort((a,b)=>b.at-a.at),open=msgs.filter(m=>!rd.has(m.id));
+  el.innerHTML=open.map(m=>`<div class="bmsg"><span style="font-size:1.2rem">📢</span><div class="tx">${esc(m.text)}<span class="by">${esc(m.byName||'')} · ${when(m.at)}</span></div><span class="row" style="gap:6px;flex-direction:column">${`<button class="btn small" type="button" data-act="bRead" data-id="${m.id}">קראתי</button>`}${canPost?`<button class="btn small" type="button" data-act="bDel" data-id="${m.id}">מחק</button>`:''}</span></div>`).join('')
+   +(canPost?`<details class="panel" ${S.bOpen?'open':''}><summary>📢 הודעה לכל הצוות</summary><form id="bForm" style="display:grid;gap:8px;margin-top:8px"><textarea id="bText" rows="2" required placeholder="למשל: השבת אין יציאות. נוכחות ערב ב-19:15"></textarea><div><button class="btn primary small" type="submit">פרסם</button></div>${msgs.length>open.length?`<span class="muted" style="font-size:.85rem">${msgs.length-open.length} הודעות שכבר קראת נשמרות כאן: <button type="button" class="btn small" data-act="bShowAll">הצג שוב</button></span>`:''}</form></details>`:'')}
+document.addEventListener('submit',async e=>{if(e.target.id!=='bForm')return;e.preventDefault();const tx=$('bText').value.trim();if(!tx)return;
+  const it={id:Math.random().toString(36).slice(2,10),text:tx,at:Date.now(),by:S.me,byName:S.myName};
+  try{await OW(db.doc('settings/board').set({items:[...(S.board||[]),it].slice(-20)}));S.bOpen=false;toast('ההודעה פורסמה לכל הצוות')}catch(err){fail(err)}});
+
+/* ---------- feedback: vibration, row flash, "all done" ---------- */
+const canBuzz=()=>!!navigator.vibrate&&(!navigator.userActivation||navigator.userActivation.isActive);
+const buzz=()=>{try{if(canBuzz())navigator.vibrate(18)}catch{}};
+function flashRow(id){requestAnimationFrame(()=>document.querySelectorAll(`.item [data-id="${id}"].name`).forEach(n=>{const it=n.closest('.item');it.classList.remove('flash');void it.offsetWidth;it.classList.add('flash')}))}
+const doneState={};
+function markDone(el,done){const p=$(el);if(!p)return;p.classList.toggle('done',done);const k=el+(el==='cProg'?S.night:S.mornDate);
+  if(done&&doneState[k]===false){const c=document.createElement('div');c.className='cheer';c.textContent='🎉 כולם סומנו!';document.body.appendChild(c);setTimeout(()=>c.remove(),1900);try{if(canBuzz())navigator.vibrate([30,60,30])}catch{}}
+  doneState[k]=done}
+
+/* ---------- student card summary (this month) ---------- */
+S.sumC=new Map();
+async function loadStuSum(sid){const today=ymd(new Date()),key=sid+'|'+today;if(S.sumC.has(key)){renderStuSum(sid);return}S.sumC.set(key,null);
+  const d0=new Date();d0.setDate(1);const days=[];for(let k=ymd(d0);k<=today;k=addD(k,1))days.push(k);
+  const g=p=>db.doc(p).get().then(d=>d.exists?d.data():null).catch(()=>null);
+  const [ev,mo]=await Promise.all([Promise.all(days.map(k=>g('nightcount/'+k+'/marks/'+sid))),Promise.all(days.map(k=>g('morning/'+k+'/marks/'+sid)))]);
+  S.sumC.set(key,{ev,mo});renderStuSum(sid)}
+function renderStuSum(sid){const el=$('shSum');if(!el||S.sel!==sid)return;const c=S.sumC.get(sid+'|'+ymd(new Date()));
+  if(!c){el.innerHTML='<span class="muted" style="font-size:.9rem">טוען סיכום חודשי…</span>';return}
+  const ev=c.ev.filter(Boolean),p=ev.filter(x=>x.s==='p').length,a=ev.filter(x=>x.s==='a').length,lin=ev.filter(x=>x.late).length;
+  const wl=c.mo.filter(x=>isLate(x)).length,wn=c.mo.filter(x=>x&&x.s==='no').length;
+  const pct=ev.length?Math.round(p/ev.length*100):null,pts=ptsMonth(sid),ms=monthStart();
+  const beh=(S.notes||[]).filter(n=>n.sid===sid&&isBeh(n)&&n.at>=ms).length;
+  const last=(S.notes||[]).filter(n=>n.sid===sid).sort((x,y)=>y.at-x.at)[0];
+  const st=(v,l,cls)=>`<div class="st ${cls||''}"><b>${v}</b><span>${l}</span></div>`;
+  el.innerHTML=st(pct==null?'—':pct+'%','נוכחות ערב החודש'+(ev.length?` (${p}/${ev.length})`:''),pct==null?'':pct>=90?'ok':pct>=75?'warn':'bad')
+    +st(a,'ערבים חסר',a?'bad':'')+st(lin+wl,'איחורים (ערב '+lin+' · השכמה '+wl+')',lin+wl?'warn':'')+(wn?st(wn,'פעמים לא קם','bad'):'')
+    +((has('notes')||has('mgr'))?st(pts,'נקודות שבח',pts?'ok':'')+st(beh,'הערות התנהגות',beh?'bad':''):'')
+    +(last&&(has('notes')||has('mgr'))?`<div class="last muted">הערה אחרונה (${when(last.at)}): <span style="color:var(--ink)">${esc(String(last.text||'').slice(0,90))}</span></div>`:'')}
+
 /* ---------- birthdays ---------- */
 const HBM=['תשרי','חשון','כסלו','טבת','שבט','אדר','אדר א\'','אדר ב\'','ניסן','אייר','סיון','תמוז','אב','אלול'];
 const HBM_EN={Tishri:'תשרי',Heshvan:'חשון',Kislev:'כסלו',Tevet:'טבת',Shevat:'שבט',Adar:'אדר','Adar I':'אדר א\'','Adar II':'אדר ב\'',Nisan:'ניסן',Iyar:'אייר',Sivan:'סיון',Tamuz:'תמוז',Av:'אב',Elul:'אלול'};
@@ -1779,7 +1873,7 @@ function renderHome(){
     {const hn=outs.filter(s=>isHome(s.id)).length;tile('out','מחוץ לפנימייה',outs.length,[hn?`<b>${hn}</b> בבית (היעדרות)`:'',late.length?`<b>${late.length}</b> באיחור בחזרה`:'אין איחורים בחזרה'].filter(Boolean).join(' · '),late.length>0)}}
   if(has('mgr')){const open=S.notes.filter(n=>isBeh(n)&&!n.handled&&S.students.has(n.sid)).length;tile('mgr','התראות התנהגות',open,open?'ממתינות לטיפול':'אין התראות פתוחות',open>0)}
   $('hmTiles').innerHTML=tiles.join('');
-  renderBirthdays();renderBackupNote();renderNotifBtn();
+  renderBirthdays();renderBackupNote();renderNotifBtn();renderBoard();
   const nx=events().filter(e=>e.to>=today).slice(0,3);
   $('hmNextP').hidden=!nx.length;
   $('hmNext').innerHTML=nx.map(e=>`<div class="ev"><i style="background:${dotC(e.k)}"></i><span class="when">${rangeTxt(e.from,e.to)}</span><b>${esc(e.name)}</b></div>`).join('');
@@ -1966,8 +2060,11 @@ $('newStaff').addEventListener('submit',async e=>{e.preventDefault();if(!S.owner
     const sa=sec.auth();await sa.setPersistence(firebase.auth.Auth.Persistence.NONE);
     const cred=await sa.createUserWithEmailAndPassword(u2e(un),pw);await sa.signOut();
     await db.doc('staff/'+cred.user.uid).set({name,username:un,role,perms:presetPerms(role),active:true,addedAt:Date.now()});
-    $('nsName').value='';$('nsUser').value='';$('nsPass').value='';
-    msg.textContent=`נוצר: ${name}. שם משתמש: ${un} · סיסמה: ${pw}. מסרו לעובד את הפרטים.`;msg.hidden=false;
+    const em=$('nsEmail').value.trim(),ph=$('nsPhone').value.trim();
+    if(em||ph)await db.doc('staffProfiles/'+cred.user.uid).set({email:em,phone:ph,startDate:ymd(new Date())},{merge:true}).catch(()=>{});
+    $('nsName').value='';$('nsUser').value='';$('nsPass').value='';$('nsEmail').value='';$('nsPhone').value='';
+    msg.innerHTML=`<b>✓ נוצר חשבון ל${esc(name)}</b><br>שם משתמש: <span dir="ltr">${esc(un)}</span> · סיסמה: <span dir="ltr">${esc(pw)}</span>${welcomeBtns({name,un,pw,email:em,phone:ph})}`;msg.hidden=false;
+    if(em){location.href=mailHref2(em,welcomeSubj(),welcomeText({name,un,pw}))}
   }catch(ex){msg.textContent=authMsg(ex);msg.hidden=false}
   $('nsBtn').disabled=false;
 });
@@ -1984,6 +2081,7 @@ function subscribeAll(){
   else S.notes=[];
   S.subs.push(db.collection('moves').orderBy('at','desc').limit(300).onSnapshot(snap=>{S.moves=snap.docs.map(d=>({id:d.id,...d.data()}));resolveNames(S.moves);renderAll()},onErr));
   S.subs.push(db.doc('schedule/week').onSnapshot(d=>{S.sched=d.exists?d.data():null;renderSched();renderHome()},onErr));
+  S.subs.push(db.doc('settings/board').onSnapshot(d=>{S.board=d.exists?(d.data().items||[]):[];renderHome()},()=>{}));
   S.subs.push(db.doc('settings/app').onSnapshot(d=>{S.settings=d.exists?d.data():null;S.wakeTarget=S.settings?.wakeTarget||'07:00';renderMorn()},onErr));
   if(has('personal'))S.subs.push(db.collection('profiles').onSnapshot(snap=>{S.profiles=new Map(snap.docs.map(d=>[d.id,d.data()]));renderSheet()},onErr));
   else S.profiles=new Map();
