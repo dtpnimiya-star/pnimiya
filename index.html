@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-25";
+const APP_VERSION = "2026-11-02-26";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -194,7 +194,7 @@ html.big .seg button,html.big .btn{font-size:1.02rem}
 .mtabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .ins-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
 .ins-tiles button{border:1px solid var(--line);border-radius:12px;padding:8px 4px;display:grid;gap:2px;justify-items:center;font:inherit;color:var(--ink);cursor:pointer}
-.ins-tiles button b{font-size:1rem}.ins-tiles button span{font-size:.8rem;font-weight:700}
+.ins-tiles button b{font-size:1rem}.ins-tiles button span{font-size:.8rem;font-weight:700}.ins-tiles button small{font-size:.74rem;font-weight:600;color:var(--muted)}
 .ins-tiles button[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:1px}
 .view-opts{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0 10px}
 .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
@@ -1692,7 +1692,8 @@ function renderIns(){if(S.tab!=='rooms')return;const w=S.insWeek;
   const best=done.slice().sort((a,b)=>S.ins.get(b).score-S.ins.get(a).score).filter(r=>S.ins.get(r).score===5);
   $('insSum').innerHTML=`<div class="row" style="gap:8px"><span class="pill">${done.length}/${R.length} חדרים נבדקו</span>${avg!=null?`<span class="pill">ממוצע ${avg.toFixed(1)} מתוך 5</span>`:''}${best.length?`<span class="pill ok">🏆 מצטיינים: ${best.map(r=>'חדר '+r).join(', ')}</span>`:''}</div>`;
   const ro=S.ro||!has('rooms');
-  $('insTiles').innerHTML=R.map(r=>{const x=S.ins.get(r);return `<button type="button" data-act="insSel" data-room="${esc(r)}" aria-pressed="${S.insSel===r}" style="background:${scoreCol(x?.score)}"><b>${esc(r)}</b><span>${x?x.score+'/5':'—'}</span></button>`}).join('');
+  $('insTiles').innerHTML=R.map(r=>{const x=S.ins.get(r);const gs=[...new Set(allSorted().filter(s=>String(s.room)===r).map(s=>s.grade).filter(Boolean))].sort((a,b)=>GRADES.indexOf(a)-GRADES.indexOf(b));
+    return `<button type="button" data-act="insSel" data-room="${esc(r)}" aria-pressed="${S.insSel===r}" style="background:${scoreCol(x?.score)}"><b>${esc(r)}</b><small>${gs.length?gs.map(g=>esc(g)).join(', '):'ריק'}</small><span>${x?x.score+'/5':'—'}</span></button>`}).join('');
   if(!S.insSel){$('insGrid').innerHTML='<div class="muted">לחצו על חדר כדי לבדוק אותו.</div>';return}
   $('insGrid').innerHTML=R.filter(r=>r===S.insSel).map(r=>{const x=S.ins.get(r),c=x?.checks||{};const who=allSorted().filter(s=>String(s.room)===r).map(s=>s.name);
     return `<div class="room-card"><div class="hd"><b>חדר ${esc(r)}</b><span class="sc" style="background:${scoreCol(x?.score)}">${x?x.score+'/5':'—'}</span></div>
