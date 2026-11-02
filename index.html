@@ -24,7 +24,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-5";
+const APP_VERSION = "2026-11-02-6";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -255,6 +255,14 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
         <input type="password" id="pwOld" placeholder="סיסמה נוכחית" autocomplete="current-password" required dir="ltr" aria-label="סיסמה נוכחית">
         <input type="password" id="pwNew" placeholder="סיסמה חדשה (6 תווים לפחות)" autocomplete="new-password" required minlength="6" dir="ltr" aria-label="סיסמה חדשה">
         <div class="row"><button class="btn primary" type="submit">שמור סיסמה</button><button class="btn" type="button" data-act="logout">יציאה מהחשבון</button></div>
+      </form>
+      <form id="ownForm" style="display:grid;gap:8px;border-top:1px solid var(--line);padding-top:12px" hidden>
+        <h2>החלפת שם משתמש וסיסמה למנהל</h2>
+        <span class="muted" style="font-size:.88rem">בחרו שם משתמש וסיסמה חדשים. אין צורך בסיסמה הישנה. כל הנתונים והעובדים נשארים.</span>
+        <input id="owUser" placeholder="שם משתמש חדש (באנגלית או מספרים)" required dir="ltr" autocapitalize="none" spellcheck="false" autocomplete="off" aria-label="שם משתמש חדש">
+        <input id="owPass" placeholder="סיסמה חדשה (6 תווים לפחות)" required minlength="6" dir="ltr" autocapitalize="none" spellcheck="false" autocomplete="off" aria-label="סיסמה חדשה">
+        <div><button class="btn primary" type="submit" id="owBtn">שמור פרטי כניסה חדשים</button></div>
+        <div id="owMsg" class="notice" hidden></div>
       </form>
     </div>
     <div class="sum" id="topSum" aria-live="polite"></div>
@@ -1128,10 +1136,21 @@ $('lgForm').addEventListener('submit',async e=>{e.preventDefault();
   try{
     if(S.setupMode){const cred=await auth.createUserWithEmailAndPassword(u2e(un),pw);
       await db.doc('config/owner').set({uid:cred.user.uid,name:$('lgFull').value.trim()||un,username:un,createdAt:Date.now()})}
-    else await auth.signInWithEmailAndPassword(u2e(un),pw);
+    else{try{await auth.signInWithEmailAndPassword(u2e(un),pw)}catch(ex){if(pw!==pw.trim()&&/invalid-credential|wrong-password/.test(ex.code||''))await auth.signInWithEmailAndPassword(u2e(un),pw.trim());else throw ex}}
   }catch(ex){err.textContent=authMsg(ex);err.hidden=false}
   $('lgBtn').disabled=false;
 });
+$('ownForm').addEventListener('submit',async e=>{e.preventDefault();if(!S.owner)return;
+  const un=$('owUser').value.trim().toLowerCase(),pw=$('owPass').value,msg=$('owMsg');msg.hidden=true;
+  if(!USER_RE.test(un)){msg.textContent='שם משתמש: 3–30 תווים באנגלית, מספרים, נקודה, קו תחתון או מקף';msg.hidden=false;return}
+  if(pw.length<6){msg.textContent='הסיסמה צריכה לפחות 6 תווים';msg.hidden=false;return}
+  $('owBtn').disabled=true;
+  try{const sec=firebase.apps.find(a=>a.name==='staff-maker')||firebase.initializeApp(FIREBASE_CONFIG,'staff-maker');
+    const sa=sec.auth();await sa.setPersistence(firebase.auth.Auth.Persistence.NONE);
+    const cred=await sa.createUserWithEmailAndPassword(u2e(un),pw);await sa.signOut();
+    await db.doc('config/owner').set({...(S.ownerDoc||{}),uid:cred.user.uid,username:un,changedAt:Date.now()});
+    await auth.signOut();await auth.signInWithEmailAndPassword(u2e(un),pw);location.reload();
+  }catch(ex){msg.textContent=authMsg(ex);msg.hidden=false;$('owBtn').disabled=false}});
 $('pwForm').addEventListener('submit',async e=>{e.preventDefault();const u=auth.currentUser;if(!u)return;
   try{await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,$('pwOld').value));
     await u.updatePassword($('pwNew').value);$('pwOld').value='';$('pwNew').value='';$('acctPanel').hidden=true;toast('הסיסמה עודכנה')}
@@ -1182,7 +1201,7 @@ function recompute(){
   else if(me&&me.active!==false){S.perm=me.perms||{};S.myName=me.name||me.username||'';S.na=PERMS.some(([k])=>S.perm[k])?'':'none'}
   else{S.perm=null;S.na=me?'disabled':'removed';S.myName=me?.name||''}
   S.names[S.me]=S.myName;S.permReady=true;
-  $('acctBtn').textContent=(S.myName||'החשבון שלי')+' ▾';$('acctBtn').hidden=false;
+  $('acctBtn').textContent=(S.myName||'החשבון שלי')+' ▾';$('acctBtn').hidden=false;$('ownForm').hidden=!S.owner;
   applyPerms();
   const key=JSON.stringify([S.owner,S.perm]);
   if(key!==S.permKey){S.permKey=key;subscribeAll()}
