@@ -24,7 +24,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-11";
+const APP_VERSION = "2026-11-02-12";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -206,6 +206,23 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
 .mr-grade:first-child{border-top:0;padding-top:0}
 .mr-grade ul{margin:0;padding-inline-start:18px;display:grid;gap:2px}
 .mr-grade .row{justify-content:space-between}
+body[data-tab="home"] #topSum,body[data-tab="home"] #gradeFilter,body[data-tab="sched"] #topSum,body[data-tab="sched"] #gradeFilter,body[data-tab="cal"] #topSum,body[data-tab="cal"] #gradeFilter,body[data-tab="staff"] #topSum,body[data-tab="staff"] #gradeFilter{display:none!important}
+.home-hero{display:grid;gap:4px;padding:6px 2px}
+.home-hero .hi{font-family:var(--f-display);font-size:1.7rem;line-height:1.2;margin:0;font-weight:400}
+.home-hero .dt{color:var(--muted)}
+.home-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{display:grid;gap:4px;text-align:right;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;font:inherit;color:var(--ink);min-width:0}
+.tile:hover{border-color:var(--accent)}
+.tile .t-l{font-size:.85rem;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:6px}
+.tile .t-l svg{width:16px;height:16px}
+.tile .t-n{font-family:var(--f-display);font-size:2rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile .t-s{font-size:.85rem;color:var(--muted)}
+.tile .t-s b{font-weight:700}
+.tile.alert{border-color:var(--bad);background:color-mix(in srgb,var(--bad-bg) 60%,var(--surface))}
+.home-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.home-links button{display:grid;justify-items:center;gap:6px;padding:14px 8px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 .92rem var(--f-body);cursor:pointer}
+.home-links button:hover{background:var(--soft)}
+.home-links svg{width:26px;height:26px;color:var(--accent)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
 .cal-h{text-align:center;font-size:.78rem;font-weight:700;color:var(--muted);padding:2px 0}
 .cal-d{min-height:64px;border-radius:6px;padding:4px 4px 5px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:1px;min-width:0;font-size:.72rem;line-height:1.2}
@@ -263,7 +280,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <button class="menu-btn" id="menuBtn" data-act="menu" type="button" aria-label="פתיחת תפריט" aria-expanded="false" aria-controls="drawer" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg><span class="badge dot" id="menuBadge" hidden></span>
       </button>
-      <div class="title-block"><span class="kicker">נוכחות פנימייה</span><h1 id="pageTitle">נוכחות פנימייה</h1></div>
+      <div class="title-block" data-act="go" data-to="home" style="cursor:pointer" title="מסך הבית"><span class="kicker">נוכחות פנימייה</span><h1 id="pageTitle">נוכחות פנימייה</h1></div>
       <span class="night" id="nightLabel"></span>
       <button class="btn small" id="acctBtn" data-act="acct" hidden aria-expanded="false" aria-controls="acctPanel"></button>
     </div>
@@ -293,6 +310,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 <nav class="drawer" id="drawer" aria-label="תפריט ראשי" aria-hidden="true">
   <div class="drawer-head"><img id="drawerLogo" alt="דעת תבונות, פנימייה" width="150" height="122"><button class="menu-close" type="button" data-act="menuClose" aria-label="סגירת התפריט"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="drawer-list">
+    <button type="button" id="t-home" data-tab="home" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span class="lbl">מסך הבית</span></button>
     <button type="button" id="t-count" data-tab="count" data-perm="count" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><span class="lbl">ספירת לילה</span></button>
     <button type="button" id="t-morn" data-tab="morn" data-perm="morning" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span class="lbl">השכמה</span></button>
     <button type="button" id="t-out" data-tab="out" data-perm="out" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M9 8l-4 4 4 4M5 12h11"/></svg><span class="lbl">יציאות</span></button>
@@ -320,6 +338,15 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     </form>
   </div>
   <div id="noAccess" class="panel"><h2 id="naTitle">טוען…</h2><p id="naText" class="muted" style="margin:0"></p></div>
+
+  <!-- מסך הבית -->
+  <section id="tab-home" hidden style="display:grid;gap:16px">
+    <div class="home-hero" id="hmHero"></div>
+    <div id="hmNow"></div>
+    <div class="home-tiles" id="hmTiles"></div>
+    <div class="panel" id="hmNextP"><h2>בקרוב בלוח השנה</h2><div id="hmNext"></div></div>
+    <div><h2 style="margin-bottom:8px">מעבר מהיר</h2><div class="home-links" id="hmLinks"></div></div>
+  </section>
 
   <!-- ספירת לילה -->
   <section id="tab-count" hidden style="display:grid;gap:14px">
@@ -896,7 +923,7 @@ function applyPerms(){
   $('topSum').hidden=!ok;
   const na=$('noAccess');na.hidden=ok;
   if(!ok){
-    ['count','morn','out','stu','mgr','sched','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
+    ['home','count','morn','out','stu','mgr','sched','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
     const m={removed:['אין לך גישה','החשבון הזה לא רשום כאיש צוות. פנו למנהל הפנימייה.'],
       disabled:['הגישה שלך הושבתה','מנהל הפנימייה השבית את הגישה שלך. לפרטים, פנו אליו.'],
       none:['אין לך עדיין הרשאות','מנהל הפנימייה עוד לא הגדיר מה מותר לך לעשות. פנו אליו.'],
@@ -909,7 +936,7 @@ function applyPerms(){
   const cur=$('t-'+S.tab);
   if(!cur||cur.hidden||$('tab-'+S.tab).hidden){let want=null;try{want=localStorage.getItem('pn-tab')}catch{}
     const btns=[...document.querySelectorAll('.drawer [data-tab]')].filter(b=>!b.hidden);
-    (btns.find(b=>b.dataset.tab===want&&want!==S.tab)||btns[0])?.click()}
+    btns[0]?.click()}
   renderAll();
 }
 function renderStaff(){
@@ -933,7 +960,7 @@ document.addEventListener('change',async e=>{
     else if(el.dataset.sact==='perm'){const s=S.staff.find(x=>x.id===id);const perms={...(s?.perms||{}),[el.dataset.k]:el.checked};await db.doc('staff/'+id).update({perms});toast('ההרשאות עודכנו')}
   }catch(err){fail(err)}
 });
-function renderAll(){renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes();renderSched()}
+function renderAll(){renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes();renderSched();renderHome()}
 
 /* ---------- sheet ---------- */
 function setRoomSel(sel,v){if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o)}sel.value=v}
@@ -1016,8 +1043,8 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act],[data-tab]');
   if(e.target===$('sheetBg')){closeSheet();return}
   if(!b)return;
-  if(b.dataset.tab){S.tab=b.dataset.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
-    ['count','morn','out','stu','mgr','sched','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
+  if(b.dataset.tab){S.tab=b.dataset.tab;document.body.dataset.tab=S.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
+    ['home','count','morn','out','stu','mgr','sched','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='home')renderHome();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
     try{localStorage.setItem('pn-tab',S.tab)}catch{}return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
   if(!db&&b.dataset.act!=='close'&&b.dataset.act!=='open')return;
@@ -1049,6 +1076,7 @@ document.addEventListener('click',async e=>{
     case'schCopy':{schCollect();const to=[...$('schList').querySelectorAll('[data-copy]:checked')].map(x=>+x.dataset.copy);if(!to.length){toast('סמנו לאילו ימים להעתיק');break}
       await schSave(b,to);break}
     case'mrCopy':{const t=S.mrTexts?.[b.dataset.g]||'';try{await navigator.clipboard.writeText(t);toast('הדוח הועתק')}catch{toast('לא הצלחתי להעתיק')}break}
+    case'go':$('t-'+b.dataset.to)?.click();break;
     case'calPrev':S.calM=Math.max(0,S.calM-1);renderCal();break;
     case'calNext':S.calM=Math.min(HMONTHS.length-1,S.calM+1);renderCal();break;
     case'repRange':setRange(b.dataset.d);break;
@@ -1193,6 +1221,34 @@ function renderSched(){
   else $('schList').innerHTML=it.map(x=>{const f=tmin(x.from),e=tmin(x.to);const cur=isToday&&ni.cur===x;const past=isToday&&!cur&&f!=null&&((e??f)<ni.m)&&!(e!=null&&e<f);
     return `<div class="sch-item ${cur?'now':''} ${past?'past':''}"><span class="sch-time">${esc(x.from)}${x.to?`<small>עד ${esc(x.to)}</small>`:''}</span><span class="sch-what"><b>${esc(x.title)}</b><span class="sch-chip" style="background:${SK[x.k]?.[1]||'var(--soft)'}">${SK[x.k]?.[0]||''}</span>${cur?'<span class="chip ok">עכשיו</span>':''}</span></div>`}).join('');
   $('schLegend').innerHTML=Object.values(SK).map(([l,c])=>`<span><i style="background:${c}"></i>${l}</span>`).join('');
+}
+
+/* ---------- home ---------- */
+function renderHome(){
+  if(S.tab!=='home')return;
+  const now=new Date(),h=now.getHours(),today=ymd(now),hb=heb(today),ti=dayInfo(today);
+  const greet=h<5?'לילה טוב':h<12?'בוקר טוב':h<17?'צהריים טובים':h<21?'ערב טוב':'לילה טוב';
+  const first=(S.myName||'').split(' ')[0];
+  const calTxt=offK.has(ti.k)?(ti.k==='c'?'חג':'חופשה')+(ti.l?' · '+ti.l:''):ti.k==='t'?(ti.l||'טיול'):ti.k==='l'?'תחילת לימודים 12:00':ti.l||(ti.k==='s'?'שבת':'יום לימודים');
+  $('hmHero').innerHTML=`<h2 class="hi">${greet}${first?', '+esc(first):''}</h2><span class="dt">${hb?hNum(hb.day)+' '+hb.m+' · ':''}${nf.format(now)}</span><span><span class="pill" style="background:${dotC(ti.k==='w'?'x':ti.k)};color:var(--ink)">${esc(calTxt)}</span></span>`;
+  const ni=S.sched?schNowInfo():null;
+  $('hmNow').innerHTML=ni&&(ni.cur||ni.next)?`<button type="button" class="calnote" data-act="go" data-to="sched" style="width:100%;text-align:right;cursor:pointer;font:inherit;color:var(--ink);background:${ni.cur?SK[ni.cur.k]?.[1]:'var(--soft)'}"><span style="display:grid;gap:2px"><span>עכשיו: ${ni.cur?esc(ni.cur.title)+' · <bdi dir="ltr">'+esc(ni.cur.from)+(ni.cur.to?'–'+esc(ni.cur.to):'')+'</bdi>':'אין פעילות מתוכננת'}</span>${ni.next?`<span class="muted" style="font-weight:400">הבא: ${esc(ni.next.title)} · ${esc(ni.next.from)}</span>`:''}</span></button>`:'';
+  const ico=t=>$('t-'+t)?.querySelector('svg')?.outerHTML.replace('class="ni"','')||'';
+  const st=allSorted(),act=st.filter(s=>!isOut(s.id)),tiles=[];
+  const tile=(to,label,n,sub,alert)=>tiles.push(`<button type="button" class="tile ${alert?'alert':''}" data-act="go" data-to="${to}"><span class="t-l">${ico(to)}${label}</span><span class="t-n">${n}</span><span class="t-s">${sub}</span></button>`);
+  if(has('stu'))tile('stu','תלמידים',st.length,`<b>${act.length}</b> בפנימייה · <b>${st.length-act.length}</b> בחוץ`);
+  if(has('count')){let p=0,a=0;act.forEach(s=>{const m=S.marks.get(s.id)?.s;if(m==='p')p++;else if(m==='a')a++});const u=act.length-p-a;
+    tile('count','ספירת לילה',`${p}/${act.length}`,a?`<b>${a}</b> חסרים · ${u} לא נבדקו`:u?`${u} לא נבדקו`:'כולם נבדקו',a>0)}
+  if(has('morning')){let up=0,late=0,no=0,pa=0;act.forEach(s=>{const m=S.wake.get(s.id);if(m?.s==='up'){up++;if(isLate(m))late++}else if(m?.s==='no')no++;if(S.prevNight.get(s.id)?.s==='a')pa++});
+    tile('morn','השכמה היום',`${up}/${act.length}`,[late?`<b>${late}</b> איחרו`:'',no?`<b>${no}</b> לא קמו`:'',pa?`<b>${pa}</b> לא נכחו בלילה`:''].filter(Boolean).join(' · ')||'עדיין אין חריגים',no>0)}
+  if(has('out')){const outs=st.filter(s=>isOut(s.id)),late=outs.filter(s=>{const b=S.status.get(s.id)?.backBy;return b&&b<Date.now()});
+    tile('out','מחוץ לפנימייה',outs.length,late.length?`<b>${late.length}</b> באיחור בחזרה`:'אין איחורים בחזרה',late.length>0)}
+  if(has('mgr')){const open=S.notes.filter(n=>isBeh(n)&&!n.handled&&S.students.has(n.sid)).length;tile('mgr','התראות התנהגות',open,open?'ממתינות לטיפול':'אין התראות פתוחות',open>0)}
+  $('hmTiles').innerHTML=tiles.join('');
+  const nx=events().filter(e=>e.to>=today).slice(0,3);
+  $('hmNextP').hidden=!nx.length;
+  $('hmNext').innerHTML=nx.map(e=>`<div class="ev"><i style="background:${dotC(e.k)}"></i><span class="when">${rangeTxt(e.from,e.to)}</span><b>${esc(e.name)}</b></div>`).join('');
+  $('hmLinks').innerHTML=[...document.querySelectorAll('.drawer-list button')].filter(b=>!b.hidden&&b.dataset.tab!=='home').map(b=>`<button type="button" data-act="go" data-to="${b.dataset.tab}">${b.querySelector('svg').outerHTML.replace('class="ni"','')}<span>${b.querySelector('.lbl').textContent}</span></button>`).join('');
 }
 
 /* ---------- reports ---------- */
