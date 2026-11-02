@@ -24,7 +24,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-9";
+const APP_VERSION = "2026-11-02-10";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -202,6 +202,10 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
 .sch-edit>*{min-width:0}
 .sch-edit input[type=time]{width:7.2em;padding:7px 6px}
 @media (max-width:560px){.sch-edit{grid-template-columns:auto auto 1fr;}.sch-edit .k,.sch-edit .del{grid-row:2}.sch-edit .k{grid-column:1/3}}
+.mr-grade{display:grid;gap:6px;padding:10px 0;border-top:1px solid var(--line)}
+.mr-grade:first-child{border-top:0;padding-top:0}
+.mr-grade ul{margin:0;padding-inline-start:18px;display:grid;gap:2px}
+.mr-grade .row{justify-content:space-between}
 .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
 .cal-h{text-align:center;font-size:.78rem;font-weight:700;color:var(--muted);padding:2px 0}
 .cal-d{min-height:64px;border-radius:6px;padding:4px 4px 5px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:1px;min-width:0;font-size:.72rem;line-height:1.2}
@@ -340,6 +344,25 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <div id="mornCal"></div>
     <div id="mornSum" class="sum"></div>
     <div id="mornList"></div>
+    <details class="panel" id="repMorn" open>
+      <summary style="font-size:1.05rem">דוח בוקר למחנכים</summary>
+      <div style="display:grid;gap:12px;margin-top:10px">
+        <span class="muted" style="font-size:.9rem">הדוח נבנה מספירת הלילה שלפני ומההשכמה של הבוקר. לחיצה על "שלח" פותחת מייל מוכן באפליקציית המייל שלך, ונשאר רק ללחוץ שליחה.</span>
+        <div id="mrPreview"></div>
+        <details id="mrSettings"><summary>מיילים של המחנכים</summary>
+          <form id="eduForm" style="display:grid;gap:8px;margin-top:8px">
+            <div class="pf-grid">
+              <label>מחנך כיתה ט<input id="edu-ט" type="email" dir="ltr" autocomplete="off" placeholder="name@example.com"></label>
+              <label>מחנך כיתה י<input id="edu-י" type="email" dir="ltr" autocomplete="off" placeholder="name@example.com"></label>
+              <label>מחנך כיתה יא<input id="edu-יא" type="email" dir="ltr" autocomplete="off" placeholder="name@example.com"></label>
+              <label>מחנך כיתה יב<input id="edu-יב" type="email" dir="ltr" autocomplete="off" placeholder="name@example.com"></label>
+              <label class="full">עותק לכל דוח (לא חובה)<input id="edu-cc" type="email" dir="ltr" autocomplete="off" placeholder="למשל המייל שלך"></label>
+            </div>
+            <div><button class="btn small primary" type="submit">שמור מיילים</button></div>
+          </form>
+        </details>
+      </div>
+    </details>
   </section>
 
   <!-- יציאות -->
@@ -547,7 +570,7 @@ const df=new Intl.DateTimeFormat('he-IL',{day:'numeric',month:'numeric',hour:'2-
 const nf=new Intl.DateTimeFormat('he-IL',{weekday:'long',day:'numeric',month:'long'});
 const when=t=>{if(!t)return'';const d=new Date(t);return ymd(d)===ymd(new Date())?'היום '+tf.format(d):df.format(d)};
 
-const S={students:new Map(),status:new Map(),marks:new Map(),notes:[],moves:[],names:{},me:null,night:nightKey(),tab:'count',sel:null,q:'',grade:'',xl:null,ready:false,wake:new Map(),mornDate:ymd(new Date()),wakeTarget:'07:00',settings:null,perm:null,owner:false,staff:[],requests:[],calM:null,sched:undefined,schDay:null,schEdit:null,profiles:new Map(),photos:new Map(),permReady:false,access:false};
+const S={students:new Map(),status:new Map(),marks:new Map(),notes:[],moves:[],names:{},me:null,night:nightKey(),tab:'count',sel:null,q:'',grade:'',xl:null,ready:false,wake:new Map(),mornDate:ymd(new Date()),wakeTarget:'07:00',settings:null,perm:null,owner:false,staff:[],requests:[],calM:null,prevNight:new Map(),sched:undefined,schDay:null,schEdit:null,profiles:new Map(),photos:new Map(),permReady:false,access:false};
 let db=null,user=null,unMarks=null;
 
 function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
@@ -774,22 +797,25 @@ function renderMorn(){
   const tg=$('mornTarget');if(document.activeElement!==tg)tg.value=S.wakeTarget||'07:00';
   tg.disabled=!(S.owner||has('mgr'));tg.title=tg.disabled?'רק המנהל יכול לשנות את שעת ההשכמה':'';
   const st=sorted();if(!st.length){$('mornSum').innerHTML='';$('mornList').innerHTML=emptyStudents();return}
-  let up=0,late=0,no=0,sick=0,out=0,un=0;const mins=[];
+  let up=0,late=0,no=0,sick=0,out=0,un=0,nAbs=0;const mins=[];st.forEach(s=>{if(!isOut(s.id)&&S.prevNight.get(s.id)?.s==='a')nAbs++});
   st.forEach(s=>{if(isOut(s.id)){out++;return}const m=S.wake.get(s.id);
     if(!m)un++;else if(m.s==='up'){up++;if(isLate(m))late++;if(m.t)mins.push(toMin(hm(m.t)))}else if(m.s==='no')no++;else sick++});
   const avg=mins.length?Math.round(mins.reduce((a,b)=>a+b,0)/mins.length):null;
-  $('mornSum').innerHTML=`<span class="pill ok">${up} קמו</span>${late?`<span class="pill warn">${late} באיחור</span>`:''}<span class="pill bad">${no} לא קמו</span>${sick?`<span class="pill warn">${sick} חולים</span>`:''}<span class="pill">${un} לא נבדקו</span>${out?`<span class="pill">${out} בחוץ</span>`:''}${avg!=null?`<span class="pill">ממוצע ${pad(Math.floor(avg/60))}:${pad(avg%60)}</span>`:''}`;
+  $('mornSum').innerHTML=`${nAbs?`<span class="pill bad">${nAbs} לא נכחו בלילה</span>`:''}<span class="pill ok">${up} קמו</span>${late?`<span class="pill warn">${late} באיחור</span>`:''}<span class="pill bad">${no} לא קמו</span>${sick?`<span class="pill warn">${sick} חולים</span>`:''}<span class="pill">${un} לא נבדקו</span>${out?`<span class="pill">${out} בחוץ</span>`:''}${avg!=null?`<span class="pill">ממוצע ${pad(Math.floor(avg/60))}:${pad(avg%60)}</span>`:''}`;
   let h='';
   for(const [room,list] of groupRooms(st)){
     const open=list.filter(s=>!isOut(s.id)&&!S.wake.get(s.id));
     h+=`<div class="room"><div class="room-h"><span>חדר ${esc(room)}</span>${open.length&&!S.ro?`<button class="btn small" data-act="roomWake" data-room="${esc(room)}">כולם קמו עכשיו</button>`:''}</div><div class="list">`;
     for(const s of list){
       const m=S.wake.get(s.id),parts=[s.grade?'כיתה '+s.grade:''];
+      const pn=S.prevNight.get(s.id);
       if(isOut(s.id))parts.push('מחוץ לפנימייה');
       else if(m)parts.push(({up:'קם',no:'לא קם',sick:'נשאר בחדר, חולה'})[m.s]+' · '+byName(m.by));
+      else if(!pn)parts.push('לא נבדק בספירת הלילה');
       const meta=parts.filter(Boolean).join(' · ');
       h+=`<div class="item wrap"><button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}${meta?`<span class="meta">${esc(meta)}</span>`:''}</button>`;
       if(isOut(s.id)){h+=`<span class="chip warn">בחוץ</span></div>`;continue}
+      if(pn?.s==='a')h+=`<span class="chip bad" title="סומן חסר בספירת הלילה ${fmtShort(prevNightOf(S.mornDate))}">לא נכח בלילה</span>`;
       if(m&&m.s==='up'){h+=`<input type="time" class="tsm" id="wt-${s.id}" data-mact="time" data-id="${s.id}" value="${hm(m.t)}" aria-label="שעת קימה" ${S.ro?'disabled':''}>${isLate(m)?'<span class="chip bad">איחור</span>':'<span class="chip ok">בזמן</span>'}`}
       const pr=v=>`aria-pressed="${m?.s===v}" data-act="wake" data-id="${s.id}" data-v="${v}" ${S.ro?'disabled':''}`;
       h+=`<div class="seg"><button class="p" ${pr('up')}>קם</button><button class="a" ${pr('no')}>לא קם</button><button class="s" ${pr('sick')}>חולה</button></div></div>`;
@@ -797,8 +823,46 @@ function renderMorn(){
     h+=`</div></div>`;
   }
   $('mornList').innerHTML=h;
+  renderReport();
 }
 const wakeRef=id=>db.collection('morning/'+S.mornDate+'/marks').doc(id);
+/* ---------- morning report for class educators ---------- */
+const prevNightOf=d=>addD(d,-1);
+function morningReport(){
+  const night=prevNightOf(S.mornDate),out={};
+  for(const s of allSorted()){const g=s.grade||'-';const o=out[g]||(out[g]={absent:[],noWake:[],sick:[],late:[],home:[]});
+    const n=S.prevNight.get(s.id),m=S.wake.get(s.id),st=S.status.get(s.id);
+    if(st&&st.state==='out'){o.home.push(s.name+(st.reason?' ('+st.reason+')':''));continue}
+    if(n&&n.s==='a')o.absent.push(s.name);
+    if(m){if(m.s==='no')o.noWake.push(s.name);else if(m.s==='sick')o.sick.push(s.name);else if(isLate(m))o.late.push(s.name+' – '+hm(m.t))}}
+  return {night,out}}
+function reportText(g,o,dateK){
+  const L=[],sec=(t,a)=>{if(a.length){L.push(t+' ('+a.length+'):');a.forEach(x=>L.push('• '+x));L.push('')}};
+  L.push(`דוח נוכחות בוקר – ${g==='-'?'ללא כיתה':'כיתה '+g} – ${nf.format(new Date(dateK+'T12:00'))}`,'');
+  sec('לא נכחו בפנימייה בלילה',o.absent);sec('לא קמו בבוקר',o.noWake);sec('חולים / נשארו בחדר',o.sick);sec(`איחרו להשכמה (השכמה ב-${S.wakeTarget||'07:00'})`,o.late);sec('בבית / מחוץ לפנימייה',o.home);
+  if(!o.absent.length&&!o.noWake.length&&!o.sick.length&&!o.late.length)L.push('כל התלמידים נכחו וקמו בזמן.','');
+  L.push('נשלח ממערכת הנוכחות של הפנימייה');return L.join('\n')}
+function mailHref(to,subj,body){const cc=(S.settings?.educators?.cc)||'';return 'mailto:'+encodeURIComponent(to||'')+'?'+(cc?'cc='+encodeURIComponent(cc)+'&':'')+'subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body)}
+function renderReport(){
+  if(S.tab!=='morn'||!$('mrPreview'))return;
+  const {out}=morningReport(),E=S.settings?.educators||{},d=S.mornDate;
+  const canSet=S.owner||has('mgr');$('mrSettings').hidden=!canSet;
+  const gs=[...GRADES,'-'].filter(g=>out[g]);
+  if(!gs.length){$('mrPreview').innerHTML='<div class="empty">אין תלמידים ברשימה.</div>';return}
+  let all=[];
+  $('mrPreview').innerHTML=gs.map(g=>{const o=out[g];const cnt=o.absent.length+o.noWake.length+o.sick.length+o.late.length;
+    const txt=reportText(g,o,d);all.push(txt);const subj=`דוח נוכחות בוקר – ${g==='-'?'ללא כיתה':'כיתה '+g} – ${fmtShort(d)}`;
+    const li=(t,a,c)=>a.length?`<div><b class="${c||''}">${t}:</b> ${a.map(esc).join(', ')}</div>`:'';
+    return `<div class="mr-grade"><div class="row"><b>${g==='-'?'ללא כיתה':'כיתה '+g}</b><span class="row" style="gap:6px">${g!=='-'?(E[g]?`<a class="btn small primary" href="${mailHref(E[g],subj,txt)}" title="${esc(E[g])}">שלח למחנך</a>`:(canSet?'<span class="muted" style="font-size:.85rem">אין מייל למחנך</span>':'')):''}<button class="btn small" type="button" data-act="mrCopy" data-g="${g}">העתק</button></span></div>
+      ${cnt?li('לא נכחו בלילה',o.absent)+li('לא קמו',o.noWake)+li('חולים',o.sick)+li('איחרו',o.late)+li('בבית',o.home):`<span class="muted">כל התלמידים נכחו וקמו בזמן${o.home.length?' · '+o.home.length+' בבית':''}.</span>`}</div>`}).join('')
+    +(gs.length>1?`<div class="row" style="padding-top:10px;border-top:1px solid var(--line)"><a class="btn small" href="${mailHref(GRADES.map(g=>E[g]).filter(Boolean).join(','),'דוח נוכחות בוקר – '+fmtShort(d),all.join('\n\n────────\n\n'))}">שלח דוח מלא לכל המחנכים</a><button class="btn small" type="button" data-act="mrCopy" data-g="*">העתק דוח מלא</button></div>`:'');
+  S.mrTexts=Object.fromEntries(gs.map((g,i)=>[g,all[i]]));S.mrTexts['*']=all.join('\n\n────────\n\n');
+  GRADES.forEach(g=>{const el=$('edu-'+g);if(el&&document.activeElement!==el)el.value=E[g]||''});{const c=$('edu-cc');if(document.activeElement!==c)c.value=E.cc||''}
+}
+$('eduForm').addEventListener('submit',async e=>{e.preventDefault();const ed={};GRADES.forEach(g=>{const v=$('edu-'+g).value.trim();if(v)ed[g]=v});const c=$('edu-cc').value.trim();if(c)ed.cc=c;
+  try{await db.doc('settings/app').set({...(S.settings||{}),educators:ed});toast('המיילים נשמרו')}catch(err){fail(err)}});
+function subPrevNight(){if(S.unPrev)S.unPrev();S.unPrev=null;if(!db||!S.access)return;
+  S.unPrev=db.collection('nightcount/'+prevNightOf(S.mornDate)+'/marks').onSnapshot(snap=>{S.prevNight=new Map(snap.docs.map(d=>[d.id,d.data()]));renderMorn()},onErr)}
 const defaultWakeTime=()=>S.mornDate===ymd(new Date())?Date.now():new Date(S.mornDate+'T'+(S.wakeTarget||'07:00')).getTime();
 async function wake(id,v){
   const cur=S.wake.get(id);
@@ -806,6 +870,7 @@ async function wake(id,v){
 }
 function subWake(){
   if(S.unWake)S.unWake();if(!db)return;
+  subPrevNight();
   S.unWake=db.collection('morning/'+S.mornDate+'/marks').onSnapshot(snap=>{S.wake=new Map(snap.docs.map(d=>[d.id,d.data()]));resolveNames(snap.docs.map(d=>d.data()));renderMorn()},onErr);
 }
 document.addEventListener('change',async e=>{
@@ -983,6 +1048,7 @@ document.addEventListener('click',async e=>{
     case'schSave':await schSave(b);break;
     case'schCopy':{schCollect();const to=[...$('schList').querySelectorAll('[data-copy]:checked')].map(x=>+x.dataset.copy);if(!to.length){toast('סמנו לאילו ימים להעתיק');break}
       await schSave(b,to);break}
+    case'mrCopy':{const t=S.mrTexts?.[b.dataset.g]||'';try{await navigator.clipboard.writeText(t);toast('הדוח הועתק')}catch{toast('לא הצלחתי להעתיק')}break}
     case'calPrev':S.calM=Math.max(0,S.calM-1);renderCal();break;
     case'calNext':S.calM=Math.min(HMONTHS.length-1,S.calM+1);renderCal();break;
     case'repRange':setRange(b.dataset.d);break;
@@ -1263,7 +1329,7 @@ $('newStaff').addEventListener('submit',async e=>{e.preventDefault();if(!S.owner
 });
 
 /* ---------- Firebase: data ---------- */
-function unsubAll(){S.subs.forEach(f=>{try{f()}catch{}});S.subs=[];if(unMarks){unMarks();unMarks=null}if(S.unWake){S.unWake();S.unWake=null}}
+function unsubAll(){S.subs.forEach(f=>{try{f()}catch{}});S.subs=[];if(unMarks){unMarks();unMarks=null}if(S.unWake){S.unWake();S.unWake=null}if(S.unPrev){S.unPrev();S.unPrev=null}}
 function subscribeAll(){
   unsubAll();if(!S.access)return;
   const timer=setTimeout(()=>{if(!S.ready){S.ready=true;sys('לא ניתן להתחבר לנתונים כרגע. ייתכן שמה שמוצג אינו מעודכן.');renderAll()}},10000);
