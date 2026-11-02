@@ -24,7 +24,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-14";
+const APP_VERSION = "2026-11-02-15";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -257,6 +257,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 .kv dt{color:var(--muted)}.kv dd{margin:0;overflow-wrap:anywhere}
 .kv a{color:var(--accent);font-weight:600;text-decoration:none;direction:ltr;unicode-bidi:isolate}
 .kv .sub{color:var(--muted);font-size:.85rem}
+.photo.sm{width:52px;height:64px;font-size:1.3rem;border-radius:8px}
 .pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pf-grid>*{min-width:0}
 .pf-grid label{display:grid;gap:3px;font-size:.85rem;color:var(--muted)}
 .pf-grid .full{grid-column:1/-1}
@@ -321,7 +322,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <button type="button" id="t-rep" data-tab="rep" data-perm="reports" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl">דוחות</span></button>
     <button type="button" id="t-staff" data-tab="staff" data-perm="owner" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="lbl">צוות</span></button>
   </div>
-  <div class="drawer-foot"><span class="muted" id="drawerUser"></span><button class="btn small" type="button" data-act="logout">יציאה</button></div>
+  <div class="drawer-foot"><span class="muted" id="drawerUser"></span><span class="row" style="gap:6px"><button class="btn small" type="button" data-act="stMine">הכרטיס שלי</button><button class="btn small" type="button" data-act="logout">יציאה</button></span></div>
 </nav>
 <main><div class="wrap">
   <div id="sysNote" class="notice" hidden></div>
@@ -581,6 +582,30 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     </form></div>
   </div>
 </div>
+<div id="stBg" class="sheet-bg" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="stName">
+    <div class="sheet-top"><h2 id="stName" style="font-size:1.3rem">כרטיס עובד</h2><button class="btn small" type="button" data-act="stClose">סגור</button></div>
+    <div class="panel" id="stCard"></div>
+    <form id="stForm" class="panel" hidden>
+      <h2>עריכת פרטי עובד</h2>
+      <div class="row"><div class="photo" id="stPhotoPrev"></div><div style="display:grid;gap:6px">
+        <label class="btn small" for="stPhoto" style="text-align:center">העלאת תמונה</label>
+        <input type="file" id="stPhoto" accept="image/*" hidden>
+        <button class="btn small" type="button" data-act="stNoPhoto">הסר תמונה</button></div></div>
+      <div class="pf-grid">
+        <label>טלפון<input id="sf-phone" type="tel" dir="ltr" autocomplete="off"></label>
+        <label>מייל<input id="sf-email" type="email" dir="ltr" autocomplete="off"></label>
+        <label class="full">כתובת<input id="sf-address" autocomplete="off"></label>
+        <label>תאריך לידה<input id="sf-birthDate" type="date"></label>
+        <label>תחילת עבודה<input id="sf-startDate" type="date"></label>
+        <label>איש קשר לחירום<input id="sf-emergencyName" autocomplete="off"></label>
+        <label>טלפון לחירום<input id="sf-emergencyPhone" type="tel" dir="ltr" autocomplete="off"></label>
+        <label class="full">הערות<textarea id="sf-notes" style="min-height:60px"></textarea></label>
+      </div>
+      <div class="row"><button class="btn primary" type="submit">שמור פרטים</button><button class="btn" type="button" data-act="stCancel">ביטול</button></div>
+    </form>
+  </div>
+</div>
 <div id="toast" class="toast" hidden></div>
 </div>
 
@@ -597,7 +622,7 @@ const df=new Intl.DateTimeFormat('he-IL',{day:'numeric',month:'numeric',hour:'2-
 const nf=new Intl.DateTimeFormat('he-IL',{weekday:'long',day:'numeric',month:'long'});
 const when=t=>{if(!t)return'';const d=new Date(t);return ymd(d)===ymd(new Date())?'היום '+tf.format(d):df.format(d)};
 
-const S={students:new Map(),status:new Map(),marks:new Map(),notes:[],moves:[],names:{},me:null,night:nightKey(),tab:'count',sel:null,q:'',grade:'',xl:null,ready:false,wake:new Map(),mornDate:ymd(new Date()),wakeTarget:'07:00',settings:null,perm:null,owner:false,staff:[],requests:[],calM:null,prevNight:new Map(),sched:undefined,schDay:null,schEdit:null,profiles:new Map(),photos:new Map(),permReady:false,access:false};
+const S={students:new Map(),status:new Map(),marks:new Map(),notes:[],moves:[],names:{},me:null,night:nightKey(),tab:'count',sel:null,q:'',grade:'',xl:null,ready:false,wake:new Map(),mornDate:ymd(new Date()),wakeTarget:'07:00',settings:null,perm:null,owner:false,staff:[],requests:[],calM:null,stPhotos:new Map(),stSel:null,prevNight:new Map(),sched:undefined,schDay:null,schEdit:null,profiles:new Map(),photos:new Map(),permReady:false,access:false};
 let db=null,user=null,unMarks=null;
 
 function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
@@ -945,7 +970,8 @@ function renderStaff(){
   const roleSel=(id,cur,act)=>`<select id="${id}" data-sact="${act}" aria-label="תפקיד">${Object.keys(ROLES).map(r=>`<option ${r===cur?'selected':''}>${r}</option>`).join('')}${cur&&!ROLES[cur]?`<option selected>${esc(cur)}</option>`:''}</select>`;
   const st=[...(S.staff||[])].sort((a,b)=>nm(a).localeCompare(nm(b),'he'));
   $('staffList').innerHTML=st.length?st.map(s=>{const off=s.active===false;
-    return `<div class="panel" style="${off?'opacity:.65':''}"><div class="row" style="justify-content:space-between"><span><b style="font-size:1.05rem">${esc(nm(s))}</b> <span class="muted" dir="ltr">${esc(s.username||'')}</span></span>${off?'<span class="chip bad">מושבת</span>':'<span class="chip ok">פעיל</span>'}</div>
+    loadStaffPhoto(s.id);const ph=S.stPhotos.get(s.id);
+    return `<div class="panel" style="${off?'opacity:.65':''}"><div class="row" style="justify-content:space-between"><span class="row" style="gap:10px"><span class="photo sm">${ph?photoBox(ph,nm(s)):esc(initials(nm(s)))}</span><span><b style="font-size:1.05rem">${esc(nm(s))}</b> <span class="muted" dir="ltr">${esc(s.username||'')}</span><br><button class="btn small" type="button" data-act="stOpen" data-id="${s.id}" style="margin-top:4px">כרטיס עובד</button></span></span>${off?'<span class="chip bad">מושבת</span>':'<span class="chip ok">פעיל</span>'}</div>
     <div class="row"><label class="muted" for="role-${s.id}">תפקיד</label>${roleSel('role-'+s.id,s.role,'role')}</div>
     <div class="perm-grid">${PERMS.map(([k,l])=>`<label class="perm"><input type="checkbox" id="p-${s.id}-${k}" data-sact="perm" data-id="${s.id}" data-k="${k}" ${s.perms?.[k]?'checked':''}> ${l}</label>`).join('')}</div>
     <div class="row"><button class="btn small" data-act="toggleStaff" data-id="${s.id}">${off?'הפעל מחדש':'השבת גישה'}</button><button class="btn small danger" data-act="removeStaff" data-id="${s.id}">הסר מהצוות</button></div></div>`}).join('')
@@ -965,6 +991,30 @@ function renderAll(){renderTop();renderBreakdown();renderCount();renderMorn();re
 /* ---------- sheet ---------- */
 function setRoomSel(sel,v){if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o)}sel.value=v}
 function openSheet(id){const s=S.students.get(id);if(!s)return;S.sel=id;{const sp=s.firstName!=null?[s.firstName,s.lastName||'']:splitName(s.name);$('edFirst').value=sp[0];$('edLast').value=sp[1]}setRoomSel($('edRoom'),s.room||'');$('edGrade').value=s.grade||'';$('noteText').value='';resetArm();pfClose();$('sheetBg').hidden=false;renderSheet()}
+/* ---------- staff card ---------- */
+const SF=['phone','email','address','birthDate','startDate','emergencyName','emergencyPhone','notes'];
+async function loadStaffPhoto(uid){if(S.stPhotos.has(uid))return;S.stPhotos.set(uid,'');
+  try{const d=await db.doc('staffPhotos/'+uid).get();if(d.exists){S.stPhotos.set(uid,d.data().data||'');renderStaff();if(S.stSel===uid)renderStaffCard()}}catch{}}
+function staffName(uid){if(uid===S.me)return S.myName||'';const s=(S.staff||[]).find(x=>x.id===uid);return s?(s.name||s.username):(S.names[uid]||'')}
+async function openStaff(uid){S.stSel=uid;S.stProf=null;$('stForm').hidden=true;$('stCard').hidden=false;$('stBg').hidden=false;$('stName').textContent='כרטיס עובד · '+staffName(uid);renderStaffCard();
+  try{const d=await db.doc('staffProfiles/'+uid).get();S.stProf=d.exists?d.data():{}}catch(e){S.stProf={};console.error(e)}loadStaffPhoto(uid);renderStaffCard()}
+function closeStaff(){S.stSel=null;$('stBg').hidden=true}
+function renderStaffCard(){
+  const uid=S.stSel;if(!uid)return;const p=S.stProf,nm=staffName(uid),ph=S.stPhotos.get(uid);
+  const s=(S.staff||[]).find(x=>x.id===uid);const role=uid===S.me&&S.owner?'מנהל הפנימייה':(s?.role||'');
+  const row=(k,v)=>v?`<dt>${k}</dt><dd>${v}</dd>`:'';const ag=p?ageOf(p.birthDate):null;
+  const canEdit=S.owner||uid===S.me;
+  const body=p?row('תפקיד',esc(role))+row('שם משתמש',s?.username?`<span dir="ltr">${esc(s.username)}</span>`:'')+row('גיל',ag!=null?`${ag} <span class="sub">(נולד ${fmtDMY(p.birthDate)})</span>`:'')+row('טלפון',telLink(p.phone))+row('מייל',mailLink(p.email))+row('כתובת',esc(p.address||''))+row('תחילת עבודה',p.startDate?fmtDMY(p.startDate):'')+row('חירום',(p.emergencyName||p.emergencyPhone)?`${esc(p.emergencyName||'')}${p.emergencyName&&p.emergencyPhone?' · ':''}${telLink(p.emergencyPhone)}`:'')+row('הערות',esc(p.notes||'')):'';
+  $('stCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>כרטיס עובד</h2>${canEdit?'<button class="btn small" type="button" data-act="stEdit">עריכה</button>':''}</div>
+  <div class="card"><div class="photo">${photoBox(ph||'',nm)}</div><div style="display:grid;gap:6px;min-width:0"><b style="font-size:1.1rem">${esc(nm)}</b>
+  ${p===null?'<span class="muted">טוען…</span>':`<dl class="kv">${body}</dl>${Object.keys(p).filter(k=>SF.includes(k)&&p[k]).length?'':`<span class="muted">עדיין לא הוזנו פרטים.${canEdit?' לחצו "עריכה" כדי להוסיף.':''}</span>`}`}</div></div>`;
+}
+function stOpenForm(){const p=S.stProf||{};SF.forEach(k=>$('sf-'+k).value=p[k]||'');S.stNewPhoto=undefined;$('stPhotoPrev').innerHTML=photoBox(S.stPhotos.get(S.stSel)||'',staffName(S.stSel));$('stForm').hidden=false;$('stCard').hidden=true}
+$('stPhoto').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{S.stNewPhoto=await resizePhoto(f);$('stPhotoPrev').innerHTML=photoBox(S.stNewPhoto,'')}catch{toast('לא הצלחתי לקרוא את התמונה. נסו קובץ JPG או PNG')}e.target.value=''});
+$('stForm').addEventListener('submit',async e=>{e.preventDefault();const uid=S.stSel;if(!uid)return;const d={};SF.forEach(k=>d[k]=$('sf-'+k).value.trim());d.updatedAt=Date.now();
+  try{await db.doc('staffProfiles/'+uid).set(d);S.stProf=d;
+    if(S.stNewPhoto!==undefined){if(S.stNewPhoto)await db.doc('staffPhotos/'+uid).set({data:S.stNewPhoto,at:Date.now()});else await db.doc('staffPhotos/'+uid).delete();S.stPhotos.set(uid,S.stNewPhoto)}
+    $('stForm').hidden=true;$('stCard').hidden=false;renderStaffCard();renderStaff();toast('הפרטים נשמרו')}catch(err){fail(err)}});
 function closeSheet(){S.sel=null;$('sheetBg').hidden=true;if($('pfForm'))$('pfForm').hidden=true}
 function resetArm(){document.querySelectorAll('[data-armed]').forEach(b=>{b.removeAttribute('data-armed');b.textContent=b.dataset.label||b.textContent})}
 function armed(btn,label){if(btn.dataset.armed){return true}resetArm();btn.dataset.label=btn.textContent;btn.dataset.armed='1';btn.textContent=label;return false}
@@ -1042,6 +1092,7 @@ async function xlImport(btn){
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act],[data-tab]');
   if(e.target===$('sheetBg')){closeSheet();return}
+  if(e.target===$('stBg')){closeStaff();return}
   if(!b)return;
   if(b.dataset.tab){S.tab=b.dataset.tab;document.body.dataset.page=S.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
     ['home','count','morn','out','stu','mgr','sched','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='home')renderHome();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
@@ -1080,6 +1131,12 @@ document.addEventListener('click',async e=>{
     case'calPrev':S.calM=Math.max(0,S.calM-1);renderCal();break;
     case'calNext':S.calM=Math.min(HMONTHS.length-1,S.calM+1);renderCal();break;
     case'repRange':setRange(b.dataset.d);break;
+    case'stOpen':openStaff(id);break;
+    case'stMine':if(S.menuOpen)menu(false);openStaff(S.me);break;
+    case'stClose':closeStaff();break;
+    case'stEdit':stOpenForm();break;
+    case'stCancel':$('stForm').hidden=true;$('stCard').hidden=false;break;
+    case'stNoPhoto':S.stNewPhoto='';$('stPhotoPrev').innerHTML=photoBox('',staffName(S.stSel));break;
     case'pfEdit':pfOpen();break;
     case'pfCancel':pfClose();break;
     case'pfNoPhoto':S.pfPhoto='';$('pfPhotoPrev').innerHTML=photoBox('',S.students.get(S.sel)?.name);break;
@@ -1122,7 +1179,7 @@ $('xlFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)
   catch{toast('לא הצלחתי לקרוא את הקובץ. ודאו שזה קובץ אקסל או CSV')}});
 $('q').addEventListener('input',e=>{S.q=e.target.value;renderStudents()});
 $('nightDate').addEventListener('change',e=>{if(!e.target.value)return;S.night=e.target.value;S.marks=new Map();subMarks();renderAll()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.sel)closeSheet()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.sel)closeSheet();if(e.key==='Escape'&&S.stSel)closeStaff()});
 
 /* ---------- data ---------- */
 function subMarks(){
