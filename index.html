@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-26";
+const APP_VERSION = "2026-11-02-27";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -540,7 +540,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
         <input id="newFirst" placeholder="שם פרטי" required aria-label="שם פרטי" autocomplete="off">
         <input id="newLast" placeholder="שם משפחה" required aria-label="שם משפחה" autocomplete="off">
         <select id="newGrade" aria-label="כיתה"><option value="">כיתה</option><option>ט</option><option>י</option><option>יא</option><option>יב</option></select>
-        <select id="newRoom" aria-label="חדר"><option value="">חדר</option><option>101</option><option>102</option><option>103</option><option>104</option><option>105</option><option>106</option><option>107</option><option>108</option><option>109</option><option>110</option><option>111</option><option>112</option><option>113</option><option>114</option><option>115</option></select>
+        <select id="newRoom" aria-label="חדר"><option value="">חדר</option><option>101</option><option>102</option><option>103</option><option>104</option><option>105</option><option>106</option><option>107</option><option>108</option><option>109</option><option>110</option><option>111</option><option>112</option><option>113</option></select>
       </div>
       <div><button class="btn primary" type="submit">הוסף</button></div>
       <div id="dupMsg" class="notice" hidden></div>
@@ -744,7 +744,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
         <input id="edFirst" required placeholder="שם פרטי" aria-label="שם פרטי" autocomplete="off">
         <input id="edLast" placeholder="שם משפחה" aria-label="שם משפחה" autocomplete="off">
         <select id="edGrade" aria-label="כיתה"><option value="">ללא כיתה</option><option>ט</option><option>י</option><option>יא</option><option>יב</option></select>
-        <select id="edRoom" aria-label="חדר"><option value="">ללא חדר</option><option>101</option><option>102</option><option>103</option><option>104</option><option>105</option><option>106</option><option>107</option><option>108</option><option>109</option><option>110</option><option>111</option><option>112</option><option>113</option><option>114</option><option>115</option></select>
+        <select id="edRoom" aria-label="חדר"><option value="">ללא חדר</option><option>101</option><option>102</option><option>103</option><option>104</option><option>105</option><option>106</option><option>107</option><option>108</option><option>109</option><option>110</option><option>111</option><option>112</option><option>113</option></select>
       </div>
       <div class="row">
         <button class="btn" type="submit">שמור שינויים</button>
@@ -1682,21 +1682,22 @@ function renderTrends(){if(!S.trend||!$('trends'))return;const {days,morn,night}
 const INS=[['order','סדר כללי'],['beds','מיטות מסודרות'],['floor','רצפה נקייה'],['trash','פח ריק, בלי אוכל'],['damage','ללא נזק']];
 const weekOf=k=>{const d=new Date(k+'T12:00');d.setDate(d.getDate()-d.getDay());return ymd(d)};
 S.insWeek=weekOf(ymd(new Date()));S.ins=new Map();
+const STAFF_ROOMS=new Set(['114','115']);
 function roomsList(){const r=new Set();for(let i=101;i<=115;i++)r.add(String(i));for(const s of S.students.values())if(s.room)r.add(String(s.room));return [...r].sort((a,b)=>a.localeCompare(b,'he',{numeric:true}))}
 function subIns(){if(!db||!has('rooms'))return;if(S.unIns&&S.insSubWeek===S.insWeek){renderIns();return}if(S.unIns)S.unIns();S.insSubWeek=S.insWeek;
   S.unIns=db.collection('inspections').where('week','==',S.insWeek).onSnapshot(q=>{S.ins=new Map(q.docs.map(d=>[d.data().room,d.data()]));renderIns()},onErr);renderIns()}
 const scoreCol=v=>v==null?'var(--soft)':v>=4?'var(--ok-bg)':v>=3?'var(--warn-bg)':'var(--bad-bg)';
 function renderIns(){if(S.tab!=='rooms')return;const w=S.insWeek;
   $('insTitle').textContent=`בדיקת חדרים · שבוע ${fmtShort(w)}–${fmtShort(addD(w,6))}`;
-  const R=roomsList(),done=R.filter(r=>S.ins.has(r)),sc=done.map(r=>S.ins.get(r).score);const avg=sc.length?(sc.reduce((a,b)=>a+b,0)/sc.length):null;
+  const R=roomsList(),RS=R.filter(r=>!STAFF_ROOMS.has(r)),done=RS.filter(r=>S.ins.has(r)),sc=done.map(r=>S.ins.get(r).score);const avg=sc.length?(sc.reduce((a,b)=>a+b,0)/sc.length):null;
   const best=done.slice().sort((a,b)=>S.ins.get(b).score-S.ins.get(a).score).filter(r=>S.ins.get(r).score===5);
-  $('insSum').innerHTML=`<div class="row" style="gap:8px"><span class="pill">${done.length}/${R.length} חדרים נבדקו</span>${avg!=null?`<span class="pill">ממוצע ${avg.toFixed(1)} מתוך 5</span>`:''}${best.length?`<span class="pill ok">🏆 מצטיינים: ${best.map(r=>'חדר '+r).join(', ')}</span>`:''}</div>`;
+  $('insSum').innerHTML=`<div class="row" style="gap:8px"><span class="pill">${done.length}/${RS.length} חדרי תלמידים נבדקו</span>${avg!=null?`<span class="pill">ממוצע ${avg.toFixed(1)} מתוך 5</span>`:''}${best.length?`<span class="pill ok">🏆 מצטיינים: ${best.map(r=>'חדר '+r).join(', ')}</span>`:''}</div>`;
   const ro=S.ro||!has('rooms');
   $('insTiles').innerHTML=R.map(r=>{const x=S.ins.get(r);const gs=[...new Set(allSorted().filter(s=>String(s.room)===r).map(s=>s.grade).filter(Boolean))].sort((a,b)=>GRADES.indexOf(a)-GRADES.indexOf(b));
-    return `<button type="button" data-act="insSel" data-room="${esc(r)}" aria-pressed="${S.insSel===r}" style="background:${scoreCol(x?.score)}"><b>${esc(r)}</b><small>${gs.length?gs.map(g=>esc(g)).join(', '):'ריק'}</small><span>${x?x.score+'/5':'—'}</span></button>`}).join('');
+    return `<button type="button" data-act="insSel" data-room="${esc(r)}" aria-pressed="${S.insSel===r}" style="background:${scoreCol(x?.score)}"><b>${esc(r)}</b><small>${STAFF_ROOMS.has(r)?'מדריכים':gs.length?gs.map(g=>esc(g)).join(', '):'ריק'}</small><span>${x?x.score+'/5':'—'}</span></button>`}).join('');
   if(!S.insSel){$('insGrid').innerHTML='<div class="muted">לחצו על חדר כדי לבדוק אותו.</div>';return}
   $('insGrid').innerHTML=R.filter(r=>r===S.insSel).map(r=>{const x=S.ins.get(r),c=x?.checks||{};const who=allSorted().filter(s=>String(s.room)===r).map(s=>s.name);
-    return `<div class="room-card"><div class="hd"><b>חדר ${esc(r)}</b><span class="sc" style="background:${scoreCol(x?.score)}">${x?x.score+'/5':'—'}</span></div>
+    return `<div class="room-card"><div class="hd"><b>חדר ${esc(r)}${STAFF_ROOMS.has(r)?' · חדר מדריכים':''}</b><span class="sc" style="background:${scoreCol(x?.score)}">${x?x.score+'/5':'—'}</span></div>
       ${who.length?`<span class="muted" style="font-size:.82rem">${esc(who.join(', '))}</span>`:''}
       <div class="chk">${INS.map(([k,l])=>`<button type="button" class="${x?'set':''}" aria-pressed="${!!c[k]}" data-act="insChk" data-room="${esc(r)}" data-k="${k}" ${ro?'disabled':''}>${x?(c[k]?'✓':'✗'):'○'} ${l}</button>`).join('')}</div>
       <input data-room="${esc(r)}" class="insNote" placeholder="הערה (לא חובה)" value="${esc(x?.note||'')}" ${ro?'disabled':''}>
