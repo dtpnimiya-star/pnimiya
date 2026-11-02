@@ -24,7 +24,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-12";
+const APP_VERSION = "2026-11-02-13";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -889,7 +889,7 @@ function renderReport(){
 $('eduForm').addEventListener('submit',async e=>{e.preventDefault();const ed={};GRADES.forEach(g=>{const v=$('edu-'+g).value.trim();if(v)ed[g]=v});const c=$('edu-cc').value.trim();if(c)ed.cc=c;
   try{await db.doc('settings/app').set({...(S.settings||{}),educators:ed});toast('המיילים נשמרו')}catch(err){fail(err)}});
 function subPrevNight(){if(S.unPrev)S.unPrev();S.unPrev=null;if(!db||!S.access)return;
-  S.unPrev=db.collection('nightcount/'+prevNightOf(S.mornDate)+'/marks').onSnapshot(snap=>{S.prevNight=new Map(snap.docs.map(d=>[d.id,d.data()]));renderMorn()},onErr)}
+  S.unPrev=db.collection('nightcount/'+prevNightOf(S.mornDate)+'/marks').onSnapshot(snap=>{S.prevNight=new Map(snap.docs.map(d=>[d.id,d.data()]));renderMorn();renderHome()},onErr)}
 const defaultWakeTime=()=>S.mornDate===ymd(new Date())?Date.now():new Date(S.mornDate+'T'+(S.wakeTarget||'07:00')).getTime();
 async function wake(id,v){
   const cur=S.wake.get(id);
@@ -898,7 +898,7 @@ async function wake(id,v){
 function subWake(){
   if(S.unWake)S.unWake();if(!db)return;
   subPrevNight();
-  S.unWake=db.collection('morning/'+S.mornDate+'/marks').onSnapshot(snap=>{S.wake=new Map(snap.docs.map(d=>[d.id,d.data()]));resolveNames(snap.docs.map(d=>d.data()));renderMorn()},onErr);
+  S.unWake=db.collection('morning/'+S.mornDate+'/marks').onSnapshot(snap=>{S.wake=new Map(snap.docs.map(d=>[d.id,d.data()]));resolveNames(snap.docs.map(d=>d.data()));renderMorn();renderHome()},onErr);
 }
 document.addEventListener('change',async e=>{
   const el=e.target;if(!db)return;
@@ -1395,7 +1395,7 @@ function subscribeAll(){
     if(S.mgr)snap.docChanges().forEach(ch=>{if(ch.type!=='added')return;const n=ch.doc.data();if(n.kind==='התנהגות'&&n.at>S.loadAt&&n.by!==S.me)showLive(n)});resolveNames(S.notes);renderAll()},onErr));
   else S.notes=[];
   S.subs.push(db.collection('moves').orderBy('at','desc').limit(300).onSnapshot(snap=>{S.moves=snap.docs.map(d=>({id:d.id,...d.data()}));resolveNames(S.moves);renderAll()},onErr));
-  S.subs.push(db.doc('schedule/week').onSnapshot(d=>{S.sched=d.exists?d.data():null;renderSched()},onErr));
+  S.subs.push(db.doc('schedule/week').onSnapshot(d=>{S.sched=d.exists?d.data():null;renderSched();renderHome()},onErr));
   S.subs.push(db.doc('settings/app').onSnapshot(d=>{S.settings=d.exists?d.data():null;S.wakeTarget=S.settings?.wakeTarget||'07:00';renderMorn()},onErr));
   if(has('personal'))S.subs.push(db.collection('profiles').onSnapshot(snap=>{S.profiles=new Map(snap.docs.map(d=>[d.id,d.data()]));renderSheet()},onErr));
   else S.profiles=new Map();
