@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-28";
+const APP_VERSION = "2026-11-02-29";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -842,7 +842,9 @@ function emptyStudents(){if(S.students.size)return `<div class="empty">אין ת
 
 /* ---------- list helpers (search, avatars, progress) ---------- */
 const qMatch=q=>s=>{q=String(q||'').trim();if(!q)return true;return normName(s.name).includes(normName(q))||String(s.room||'')===q||String(s.room||'').startsWith(q)};
-function av(s){if(has('personal'))loadPhoto(s.id);const ph=S.photos.get(s.id);return `<span class="av" data-av="${s.id}" aria-hidden="true">${ph?`<img src="${esc(ph)}" alt="">`:esc(initials(s.name))}</span>`}
+S.photoVer=new Map();
+function setAv(id,ph){const s=S.students.get(id);document.querySelectorAll('[data-av="'+id+'"]').forEach(e=>e.innerHTML=ph?`<img src="${esc(ph)}" alt="">`:esc(initials(s?.name||'')))}
+function av(s){if(s.photoAt&&S.photoVer.get(s.id)!==s.photoAt){S.photoVer.set(s.id,s.photoAt);if(S.photos.get(s.id)!==null)S.photos.delete(s.id)}if(has('personal'))loadPhoto(s.id);const ph=S.photos.get(s.id);return `<span class="av" data-av="${s.id}" aria-hidden="true">${ph?`<img src="${esc(ph)}" alt="">`:esc(initials(s.name))}</span>`}
 function progBar(el,parts,total,label){const done=parts.reduce((a,x)=>a+x[0],0);
   $(el).innerHTML=total?`<div class="row"><b>${label(done,total)}</b><span class="muted" style="font-size:.88rem">${parts.filter(x=>x[0]).map(x=>`${x[0]} ${x[2]}`).join(' · ')}</span></div><div class="bar" role="img" aria-label="${done} מתוך ${total}">${parts.map(([n,c])=>n?`<i style="width:${n/total*100}%;background:${c}"></i>`:'').join('')}</div>`:'';$(el).hidden=!total}
 function renderCount(){
@@ -860,7 +862,7 @@ function renderCount(){
       const stt=S.status.get(s.id),m=S.marks.get(s.id);
       const parts=[s.grade?'כיתה '+s.grade:''];
       if(isOut(s.id))parts.push((stt.reason||'')+(stt.backBy?' · חזרה '+when(stt.backBy):''));
-      else if(m)parts.push((m.s==='p'?(m.late?'הגיע באיחור ':'סומן נוכח '):'סומן חסר ')+(m.late&&m.lt?hm(m.lt):tf.format(new Date(m.at)))+' · '+byName(m.by));
+      else if(m)parts.push((m.s==='p'?(m.late?'הגיע באיחור ':'סומן נוכח '):'סומן חסר ')+(m.late&&m.lt?hm(m.lt):m.at?tf.format(new Date(m.at)):'')+' · '+byName(m.by));
       const meta=parts.filter(Boolean).join(' · ');
       h+=`<div class="item">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}${meta?`<span class="meta">${esc(meta)}</span>`:''}</button>`;
       if(isOut(s.id))h+=`<span class="chip ${stt.backBy&&stt.backBy<Date.now()?'bad':'warn'}">${stt.backBy&&stt.backBy<Date.now()?'באיחור':stt.long?'בבית':'בחוץ'}</span>`;
@@ -963,7 +965,7 @@ const initials=n=>String(n||'').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join
 function photoBox(src,name){return src?`<img src="${esc(src)}" alt="תמונה של ${esc(name)}">`:esc(initials(name))}
 async function loadPhoto(id){
   if(S.photos.has(id)||!has('personal'))return;S.photos.set(id,null);
-  try{const d=await db.doc('photos/'+id).get();const ph=d.exists?d.data().data||'':'';S.photos.set(id,ph);if(ph)document.querySelectorAll('[data-av="'+id+'"]').forEach(e=>e.innerHTML=`<img src="${esc(ph)}" alt="">`);if(S.sel===id)renderCard(S.students.get(id))}catch(e){S.photos.delete(id)}
+  try{const d=await db.doc('photos/'+id).get();const ph=d.exists?d.data().data||'':'';S.photos.set(id,ph);setAv(id,ph);if(S.sel===id)renderCard(S.students.get(id))}catch(e){S.photos.delete(id)}
 }
 function renderCard(s){
   if(!has('personal')||!s)return;
@@ -1000,7 +1002,7 @@ $('pfForm').addEventListener('submit',async e=>{e.preventDefault();const id=S.se
   try{await db.doc('profiles/'+id).set(data);
     {const d=+$('pf-hbD').value,m=$('pf-hbM').value,old=S.students.get(id)?.hb;const hb=d&&m?{d,m,y:S.pfHbY||old?.y||null}:null;
      if(JSON.stringify(hb)!==JSON.stringify(old||null))await db.doc('students/'+id).update({hb:hb||firebase.firestore.FieldValue.delete()})}
-    if(S.pfPhoto!==undefined){if(S.pfPhoto)await db.doc('photos/'+id).set({data:S.pfPhoto,at:Date.now()});else await db.doc('photos/'+id).delete();S.photos.set(id,S.pfPhoto)}
+    if(S.pfPhoto!==undefined){const ts=Date.now();if(S.pfPhoto)await db.doc('photos/'+id).set({data:S.pfPhoto,at:ts});else await db.doc('photos/'+id).delete();S.photos.set(id,S.pfPhoto);S.photoVer.set(id,ts);setAv(id,S.pfPhoto);db.doc('students/'+id).update({photoAt:ts}).catch(()=>{})}
     pfClose();renderCard(S.students.get(id));toast('הפרטים נשמרו')}catch(err){fail(err)}});
 /* ---------- manager dashboard ---------- */
 const SEV={1:'קלה',2:'בינונית',3:'חמורה'};
