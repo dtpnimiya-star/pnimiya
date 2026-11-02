@@ -24,7 +24,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-13";
+const APP_VERSION = "2026-11-02-14";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -206,7 +206,7 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
 .mr-grade:first-child{border-top:0;padding-top:0}
 .mr-grade ul{margin:0;padding-inline-start:18px;display:grid;gap:2px}
 .mr-grade .row{justify-content:space-between}
-body[data-tab="home"] #topSum,body[data-tab="home"] #gradeFilter,body[data-tab="sched"] #topSum,body[data-tab="sched"] #gradeFilter,body[data-tab="cal"] #topSum,body[data-tab="cal"] #gradeFilter,body[data-tab="staff"] #topSum,body[data-tab="staff"] #gradeFilter{display:none!important}
+body[data-page="home"] #topSum,body[data-page="home"] #gradeFilter,body[data-page="sched"] #topSum,body[data-page="sched"] #gradeFilter,body[data-page="cal"] #topSum,body[data-page="cal"] #gradeFilter,body[data-page="staff"] #topSum,body[data-page="staff"] #gradeFilter{display:none!important}
 .home-hero{display:grid;gap:4px;padding:6px 2px}
 .home-hero .hi{font-family:var(--f-display);font-size:1.7rem;line-height:1.2;margin:0;font-weight:400}
 .home-hero .dt{color:var(--muted)}
@@ -1043,7 +1043,7 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act],[data-tab]');
   if(e.target===$('sheetBg')){closeSheet();return}
   if(!b)return;
-  if(b.dataset.tab){S.tab=b.dataset.tab;document.body.dataset.tab=S.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
+  if(b.dataset.tab){S.tab=b.dataset.tab;document.body.dataset.page=S.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
     ['home','count','morn','out','stu','mgr','sched','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='home')renderHome();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
     try{localStorage.setItem('pn-tab',S.tab)}catch{}return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
