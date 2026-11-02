@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-02";
+const APP_VERSION = "2026-11-03-03";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -141,8 +141,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .room-card .sc{font-weight:800;font-size:1.1rem;border-radius:8px;padding:2px 10px}
 .chk{display:flex;flex-wrap:wrap;gap:6px}
 .chk button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 9px;font:600 .84rem var(--f-body);cursor:pointer;color:var(--muted)}
-.chk button[aria-pressed="true"]{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
-.chk button[aria-pressed="false"].set{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+.chk button.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.chk button.no{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
 .offnote{background:var(--warn-bg);border:1px solid var(--warn);color:var(--warn);border-radius:10px;padding:10px 12px;font-weight:600}
 .wa-box{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
 .wa-box .btns{display:flex;flex-wrap:wrap;gap:6px}
@@ -1397,8 +1397,10 @@ document.addEventListener('click',async e=>{
     case'praise':{const sid=S.sel;if(!sid)break;b.disabled=true;try{const r=db.collection('notes').doc();await OW(r.set({sid,kind:'שבח',pts:1,text:'שבח: '+b.dataset.c,at:Date.now(),by:S.me,byName:S.myName}));toast('+1 נקודה ל'+(S.students.get(sid)?.name||''),()=>OW(r.delete()))}catch(e){fail(e)}b.disabled=false;break}
     case'insPrev':S.insWeek=addD(S.insWeek,-7);subIns();break;
     case'insNext':S.insWeek=addD(S.insWeek,7);subIns();break;
-    case'insChk':{const r=b.dataset.room,k=b.dataset.k,cur=S.ins.get(r);const v=cur?!(cur.checks||{})[k]:false;
-      const checks=cur?{[k]:v}:Object.fromEntries(INS.map(([x])=>[x,x!==k]));await insSave(r,{checks});break}
+    case'insChk':{const r=b.dataset.room,k=b.dataset.k,cur=(S.ins.get(r)?.checks||{})[k];const v=cur===true?false:cur===false?null:true;
+      await insSave(r,{checks:{[k]:v}});break}
+    case'insAll':await insSave(b.dataset.room,{checks:Object.fromEntries(INS.map(([k])=>[k,true]))});toast('חדר '+b.dataset.room+': הכל תקין');break;
+    case'insClear':{if(!armed(b,'לאפס את הבדיקה?'))return;const r=b.dataset.room;try{await OW(db.doc('inspections/'+S.insWeek+'_'+r).delete());S.ins.delete(r);renderIns();toast('הבדיקה של חדר '+r+' אופסה')}catch(e){fail(e)}break}
     case'backup':await doBackup(b);break;
     case'auditLoad':loadAudit();break;
     case'notifOn':{try{const r=await Notification.requestPermission();if(r==='granted'){toast('ההתראות הופעלו');notify('ההתראות פועלות','מעכשיו תקבלו כאן התראות מהפנימייה','test-'+Date.now())}else toast('ההתראות לא אושרו בדפדפן')}catch{}renderNotifBtn();break}
@@ -1732,10 +1734,12 @@ function renderIns(){if(S.tab!=='rooms')return;const w=S.insWeek;
   $('insGrid').innerHTML=R.filter(r=>r===S.insSel).map(r=>{const x=S.ins.get(r),c=x?.checks||{};const who=allSorted().filter(s=>String(s.room)===r).map(s=>s.name);
     return `<div class="room-card"><div class="hd"><b>חדר ${esc(r)}${STAFF_ROOMS.has(r)?' · חדר מדריכים':''}</b><span class="sc" style="background:${scoreCol(x?.score)}">${x?x.score+'/5':'—'}</span></div>
       ${who.length?`<span class="muted" style="font-size:.82rem">${esc(who.join(', '))}</span>`:''}
-      <div class="chk">${INS.map(([k,l])=>`<button type="button" class="${x?'set':''}" aria-pressed="${!!c[k]}" data-act="insChk" data-room="${esc(r)}" data-k="${k}" ${ro?'disabled':''}>${x?(c[k]?'✓':'✗'):'○'} ${l}</button>`).join('')}</div>
+      <div class="chk">${INS.map(([k,l])=>{const v=c[k];return `<button type="button" class="${v===true?'ok':v===false?'no':''}" data-act="insChk" data-room="${esc(r)}" data-k="${k}" ${ro?'disabled':''} title="לחיצה: תקין ← לא תקין ← לא נבדק">${v===true?'✓':v===false?'✗':'○'} ${l}</button>`}).join('')}</div>
+      <span class="muted" style="font-size:.8rem">כל לחיצה מחליפה: ✓ תקין ← ✗ לא תקין ← ○ לא נבדק</span>
+      ${ro?'':`<div class="row" style="gap:6px"><button class="btn small" type="button" data-act="insAll" data-room="${esc(r)}">✓ הכל תקין</button>${x?`<button class="btn small" type="button" data-act="insClear" data-room="${esc(r)}">איפוס הבדיקה</button>`:''}</div>`}
       <input data-room="${esc(r)}" class="insNote" placeholder="הערה (לא חובה)" value="${esc(x?.note||'')}" ${ro?'disabled':''}>
       ${x?`<span class="muted" style="font-size:.8rem">נבדק ע"י ${esc(x.byName||'')} · ${when(x.at)}</span>`:''}</div>`}).join('')}
-async function insSave(room,patch){const id=S.insWeek+'_'+room,cur=S.ins.get(room)||{checks:Object.fromEntries(INS.map(([k])=>[k,true]))};const checks={...(cur.checks||{}),...(patch.checks||{})};
+async function insSave(room,patch){const id=S.insWeek+'_'+room,cur=S.ins.get(room)||{checks:{}};const checks={...(cur.checks||{}),...(patch.checks||{})};Object.keys(checks).forEach(k=>{if(checks[k]==null)delete checks[k]});
   const d={week:S.insWeek,room,checks,note:patch.note!=null?patch.note:(cur.note||''),score:INS.filter(([k])=>checks[k]).length,at:Date.now(),by:S.me,byName:S.myName};
   try{await OW(db.doc('inspections/'+id).set(d))}catch(e){fail(e)}}
 document.addEventListener('change',e=>{if(e.target.classList?.contains('insNote'))insSave(e.target.dataset.room,{note:e.target.value.trim()})});
