@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-27";
+const APP_VERSION = "2026-11-02-28";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -540,7 +540,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
         <input id="newFirst" placeholder="שם פרטי" required aria-label="שם פרטי" autocomplete="off">
         <input id="newLast" placeholder="שם משפחה" required aria-label="שם משפחה" autocomplete="off">
         <select id="newGrade" aria-label="כיתה"><option value="">כיתה</option><option>ט</option><option>י</option><option>יא</option><option>יב</option></select>
-        <select id="newRoom" aria-label="חדר"><option value="">חדר</option><option>101</option><option>102</option><option>103</option><option>104</option><option>105</option><option>106</option><option>107</option><option>108</option><option>109</option><option>110</option><option>111</option><option>112</option><option>113</option></select>
+        <select id="newRoom" aria-label="חדר"><option value="">חדר</option><option>101</option><option>102</option><option>103</option><option>104</option><option>110</option><option>111</option><option>112</option><option>113</option></select>
       </div>
       <div><button class="btn primary" type="submit">הוסף</button></div>
       <div id="dupMsg" class="notice" hidden></div>
@@ -744,7 +744,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
         <input id="edFirst" required placeholder="שם פרטי" aria-label="שם פרטי" autocomplete="off">
         <input id="edLast" placeholder="שם משפחה" aria-label="שם משפחה" autocomplete="off">
         <select id="edGrade" aria-label="כיתה"><option value="">ללא כיתה</option><option>ט</option><option>י</option><option>יא</option><option>יב</option></select>
-        <select id="edRoom" aria-label="חדר"><option value="">ללא חדר</option><option>101</option><option>102</option><option>103</option><option>104</option><option>105</option><option>106</option><option>107</option><option>108</option><option>109</option><option>110</option><option>111</option><option>112</option><option>113</option></select>
+        <select id="edRoom" aria-label="חדר"><option value="">ללא חדר</option><option>101</option><option>102</option><option>103</option><option>104</option><option>110</option><option>111</option><option>112</option><option>113</option></select>
       </div>
       <div class="row">
         <button class="btn" type="submit">שמור שינויים</button>
@@ -1682,8 +1682,8 @@ function renderTrends(){if(!S.trend||!$('trends'))return;const {days,morn,night}
 const INS=[['order','סדר כללי'],['beds','מיטות מסודרות'],['floor','רצפה נקייה'],['trash','פח ריק, בלי אוכל'],['damage','ללא נזק']];
 const weekOf=k=>{const d=new Date(k+'T12:00');d.setDate(d.getDate()-d.getDay());return ymd(d)};
 S.insWeek=weekOf(ymd(new Date()));S.ins=new Map();
-const STAFF_ROOMS=new Set(['114','115']);
-function roomsList(){const r=new Set();for(let i=101;i<=115;i++)r.add(String(i));for(const s of S.students.values())if(s.room)r.add(String(s.room));return [...r].sort((a,b)=>a.localeCompare(b,'he',{numeric:true}))}
+const STAFF_ROOMS=new Set(['114','115']),NOT_ROOMS=new Set(['105','106','107','108','109']);
+function roomsList(){const r=new Set();for(let i=101;i<=115;i++)if(!NOT_ROOMS.has(String(i)))r.add(String(i));for(const s of S.students.values())if(s.room)r.add(String(s.room));return [...r].sort((a,b)=>a.localeCompare(b,'he',{numeric:true}))}
 function subIns(){if(!db||!has('rooms'))return;if(S.unIns&&S.insSubWeek===S.insWeek){renderIns();return}if(S.unIns)S.unIns();S.insSubWeek=S.insWeek;
   S.unIns=db.collection('inspections').where('week','==',S.insWeek).onSnapshot(q=>{S.ins=new Map(q.docs.map(d=>[d.data().room,d.data()]));renderIns()},onErr);renderIns()}
 const scoreCol=v=>v==null?'var(--soft)':v>=4?'var(--ok-bg)':v>=3?'var(--warn-bg)':'var(--bad-bg)';
