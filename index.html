@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-19";
+const APP_VERSION = "2026-11-02-20";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -421,6 +421,28 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <input type="datetime-local" id="outBack">
       <div><button class="btn primary" type="submit">רשום יציאה</button></div>
     </form>
+    <form id="absForm" class="panel writer">
+      <h2>רישום היעדרות ממושכת</h2>
+      <span class="muted" style="font-size:.9rem;margin-top:-6px">לתלמיד שנעדר כמה ימים, שבוע או יותר. בזמן ההיעדרות הוא לא ייספר כחסר בלילה ובהשכמה.</span>
+      <select id="absStudent" required aria-label="תלמיד"></select>
+      <div class="grid2">
+        <select id="absReason" aria-label="סיבה">
+          <option>מחלה</option><option>טיפול רפואי / אשפוז</option><option>אירוע משפחתי</option><option>אבל</option><option>השעיה</option><option>חופשה מאושרת</option><option>אחר</option>
+        </select>
+        <input id="absOther" placeholder="פירוט (לא חובה)" aria-label="פירוט">
+      </div>
+      <div class="grid2">
+        <label class="muted" style="display:grid;gap:4px;font-size:.9rem">מתאריך<input type="date" id="absFrom" required></label>
+        <label class="muted" style="display:grid;gap:4px;font-size:.9rem">חזרה צפויה בתאריך<input type="date" id="absTo" required></label>
+      </div>
+      <div class="row" style="gap:6px">
+        <button class="btn small" type="button" data-act="absLen" data-d="7">שבוע</button>
+        <button class="btn small" type="button" data-act="absLen" data-d="14">שבועיים</button>
+        <button class="btn small" type="button" data-act="absLen" data-d="30">חודש</button>
+        <span class="muted" id="absDays" style="font-size:.9rem"></span>
+      </div>
+      <div><button class="btn primary" type="submit">רשום היעדרות</button></div>
+    </form>
     <div style="display:grid;gap:8px"><h2>נמצאים מחוץ לפנימייה</h2><div id="outList"></div></div>
     <div style="display:grid;gap:8px"><h2>יומן יציאות וחזרות</h2><div id="moveLog"></div></div>
   </section>
@@ -704,7 +726,7 @@ function renderCount(){
       else if(m)parts.push((m.s==='p'?'סומן נוכח ':'סומן חסר ')+tf.format(new Date(m.at))+' · '+byName(m.by));
       const meta=parts.filter(Boolean).join(' · ');
       h+=`<div class="item"><button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}${meta?`<span class="meta">${esc(meta)}</span>`:''}</button>`;
-      if(isOut(s.id))h+=`<span class="chip ${stt.backBy&&stt.backBy<Date.now()?'bad':'warn'}">${stt.backBy&&stt.backBy<Date.now()?'באיחור':'בחוץ'}</span>`;
+      if(isOut(s.id))h+=`<span class="chip ${stt.backBy&&stt.backBy<Date.now()?'bad':'warn'}">${stt.backBy&&stt.backBy<Date.now()?'באיחור':stt.long?'היעדרות':'בחוץ'}</span>`;
       else{const nn=nightNotes(s.id).length;if(canNN())h+=`<button class="nn-btn ${nn?'has':''}" type="button" data-act="nn" data-id="${s.id}" title="הערת לילה" aria-label="הערת לילה ל${esc(s.name)}">🌙${nn?' '+nn:''}</button>`;h+=''}
       if(!isOut(s.id))h+=`<div class="seg"><button class="p" aria-pressed="${m?.s==='p'}" data-act="mark" data-id="${s.id}" data-v="p" ${S.ro?'disabled':''}>נוכח</button><button class="a" aria-pressed="${m?.s==='a'}" data-act="mark" data-id="${s.id}" data-v="a" ${S.ro?'disabled':''}>חסר</button></div>`;
       h+=`</div>`;
@@ -739,9 +761,10 @@ function renderOut(){
   const ins=st.filter(s=>!isOut(s.id));
   sel.innerHTML=`<option value="">בחר תלמיד…</option>`+ins.map(s=>`<option value="${s.id}">${esc(s.name)}${metaOf(s)?' · '+esc(metaOf(s)):''}</option>`).join('');
   if(ins.some(s=>s.id===cur))sel.value=cur;
+  {const a=$('absStudent'),c=a.value;a.innerHTML=sel.innerHTML;if(ins.some(s=>s.id===c))a.value=c;if(!$('absFrom').value){$('absFrom').value=ymd(new Date());setAbsLen(7)}absDaysTxt()}
   const outs=st.filter(s=>isOut(s.id)).sort((a,b)=>(S.status.get(a.id).backBy||9e15)-(S.status.get(b.id).backBy||9e15));
   $('outList').innerHTML=outs.length?`<div class="list">`+outs.map(s=>{const t=S.status.get(s.id),late=t.backBy&&t.backBy<Date.now();
-    return `<div class="item"><button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${esc(t.reason||'')} · יצא ${when(t.outAt)}${t.backBy?' · חזרה '+when(t.backBy):''}</span></button>${late?'<span class="chip bad">באיחור</span>':''}${S.ro?'':`<button class="btn small" data-act="back" data-id="${s.id}">חזר</button>`}</div>`}).join('')+`</div>`
+    return `<div class="item"><button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${t.long?`היעדרות ממושכת · ${esc(t.reason||'')} · ${fmtShort(t.from)}–${fmtShort(t.to)} (${absLen(t.from,t.to)} ימים)`:`${esc(t.reason||'')} · יצא ${when(t.outAt)}${t.backBy?' · חזרה '+when(t.backBy):''}`}</span></button>${late?'<span class="chip bad">באיחור</span>':t.long?'<span class="chip warn">היעדרות</span>':''}${S.ro?'':`<button class="btn small" data-act="back" data-id="${s.id}">חזר</button>`}</div>`}).join('')+`</div>`
     :`<div class="empty">${S.ready?(S.grade?'כל התלמידים בכיתה הזו בפנימייה.':'כל התלמידים בפנימייה.'):'טוען…'}</div>`;
   $('moveLog').innerHTML=moveList(S.moves.filter(m=>{const s=S.students.get(m.sid);return !S.grade||(s&&inFilter(s))}).slice(0,40),true);
 }
@@ -776,7 +799,7 @@ function renderSheet(){
   if(!s){closeSheet();return}
   $('shName').textContent=s.name;
   const t=S.status.get(s.id),m=S.marks.get(s.id);
-  $('shStatus').innerHTML=`<div class="row"><span class="pill">${gradeLabel(s.grade)}</span>${s.room?`<span class="pill">חדר ${esc(s.room)}</span>`:''}${isOut(s.id)?`<span class="pill warn">בחוץ · ${esc(t.reason||'')}${t.backBy?' · חזרה '+when(t.backBy):''}</span>`:'<span class="pill ok">בפנימייה</span>'}${m&&!isOut(s.id)?`<span class="pill ${m.s==='p'?'ok':'bad'}">ספירת הלילה: ${m.s==='p'?'נוכח':'חסר'}</span>`:''}</div>`;
+  $('shStatus').innerHTML=`<div class="row"><span class="pill">${gradeLabel(s.grade)}</span>${s.room?`<span class="pill">חדר ${esc(s.room)}</span>`:''}${isOut(s.id)?`<span class="pill warn">${t.long?'היעדרות ממושכת':'בחוץ'} · ${esc(t.reason||'')}${t.long?' · עד '+fmtShort(t.to):t.backBy?' · חזרה '+when(t.backBy):''}</span>`:'<span class="pill ok">בפנימייה</span>'}${m&&!isOut(s.id)?`<span class="pill ${m.s==='p'?'ok':'bad'}">ספירת הלילה: ${m.s==='p'?'נוכח':'חסר'}</span>`:''}</div>`;
   const ns=S.notes.filter(x=>x.sid===s.id);
   $('shNotes').innerHTML=ns.length?`<div class="list">`+ns.map(n=>`<div class="note"><div class="row" style="justify-content:space-between"><span class="row" style="gap:6px"><span class="chip ${n.kind==='שבח'?'ok':''}" style="${n.kind==='שבח'?'':'background:var(--soft);color:var(--ink)'}">${esc(n.kind)}</span>${isBeh(n)?sevChip(n.sev)+(n.handled?'<span class="chip ok">טופל</span>':''):''} <span class="time">${when(n.at)} · ${esc(byName(n.by))}</span></span>${S.ro?'':`<button class="btn small" data-act="delNote" data-id="${n.id}">מחק</button>`}</div><p>${esc(n.text)}</p></div>`).join('')+`</div>`:`<div class="empty">אין הערות על ${esc(s.name)}.</div>`;
   $('shMoves').innerHTML=moveList(S.moves.filter(x=>x.sid===s.id).slice(0,10),false);
@@ -937,7 +960,7 @@ function morningReport(){
   for(const s of allSorted()){const g=s.grade||'-';const o=out[g]||(out[g]={absent:[],noWake:[],sick:[],late:[],home:[],nightN:[]});
     (S.notes||[]).filter(n=>n.night===night&&n.sid===s.id).forEach(n=>o.nightN.push(s.name+' – '+(n.text||'').replace(/^הערת לילה: /,'')));
     const n=S.prevNight.get(s.id),m=S.wake.get(s.id),st=S.status.get(s.id);
-    if(st&&st.state==='out'){o.home.push(s.name+(st.reason?' ('+st.reason+')':''));continue}
+    if(st&&st.state==='out'){o.home.push(s.name+(st.long?' (היעדרות ממושכת'+(st.reason?': '+st.reason:'')+', עד '+fmtShort(st.to)+')':st.reason?' ('+st.reason+')':''));continue}
     if(n&&n.s==='a')o.absent.push(s.name);
     if(m){if(m.s==='no')o.noWake.push(s.name);else if(m.s==='sick')o.sick.push(s.name);else if(isLate(m))o.late.push(s.name+' – '+hm(m.t))}}
   return {night,out}}
@@ -1152,7 +1175,7 @@ document.addEventListener('click',async e=>{
     ['home','count','morn','out','stu','mgr','sched','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='home')renderHome();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
     try{localStorage.setItem('pn-tab',S.tab)}catch{}return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
-  if(!db&&!['close','open','nnClose','nnCat'].includes(b.dataset.act))return;
+  if(!db&&!['close','open','nnClose','nnCat','absLen'].includes(b.dataset.act))return;
   const id=b.dataset.id;
   switch(b.dataset.act){
     case'mark':b.disabled=true;await mark(id,b.dataset.v);b.disabled=false;break;
@@ -1160,6 +1183,7 @@ document.addEventListener('click',async e=>{
     case'back':b.disabled=true;await goBack(id);break;
     case'open':openSheet(id);break;
     case'nn':openNN(id);break;
+    case'absLen':setAbsLen(b.dataset.d);absDaysTxt();break;
     case'nnClose':closeNN();break;
     case'nnCat':{const c=b.dataset.c;if(S.nnCats.has(c))S.nnCats.delete(c);else S.nnCats.add(c);b.setAttribute('aria-pressed',S.nnCats.has(c));break}
     case'close':closeSheet();break;
@@ -1219,6 +1243,18 @@ $('addForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)retur
   if(d&&!force){dm.innerHTML=`<div style="display:grid;gap:8px">${esc(d.name)} כבר נמצא ברשימה${d.grade?' · כיתה '+esc(d.grade):''}${d.room?' · חדר '+esc(d.room):''}. התלמיד לא נוסף שוב.<div class="row"><button class="btn small" type="button" data-act="open" data-id="${d.id}">פתח את הכרטיס שלו</button><button class="btn small" type="button" data-act="dupForce">זה תלמיד אחר עם אותו שם, הוסף</button></div></div>`;dm.hidden=false;return}
   try{await addStudent($('newFirst').value,$('newLast').value,$('newRoom').value,$('newGrade').value);toast('נוסף: '+nm);$('newFirst').value='';$('newLast').value='';$('newFirst').focus()}catch(err){fail(err)}});
 ['newFirst','newLast'].forEach(i=>$(i).addEventListener('input',()=>{$('dupMsg').hidden=true}));
+const absLen=(a,b)=>a&&b?Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e5):0;
+function setAbsLen(d){const f=$('absFrom').value||ymd(new Date());$('absTo').value=addD(f,+d)}
+function absDaysTxt(){const n=absLen($('absFrom').value,$('absTo').value);$('absDays').textContent=n>0?n+' ימים':''}
+['absFrom','absTo'].forEach(k=>$(k).addEventListener('input',absDaysTxt));
+$('absForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const sid=$('absStudent').value;if(!sid){toast('בחרו תלמיד');return}
+  const from=$('absFrom').value,to=$('absTo').value;if(!from||!to||to<=from){toast('תאריך החזרה צריך להיות אחרי תאריך ההתחלה');return}
+  if(from>ymd(new Date())){toast('אפשר לרשום היעדרות שמתחילה היום או קודם. רשמו אותה ביום שהתלמיד יוצא');return}
+  const reason=[$('absReason').value,$('absOther').value.trim()].filter(Boolean).join(' · ');
+  const outAt=from===ymd(new Date())?Date.now():new Date(from+'T08:00').getTime(),backBy=new Date(to+'T20:00').getTime(),at=Date.now();
+  try{await db.doc('status/'+sid).set({state:'out',long:true,reason,from,to,outAt,backBy,by:S.me,byName:S.myName});
+    await db.collection('moves').add({sid,type:'out',long:true,reason:'היעדרות ממושכת · '+reason+' · עד '+fmtShort(to),from,to,backBy,at,by:S.me,byName:S.myName});
+    $('absOther').value='';$('absStudent').value='';toast('ההיעדרות נרשמה')}catch(err){fail(err)}});
 $('outForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const sid=$('outStudent').value;if(!sid){toast('בחרו תלמיד');return}
   const reason=[$('outReason').value,$('outOther').value.trim()].filter(Boolean).join(' · ');const bv=$('outBack').value;const backBy=bv?new Date(bv).getTime():null;const at=Date.now();
   try{await db.doc('status/'+sid).set({state:'out',reason,outAt:at,backBy,by:S.me,byName:S.myName});await db.collection('moves').add({sid,type:'out',reason,backBy,at,by:S.me,byName:S.myName});
@@ -1476,10 +1512,12 @@ async function buildStudentReport(sid,from,to){
     wMorn?Promise.all(days.map(k=>get1('morning/'+k+'/marks/'+sid))):null,
     wMoves?db.collection('moves').where('at','>=',t0).where('at','<',t1).orderBy('at').get().then(q=>q.docs.map(d=>d.data()).filter(m=>m.sid===sid)):null,
     wNotes?db.collection('notes').where('at','>=',t0).where('at','<',t1).orderBy('at').get().then(q=>q.docs.map(d=>d.data()).filter(n=>n.sid===sid)):null]);
+  const absR=[...(moves||[]).filter(m=>m.long&&m.from&&m.to).map(m=>[m.from,m.to,m.reason||'']),...((S.status.get(sid)||{}).long?[[S.status.get(sid).from,S.status.get(sid).to,S.status.get(sid).reason||'']]:[])];
+  const absOn=k=>absR.find(([f,t])=>k>=f&&k<t);let nabs=0;
   const wdf=new Intl.DateTimeFormat('he-IL',{weekday:'long'});
   let np=0,na=0,nu=0,up=0,late=0,no=0,sick=0;const mins=[];
   const log=[['תאריך','יום','תאריך עברי','לוח השנה',...(wNight?['ספירת לילה','נבדק על ידי']:[]),...(wMorn?['השכמה','שעת קימה','נרשם על ידי']:[])]];
-  days.forEach((k,i)=>{const hd=hDate(k),ci=dayInfo(k);const cal=ci.k==='w'?'':(ci.l||KIND[ci.k]||'');const r=[fmtD(new Date(k+'T12:00')),wdf.format(new Date(k+'T12:00')),hd?hbTxt(hd):'',cal];
+  days.forEach((k,i)=>{const hd=hDate(k),ci=dayInfo(k);const ab=absOn(k);if(ab)nabs++;const cal=[ci.k==='w'?'':(ci.l||KIND[ci.k]||''),ab?'היעדרות ממושכת: '+String(ab[2]).replace(/^היעדרות ממושכת · /,''):''].filter(Boolean).join(' · ');const r=[fmtD(new Date(k+'T12:00')),wdf.format(new Date(k+'T12:00')),hd?hbTxt(hd):'',cal];
     if(wNight){const x=nights[i];if(!x){nu++;r.push('','')}else{if(x.s==='p')np++;else na++;r.push(x.s==='p'?'נוכח':'חסר',by(x))}}
     if(wMorn){const x=morns[i];if(!x)r.push('','','');else{let st;const tm=x.t?hm(x.t):'';if(x.s==='up'){up++;if(tm)mins.push(toMin(tm));if(isLate(x)){late++;st='קם באיחור'}else st='קם'}else if(x.s==='no'){no++;st='לא קם'}else{sick++;st='חולה'}r.push(st,x.s==='up'?tm:'',by(x))}}
     log.push(r)});
@@ -1488,6 +1526,7 @@ async function buildStudentReport(sid,from,to){
   const sum=[['דוח תלמיד',s.name||''],['כיתה',s.grade||''],['חדר',s.room||''],['תקופה',fmtD(t0)+' – '+fmtD(t1-864e5)+` (${days.length} ימים)`],['מצב נוכחי',o?'בחוץ'+(cur?.reason?' · '+cur.reason:''):'בפנימייה'],...(hb?[['יום הולדת עברי',hbTxt(hb)]]:[]),[]];
   if(wNight)sum.push(['ספירת לילה',''],['  לילות נוכח',np],['  לילות חסר',na],['  לא נבדק',nu],[]);
   if(wMorn)sum.push(['השכמת בוקר',''],['  קם',up],['  מתוכם באיחור',late],['  לא קם',no],['  חולה',sick],['  שעת קימה ממוצעת',avg==null?'':pad(Math.floor(avg/60))+':'+pad(avg%60)],['  שעת השכמה שנקבעה',S.wakeTarget||'07:00'],[]);
+  if(nabs)sum.push(['ימי היעדרות ממושכת בתקופה',nabs]);
   if(wMoves)sum.push(['יציאות מהפנימייה',moves.filter(m=>m.type==='out').length],['חזרות',moves.filter(m=>m.type!=='out').length]);
   if(wNotes){const beh=notes.filter(isBeh);sum.push(['הערות',notes.length],['  מתוכן התנהגות',beh.length],['  התנהגות שלא טופלה',beh.filter(n=>!n.handled).length])}
   sum.push([],['הופק',fmtD(Date.now())+' '+hm(Date.now())+(S.myName?' · '+S.myName:'')]);
