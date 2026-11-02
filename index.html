@@ -24,7 +24,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-8";
+const APP_VERSION = "2026-11-02-9";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -188,6 +188,20 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
 .pw-eye{position:absolute;top:50%;right:4px;transform:translateY(-50%);width:38px;height:38px;border:0;background:none;color:var(--muted);border-radius:8px;cursor:pointer;display:grid;place-items:center;padding:0}
 .pw-eye:hover{color:var(--ink);background:var(--soft)}
 .pw-eye svg{width:22px;height:22px}
+.sch-item{display:grid;grid-template-columns:5.6em 1fr;gap:12px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.sch-item:first-child{border-top:0}
+.sch-time{font-variant-numeric:tabular-nums;font-weight:700;direction:ltr;text-align:right;unicode-bidi:isolate;line-height:1.25}
+.sch-time small{display:block;color:var(--muted);font-weight:400;font-size:.82rem}
+.sch-what{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+.sch-what b{font-weight:600;overflow-wrap:anywhere}
+.sch-chip{font-size:.78rem;font-weight:700;padding:2px 9px;border-radius:999px;color:var(--ink)}
+.sch-item.now{background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:8px;padding-inline:8px;margin-inline:-8px}
+.sch-item.past{opacity:.55}
+.sch-edit{display:grid;grid-template-columns:auto auto 1fr auto auto;gap:6px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.sch-edit:first-child{border-top:0}
+.sch-edit>*{min-width:0}
+.sch-edit input[type=time]{width:7.2em;padding:7px 6px}
+@media (max-width:560px){.sch-edit{grid-template-columns:auto auto 1fr;}.sch-edit .k,.sch-edit .del{grid-row:2}.sch-edit .k{grid-column:1/3}}
 .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
 .cal-h{text-align:center;font-size:.78rem;font-weight:700;color:var(--muted);padding:2px 0}
 .cal-d{min-height:64px;border-radius:6px;padding:4px 4px 5px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:1px;min-width:0;font-size:.72rem;line-height:1.2}
@@ -280,6 +294,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <button type="button" id="t-out" data-tab="out" data-perm="out" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M9 8l-4 4 4 4M5 12h11"/></svg><span class="lbl">יציאות</span></button>
     <button type="button" id="t-stu" data-tab="stu" data-perm="stu" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg><span class="lbl">תלמידים</span></button>
     <button type="button" id="t-mgr" data-tab="mgr" data-perm="mgr" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="lbl">לוח מנהל</span><span class="badge" id="mgrBadge" hidden></span></button>
+    <button type="button" id="t-sched" data-tab="sched" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="lbl">מערכת שבועית</span></button>
     <button type="button" id="t-cal" data-tab="cal" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg><span class="lbl">לוח שנה</span></button>
     <button type="button" id="t-rep" data-tab="rep" data-perm="reports" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl">דוחות</span></button>
     <button type="button" id="t-staff" data-tab="staff" data-perm="owner" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="lbl">צוות</span></button>
@@ -390,6 +405,17 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <div class="panel"><h2>הכי הרבה הערות התנהגות · 30 יום</h2><div id="topStu"></div></div>
     <details><summary>טופלו לאחרונה</summary><div id="handled" style="margin-top:8px"></div></details>
   </section>
+  <!-- מערכת שבועית -->
+  <section id="tab-sched" hidden style="display:grid;gap:14px">
+    <div id="schNow"></div>
+    <div class="filters" id="schDays" role="group" aria-label="בחירת יום"></div>
+    <div class="panel" style="gap:12px">
+      <div class="row" style="justify-content:space-between"><h2 id="schTitle"></h2><div class="row" id="schTools"></div></div>
+      <div id="schList"></div>
+    </div>
+    <div class="cal-legend" id="schLegend"></div>
+  </section>
+
   <!-- לוח שנה -->
   <section id="tab-cal" hidden style="display:grid;gap:16px">
     <div id="calNow"></div>
@@ -521,7 +547,7 @@ const df=new Intl.DateTimeFormat('he-IL',{day:'numeric',month:'numeric',hour:'2-
 const nf=new Intl.DateTimeFormat('he-IL',{weekday:'long',day:'numeric',month:'long'});
 const when=t=>{if(!t)return'';const d=new Date(t);return ymd(d)===ymd(new Date())?'היום '+tf.format(d):df.format(d)};
 
-const S={students:new Map(),status:new Map(),marks:new Map(),notes:[],moves:[],names:{},me:null,night:nightKey(),tab:'count',sel:null,q:'',grade:'',xl:null,ready:false,wake:new Map(),mornDate:ymd(new Date()),wakeTarget:'07:00',settings:null,perm:null,owner:false,staff:[],requests:[],calM:null,profiles:new Map(),photos:new Map(),permReady:false,access:false};
+const S={students:new Map(),status:new Map(),marks:new Map(),notes:[],moves:[],names:{},me:null,night:nightKey(),tab:'count',sel:null,q:'',grade:'',xl:null,ready:false,wake:new Map(),mornDate:ymd(new Date()),wakeTarget:'07:00',settings:null,perm:null,owner:false,staff:[],requests:[],calM:null,sched:undefined,schDay:null,schEdit:null,profiles:new Map(),photos:new Map(),permReady:false,access:false};
 let db=null,user=null,unMarks=null;
 
 function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
@@ -805,7 +831,7 @@ function applyPerms(){
   $('topSum').hidden=!ok;
   const na=$('noAccess');na.hidden=ok;
   if(!ok){
-    ['count','morn','out','stu','mgr','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
+    ['count','morn','out','stu','mgr','sched','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
     const m={removed:['אין לך גישה','החשבון הזה לא רשום כאיש צוות. פנו למנהל הפנימייה.'],
       disabled:['הגישה שלך הושבתה','מנהל הפנימייה השבית את הגישה שלך. לפרטים, פנו אליו.'],
       none:['אין לך עדיין הרשאות','מנהל הפנימייה עוד לא הגדיר מה מותר לך לעשות. פנו אליו.'],
@@ -842,7 +868,7 @@ document.addEventListener('change',async e=>{
     else if(el.dataset.sact==='perm'){const s=S.staff.find(x=>x.id===id);const perms={...(s?.perms||{}),[el.dataset.k]:el.checked};await db.doc('staff/'+id).update({perms});toast('ההרשאות עודכנו')}
   }catch(err){fail(err)}
 });
-function renderAll(){renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes()}
+function renderAll(){renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes();renderSched()}
 
 /* ---------- sheet ---------- */
 function setRoomSel(sel,v){if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o)}sel.value=v}
@@ -926,7 +952,7 @@ document.addEventListener('click',async e=>{
   if(e.target===$('sheetBg')){closeSheet();return}
   if(!b)return;
   if(b.dataset.tab){S.tab=b.dataset.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
-    ['count','morn','out','stu','mgr','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
+    ['count','morn','out','stu','mgr','sched','cal','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
     try{localStorage.setItem('pn-tab',S.tab)}catch{}return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
   if(!db&&b.dataset.act!=='close'&&b.dataset.act!=='open')return;
@@ -949,6 +975,14 @@ document.addEventListener('click',async e=>{
     case'reopen':try{await db.doc('notes/'+id).update({handled:null});toast('ההתראה נפתחה מחדש')}catch(e){fail(e)}break;
     case'menu':menu(!S.menuOpen);break;
     case'menuClose':menu(false);break;
+    case'schDay':S.schDay=+b.dataset.d;S.schEdit=null;renderSched();break;
+    case'schEdit':S.schEdit=JSON.parse(JSON.stringify(schDayItems(S.schDay)));if(!S.schEdit.length)S.schEdit.push({from:'',to:'',title:'',k:'act'});renderSched();break;
+    case'schCancel':S.schEdit=null;renderSched();break;
+    case'schAdd':schCollect();S.schEdit.push({from:'',to:'',title:'',k:'act'});renderSched();setTimeout(()=>{const r=$('schList').querySelectorAll('.sch-edit');r[r.length-1]?.querySelector('input')?.focus()},0);break;
+    case'schDel':schCollect();S.schEdit.splice(+b.dataset.i,1);renderSched();break;
+    case'schSave':await schSave(b);break;
+    case'schCopy':{schCollect();const to=[...$('schList').querySelectorAll('[data-copy]:checked')].map(x=>+x.dataset.copy);if(!to.length){toast('סמנו לאילו ימים להעתיק');break}
+      await schSave(b,to);break}
     case'calPrev':S.calM=Math.max(0,S.calM-1);renderCal();break;
     case'calNext':S.calM=Math.min(HMONTHS.length-1,S.calM+1);renderCal();break;
     case'repRange':setRange(b.dataset.d);break;
@@ -1054,6 +1088,45 @@ function renderCal(){
     g+=`<div class="cal-d ${e.k!=='w'?'k-'+e.k:''} ${k===today?'today':''}" title="${esc(e.l||KIND[e.k]||'')}"><span class="hd">${hNum(i+1)}</span><span class="gd">${fmtShort(k)}</span>${e.l?`<span class="lb">${esc(e.l)}</span>`:''}</div>`}
   $('calGrid').innerHTML=g;
   $('calLegend').innerHTML=Object.entries(KIND).map(([k,v])=>`<span><i style="background:${dotC(k)}"></i>${v}</span>`).join('');
+}
+
+/* ---------- weekly schedule ---------- */
+const SDAYS=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const SK={sleep:['שינה / השכמה','var(--cal-s)'],pray:['תפילה','var(--cal-c)'],study:['לימוד','var(--cal-l)'],meal:['ארוחה','var(--cal-e)'],act:['פעילות','var(--cal-p)'],free:['זמן חופשי','var(--cal-x)']};
+const tmin=t=>{const m=/^(\d{1,2}):(\d{2})/.exec(t||'');return m?(+m[1])*60+(+m[2]):null};
+function schDayItems(d){const a=(S.sched&&S.sched['d'+d])||[];return [...a].sort((x,y)=>(tmin(x.from)??9999)-(tmin(y.from)??9999))}
+function schNowInfo(){const n=new Date(),d=n.getDay(),m=n.getHours()*60+n.getMinutes(),it=schDayItems(d).filter(x=>tmin(x.from)!=null);
+  let cur=null,next=null;for(let i=0;i<it.length;i++){const f=tmin(it[i].from),e=tmin(it[i].to)??(it[i+1]?tmin(it[i+1].from):f+60);
+    if(f<=m&&(e>m||(e<f&&(m>=f)))){cur=it[i]}if(f>m&&!next)next=it[i]}
+  return {d,m,cur,next}}
+function schCollect(){if(!S.schEdit)return;$('schList').querySelectorAll('.sch-edit').forEach((r,i)=>{const it=S.schEdit[i];if(!it)return;
+  it.from=r.querySelector('[data-f=from]').value;it.to=r.querySelector('[data-f=to]').value;it.title=r.querySelector('[data-f=title]').value.trim();it.k=r.querySelector('[data-f=k]').value})}
+async function schSave(btn,copyTo){schCollect();const items=S.schEdit.filter(x=>x.title&&x.from).map(({from,to,title,k})=>({from,to:to||'',title,k}));
+  const bad=S.schEdit.find(x=>(x.title&&!x.from)||(!x.title&&x.from));if(bad){toast('לכל שורה צריך שעה ותיאור');return}
+  const data={...(S.sched||{}),['d'+S.schDay]:items,updatedAt:Date.now(),by:S.me,byName:S.myName};(copyTo||[]).forEach(d=>data['d'+d]=items.map(x=>({...x})));
+  btn.disabled=true;try{await db.doc('schedule/week').set(data);S.schEdit=null;toast(copyTo?`נשמר והועתק ל-${copyTo.length} ימים`:'המערכת נשמרה')}catch(e){fail(e)}btn.disabled=false;renderSched()}
+function renderSched(){
+  if(S.tab!=='sched')return;
+  if(S.schDay==null)S.schDay=new Date().getDay();
+  const ni=schNowInfo(),canEdit=has('mgr')&&!S.ro,d=S.schDay,isToday=d===ni.d;
+  const fmtI=x=>`${esc(x.title)}${x.from?' · <bdi dir="ltr">'+esc(x.from)+(x.to?'–'+esc(x.to):'')+'</bdi>':''}`;
+  $('schNow').innerHTML=S.sched?`<div class="calnote" style="background:${ni.cur?SK[ni.cur.k]?.[1]||'var(--soft)':'var(--soft)'};padding:14px"><span style="display:grid;gap:3px"><span style="font-size:1.1rem">עכשיו: ${ni.cur?fmtI(ni.cur):'אין פעילות מתוכננת'}</span>${ni.next?`<span class="muted" style="font-weight:400">הבא: ${fmtI(ni.next)}</span>`:''}</span></div>`:'';
+  $('schDays').innerHTML=SDAYS.map((n,i)=>`<button type="button" data-act="schDay" data-d="${i}" aria-pressed="${i===d}">${n}${i===ni.d?' · היום':''}</button>`).join('');
+  $('schTitle').textContent='יום '+SDAYS[d];
+  $('schTools').innerHTML=S.schEdit?'':(canEdit?'<button class="btn small" type="button" data-act="schEdit">עריכה</button>':'');
+  const kOpts=k=>Object.entries(SK).map(([v,[l]])=>`<option value="${v}" ${v===k?'selected':''}>${l}</option>`).join('');
+  if(S.schEdit){
+    $('schList').innerHTML=`<div>${S.schEdit.map((x,i)=>`<div class="sch-edit"><input type="time" data-f="from" id="sf${i}" value="${esc(x.from)}" aria-label="משעה"><input type="time" data-f="to" id="st${i}" value="${esc(x.to)}" aria-label="עד שעה (לא חובה)"><input data-f="title" id="sn${i}" value="${esc(x.title)}" placeholder="מה קורה? למשל: שחרית" aria-label="תיאור"><select class="k" data-f="k" id="sk${i}" aria-label="סוג">${kOpts(x.k)}</select><button class="btn small del" type="button" data-act="schDel" data-i="${i}" aria-label="מחיקת שורה">מחק</button></div>`).join('')}</div>
+    <div class="row"><button class="btn small" type="button" data-act="schAdd">+ הוספת שורה</button></div>
+    <details><summary>להעתיק את היום הזה לימים נוספים</summary><div class="row" style="margin-top:8px;gap:6px">${SDAYS.map((n,i)=>i===d?'':`<label class="perm" style="padding:6px 10px"><input type="checkbox" data-copy="${i}"> ${n}</label>`).join('')}</div>
+      <div style="margin-top:8px"><button class="btn small" type="button" data-act="schCopy">שמור והעתק לימים שסומנו</button></div></details>
+    <div class="row"><button class="btn primary" type="button" data-act="schSave">שמור</button><button class="btn" type="button" data-act="schCancel">ביטול</button></div>`;
+    return}
+  const it=schDayItems(d);
+  if(!it.length){$('schList').innerHTML=`<div class="empty">${S.sched===undefined?'טוען…':'עוד לא הוזנה מערכת ליום '+SDAYS[d]+'.'+(canEdit?' לחצו "עריכה" כדי להוסיף שעות: השכמה, תפילות, ארוחות, סדרים, פעילויות וכיבוי אורות.':'')}</div>`}
+  else $('schList').innerHTML=it.map(x=>{const f=tmin(x.from),e=tmin(x.to);const cur=isToday&&ni.cur===x;const past=isToday&&!cur&&f!=null&&((e??f)<ni.m)&&!(e!=null&&e<f);
+    return `<div class="sch-item ${cur?'now':''} ${past?'past':''}"><span class="sch-time">${esc(x.from)}${x.to?`<small>עד ${esc(x.to)}</small>`:''}</span><span class="sch-what"><b>${esc(x.title)}</b><span class="sch-chip" style="background:${SK[x.k]?.[1]||'var(--soft)'}">${SK[x.k]?.[0]||''}</span>${cur?'<span class="chip ok">עכשיו</span>':''}</span></div>`}).join('');
+  $('schLegend').innerHTML=Object.values(SK).map(([l,c])=>`<span><i style="background:${c}"></i>${l}</span>`).join('');
 }
 
 /* ---------- reports ---------- */
@@ -1200,6 +1273,7 @@ function subscribeAll(){
     if(S.mgr)snap.docChanges().forEach(ch=>{if(ch.type!=='added')return;const n=ch.doc.data();if(n.kind==='התנהגות'&&n.at>S.loadAt&&n.by!==S.me)showLive(n)});resolveNames(S.notes);renderAll()},onErr));
   else S.notes=[];
   S.subs.push(db.collection('moves').orderBy('at','desc').limit(300).onSnapshot(snap=>{S.moves=snap.docs.map(d=>({id:d.id,...d.data()}));resolveNames(S.moves);renderAll()},onErr));
+  S.subs.push(db.doc('schedule/week').onSnapshot(d=>{S.sched=d.exists?d.data():null;renderSched()},onErr));
   S.subs.push(db.doc('settings/app').onSnapshot(d=>{S.settings=d.exists?d.data():null;S.wakeTarget=S.settings?.wakeTarget||'07:00';renderMorn()},onErr));
   if(has('personal'))S.subs.push(db.collection('profiles').onSnapshot(snap=>{S.profiles=new Map(snap.docs.map(d=>[d.id,d.data()]));renderSheet()},onErr));
   else S.profiles=new Map();
@@ -1261,7 +1335,8 @@ function start(){
     // enterApp pushes the two identity listeners; data listeners are added by subscribeAll
     const before=S.subs.length;enterApp(u);boot=S.subs.splice(before);S.identitySubs=boot;
   });
-  setInterval(()=>{if(S.access&&S.tab!=='stu'&&S.tab!=='morn'&&S.tab!=='staff')renderAll()},60000);
+  setInterval(()=>{if(S.access&&S.tab==='sched'&&!S.schEdit)renderSched()},60000);
+  setInterval(()=>{if(S.access&&!['stu','morn','staff','sched'].includes(S.tab))renderAll()},60000);
 }
 start();
 </script>
