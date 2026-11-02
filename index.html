@@ -24,7 +24,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-3";
+const APP_VERSION = "2026-11-02-4";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -229,6 +229,8 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 .perm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px}
 .perm{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer}
 .perm input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}.grid4>*{min-width:0}
+@media (max-width:560px){.grid4{grid-template-columns:1fr 1fr}}
 .grid3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px}.grid3>*{min-width:0}
 @media (max-width:460px){.grid3{grid-template-columns:1fr 1fr}.grid3>:first-child{grid-column:1/-1}}
 @media (prefers-reduced-motion:no-preference){.seg button,.drawer-list button{transition:background .12s,color .12s}}
@@ -340,10 +342,11 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
   <section id="tab-stu" hidden style="display:grid;gap:16px">
     <div data-perm="students"><form id="addForm" class="panel writer">
       <h2>הוספת תלמיד</h2>
-      <div class="grid3">
-        <input id="newName" placeholder="שם מלא" required aria-label="שם מלא">
+      <div class="grid4">
+        <input id="newFirst" placeholder="שם פרטי" required aria-label="שם פרטי" autocomplete="off">
+        <input id="newLast" placeholder="שם משפחה" required aria-label="שם משפחה" autocomplete="off">
         <select id="newGrade" aria-label="כיתה"><option value="">כיתה</option><option>ט</option><option>י</option><option>יא</option><option>יב</option></select>
-        <input id="newRoom" placeholder="חדר" aria-label="חדר">
+        <select id="newRoom" aria-label="חדר"><option value="">חדר</option><option>101</option><option>102</option><option>103</option><option>104</option><option>105</option><option>106</option><option>107</option><option>108</option><option>109</option><option>110</option><option>111</option><option>112</option><option>113</option><option>114</option><option>115</option></select>
       </div>
       <div><button class="btn primary" type="submit">הוסף</button></div>
       <details open>
@@ -357,7 +360,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <details>
         <summary>הדבקת רשימה</summary>
         <div style="display:grid;gap:8px;margin-top:8px">
-          <span class="muted" style="font-size:.9rem">שורה לכל תלמיד: שם, כיתה, חדר. למשל: יוסף כהן, יא, 12</span>
+          <span class="muted" style="font-size:.9rem">שורה לכל תלמיד: שם פרטי, שם משפחה, כיתה, חדר. למשל: יוסף, כהן, יא, 104</span>
           <textarea id="bulk" aria-label="רשימת תלמידים"></textarea>
           <div><button class="btn" type="button" data-act="bulk">הוסף רשימה</button></div>
         </div>
@@ -477,10 +480,11 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <div data-perm="out" style="display:grid;gap:8px"><h2>יציאות אחרונות</h2><div id="shMoves"></div></div>
     <div data-perm="students"><form id="editForm" class="panel writer">
       <h2>פרטי תלמיד</h2>
-      <div class="grid3">
-        <input id="edName" required aria-label="שם">
+      <div class="grid4">
+        <input id="edFirst" required placeholder="שם פרטי" aria-label="שם פרטי" autocomplete="off">
+        <input id="edLast" placeholder="שם משפחה" aria-label="שם משפחה" autocomplete="off">
         <select id="edGrade" aria-label="כיתה"><option value="">ללא כיתה</option><option>ט</option><option>י</option><option>יא</option><option>יב</option></select>
-        <input id="edRoom" placeholder="חדר" aria-label="חדר">
+        <select id="edRoom" aria-label="חדר"><option value="">ללא חדר</option><option>101</option><option>102</option><option>103</option><option>104</option><option>105</option><option>106</option><option>107</option><option>108</option><option>109</option><option>110</option><option>111</option><option>112</option><option>113</option><option>114</option><option>115</option></select>
       </div>
       <div class="row">
         <button class="btn" type="submit">שמור שינויים</button>
@@ -817,7 +821,8 @@ document.addEventListener('change',async e=>{
 function renderAll(){renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes()}
 
 /* ---------- sheet ---------- */
-function openSheet(id){const s=S.students.get(id);if(!s)return;S.sel=id;$('edName').value=s.name||'';$('edRoom').value=s.room||'';$('edGrade').value=s.grade||'';$('noteText').value='';resetArm();pfClose();$('sheetBg').hidden=false;renderSheet()}
+function setRoomSel(sel,v){if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o)}sel.value=v}
+function openSheet(id){const s=S.students.get(id);if(!s)return;S.sel=id;{const sp=s.firstName!=null?[s.firstName,s.lastName||'']:splitName(s.name);$('edFirst').value=sp[0];$('edLast').value=sp[1]}setRoomSel($('edRoom'),s.room||'');$('edGrade').value=s.grade||'';$('noteText').value='';resetArm();pfClose();$('sheetBg').hidden=false;renderSheet()}
 function closeSheet(){S.sel=null;$('sheetBg').hidden=true;if($('pfForm'))$('pfForm').hidden=true}
 function resetArm(){document.querySelectorAll('[data-armed]').forEach(b=>{b.removeAttribute('data-armed');b.textContent=b.dataset.label||b.textContent})}
 function armed(btn,label){if(btn.dataset.armed){return true}resetArm();btn.dataset.label=btn.textContent;btn.dataset.armed='1';btn.textContent=label;return false}
@@ -834,9 +839,13 @@ async function roomAll(room){
 async function goBack(id){
   try{await db.doc('status/'+id).set({state:'in',at:Date.now(),by:S.me,byName:S.myName});await db.collection('moves').add({sid:id,type:'back',at:Date.now(),by:S.me,byName:S.myName});toast('נרשמה חזרה')}catch(e){fail(e)}
 }
-async function addStudent(name,room,grade){
-  name=String(name||'').trim();room=String(room||'').trim();if(!name)return;
-  const ref=await db.collection('students').add({name,room,grade:normGrade(grade),createdAt:Date.now(),by:S.me,byName:S.myName});
+const normRoom=r=>{const d=String(r||'').trim().match(/\d+/);return d?d[0]:String(r||'').trim()};
+function splitName(full){const p=String(full||'').replace(/\s+/g,' ').trim().split(' ');return [p[0]||'',p.slice(1).join(' ')]}
+async function addStudent(first,last,room,grade){
+  first=String(first||'').trim();last=String(last||'').trim();if(!first&&!last)return;
+  if(first&&!last&&first.includes(' '))[first,last]=splitName(first);
+  const name=[first,last].filter(Boolean).join(' ');
+  const ref=await db.collection('students').add({name,firstName:first,lastName:last,room:normRoom(room),grade:normGrade(grade),createdAt:Date.now(),by:S.me,byName:S.myName});
   return ref.id;
 }
 
@@ -857,12 +866,13 @@ function parseRows(rows){
   const existing=new Set([...S.students.values()].map(s=>(s.name||'').replace(/\s+/g,' ')));
   const out=[],seen=new Set();let dup=0,noGrade=0;
   for(const r of rows.slice(hi+1)){
-    let name=full>=0?r[full]:[first>=0?r[first]:'',last>=0?r[last]:''].filter(Boolean).join(' ');
-    name=(name||'').replace(/\s+/g,' ').trim();if(!name)continue;
+    let fn=first>=0?(r[first]||'').trim():'',ln=last>=0?(r[last]||'').trim():'';
+    if(!fn&&!ln&&full>=0)[fn,ln]=splitName(r[full]);
+    const name=[fn,ln].filter(Boolean).join(' ').replace(/\s+/g,' ');if(!name)continue;
     if(existing.has(name)||seen.has(name)){dup++;continue}seen.add(name);
     const g=grade>=0?normGrade(r[grade]):'';if(!g)noGrade++;
     const pf={};for(const k in col)if(col[k]>=0&&r[col[k]])pf[k]=r[col[k]];
-    out.push({name,grade:g,room:room>=0?r[room]:'',pf});
+    out.push({name,first:fn,last:ln,grade:g,room:room>=0?normRoom(r[room]):'',pf});
   }
   const pfCols=Object.entries(col).filter(([,i])=>i>=0).length;
   return{rows:out,dup,noGrade,hasGradeCol:grade>=0,hasRoomCol:room>=0,pfCols};
@@ -872,13 +882,13 @@ function renderXl(){
   if(!x.rows.length){el.innerHTML=`<div class="notice">${x.dup?'כל התלמידים בקובץ כבר נמצאים ברשימה.':'לא נמצאו שמות בקובץ. בדקו שיש עמודה בשם "שם".'}</div>`;return}
   const notes=[x.dup?`${x.dup} כבר ברשימה וידולגו`:'',!x.hasGradeCol?'לא נמצאה עמודת כיתה':x.noGrade?`ל-${x.noGrade} לא זוהתה כיתה (ט–יב)`:'',!x.hasRoomCol?'לא נמצאה עמודת חדר':'',x.pfCols?`זוהו ${x.pfCols} עמודות של פרטים אישיים`:''].filter(Boolean);
   el.innerHTML=`<div style="display:grid;gap:8px"><b>נמצאו ${x.rows.length} תלמידים לייבוא</b>${notes.length?`<span class="muted" style="font-size:.9rem">${notes.join(' · ')}</span>`:''}
-  <div class="tbl-wrap"><table><thead><tr><th>שם</th><th>כיתה</th><th>חדר</th></tr></thead><tbody>${x.rows.slice(0,8).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.grade||'—')}</td><td>${esc(r.room||'—')}</td></tr>`).join('')}${x.rows.length>8?`<tr><td colspan="3" class="muted">ועוד ${x.rows.length-8}…</td></tr>`:''}</tbody></table></div>
+  <div class="tbl-wrap"><table><thead><tr><th>שם פרטי</th><th>שם משפחה</th><th>כיתה</th><th>חדר</th></tr></thead><tbody>${x.rows.slice(0,8).map(r=>`<tr><td>${esc(r.first)}</td><td>${esc(r.last||'—')}</td><td>${esc(r.grade||'—')}</td><td>${esc(r.room||'—')}</td></tr>`).join('')}${x.rows.length>8?`<tr><td colspan="4" class="muted">ועוד ${x.rows.length-8}…</td></tr>`:''}</tbody></table></div>
   <div class="row"><button class="btn primary" type="button" data-act="xlGo">ייבא ${x.rows.length} תלמידים</button><button class="btn" type="button" data-act="xlCancel">ביטול</button></div></div>`;
 }
 async function xlImport(btn){
   const list=S.xl.rows;let n=0;btn.disabled=true;
   for(let i=0;i<list.length;i+=8){
-    try{await Promise.all(list.slice(i,i+8).map(async r=>{const id=await addStudent(r.name,r.room,r.grade);
+    try{await Promise.all(list.slice(i,i+8).map(async r=>{const id=await addStudent(r.first,r.last,r.room,r.grade);
       if(id&&Object.keys(r.pf||{}).length){const d={};PF.forEach(k=>d[k]=r.pf[k]||'');d.updatedAt=Date.now();d.by=S.me;d.byName=S.myName;await db.doc('profiles/'+id).set(d)}}))}catch(e){fail(e);break}
     n=Math.min(i+8,list.length);btn.textContent=`מייבא… ${n}/${list.length}`;
   }
@@ -902,7 +912,7 @@ document.addEventListener('click',async e=>{
     case'open':openSheet(id);break;
     case'close':closeSheet();break;
     case'bulk':{const lines=$('bulk').value.split('\n').map(l=>l.trim()).filter(Boolean);if(!lines.length)return;b.disabled=true;let n=0;
-      for(const l of lines){const [nm,gr,rm]=l.split(/[,\t]/).map(x=>(x||'').trim());try{await addStudent(nm,rm,gr);n++}catch(e){fail(e);break}}
+      for(const l of lines){const [f,la,gr,rm]=l.split(/[,\t]/).map(x=>(x||'').trim());try{await addStudent(f,la,rm,gr);n++}catch(e){fail(e);break}}
       b.disabled=false;$('bulk').value='';toast(`נוספו ${n} תלמידים`);break}
     case'handle':b.disabled=true;try{await db.doc('notes/'+id).update({handled:{by:S.me,byName:S.myName,at:Date.now()}});toast('סומן כטופל')}catch(e){fail(e);b.disabled=false}break;
     case'reopen':try{await db.doc('notes/'+id).update({handled:null});toast('ההתראה נפתחה מחדש')}catch(e){fail(e)}break;
@@ -930,7 +940,7 @@ document.addEventListener('click',async e=>{
   }
 });
 
-$('addForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;try{await addStudent($('newName').value,$('newRoom').value,$('newGrade').value);toast('נוסף: '+$('newName').value.trim());$('newName').value='';$('newName').focus()}catch(err){fail(err)}});
+$('addForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const nm=($('newFirst').value+' '+$('newLast').value).trim();try{await addStudent($('newFirst').value,$('newLast').value,$('newRoom').value,$('newGrade').value);toast('נוסף: '+nm);$('newFirst').value='';$('newLast').value='';$('newFirst').focus()}catch(err){fail(err)}});
 $('outForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const sid=$('outStudent').value;if(!sid){toast('בחרו תלמיד');return}
   const reason=[$('outReason').value,$('outOther').value.trim()].filter(Boolean).join(' · ');const bv=$('outBack').value;const backBy=bv?new Date(bv).getTime():null;const at=Date.now();
   try{await db.doc('status/'+sid).set({state:'out',reason,outAt:at,backBy,by:S.me,byName:S.myName});await db.collection('moves').add({sid,type:'out',reason,backBy,at,by:S.me,byName:S.myName});
@@ -939,8 +949,8 @@ $('noteForm').addEventListener('submit',async e=>{e.preventDefault();if(!db||!S.
   const kind=$('noteKind').value,doc={sid:S.sel,kind,text,at:Date.now(),by:S.me,byName:S.myName};if(kind==='התנהגות')doc.sev=+$('noteSev').value;
   try{await db.collection('notes').add(doc);$('noteText').value='';toast(kind==='התנהגות'?'ההערה נשמרה ונשלחה למנהל':'ההערה נשמרה')}catch(err){fail(err)}});
 $('noteKind').addEventListener('change',e=>{const b=e.target.value==='התנהגות';$('noteSev').hidden=!b;$('noteHint').hidden=!b});
-$('editForm').addEventListener('submit',async e=>{e.preventDefault();if(!db||!S.sel)return;const name=$('edName').value.trim();if(!name)return;
-  try{await db.doc('students/'+S.sel).update({name,room:$('edRoom').value.trim(),grade:$('edGrade').value});toast('נשמר')}catch(err){fail(err)}});
+$('editForm').addEventListener('submit',async e=>{e.preventDefault();if(!db||!S.sel)return;const firstName=$('edFirst').value.trim(),lastName=$('edLast').value.trim();const name=[firstName,lastName].filter(Boolean).join(' ');if(!name)return;
+  try{await db.doc('students/'+S.sel).update({name,firstName,lastName,room:$('edRoom').value,grade:$('edGrade').value});toast('נשמר')}catch(err){fail(err)}});
 $('xlFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;
   if(!window.XLSX){toast('רכיב קריאת האקסל לא נטען. רעננו את הדף ונסו שוב');return}
   try{const wb=XLSX.read(await f.arrayBuffer());const ws=wb.Sheets[wb.SheetNames[0]];
