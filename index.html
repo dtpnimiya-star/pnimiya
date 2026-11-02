@@ -24,7 +24,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-7";
+const APP_VERSION = "2026-11-02-8";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -470,10 +470,10 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
         <label>טלפון התלמיד<input id="pf-phone" type="tel" dir="ltr" autocomplete="off"></label>
         <label>מייל התלמיד<input id="pf-email" type="email" dir="ltr" autocomplete="off"></label>
         <label class="full">כתובת מגורים<input id="pf-address" autocomplete="off"></label>
-        <label>שם האב<input id="pf-fatherName" autocomplete="off"></label>
-        <label>טלפון האב<input id="pf-fatherPhone" type="tel" dir="ltr" autocomplete="off"></label>
-        <label>שם האם<input id="pf-motherName" autocomplete="off"></label>
-        <label>טלפון האם<input id="pf-motherPhone" type="tel" dir="ltr" autocomplete="off"></label>
+        <label>שם הורה 1<input id="pf-fatherName" autocomplete="off"></label>
+        <label>טלפון הורה 1<input id="pf-fatherPhone" type="tel" dir="ltr" autocomplete="off"></label>
+        <label>שם הורה 2<input id="pf-motherName" autocomplete="off"></label>
+        <label>טלפון הורה 2<input id="pf-motherPhone" type="tel" dir="ltr" autocomplete="off"></label>
         <label class="full">מייל ההורים<input id="pf-parentEmail" type="email" dir="ltr" autocomplete="off"></label>
       </div>
       <div class="row"><button class="btn primary" type="submit">שמור פרטים</button><button class="btn" type="button" data-act="pfCancel">ביטול</button></div>
@@ -659,7 +659,7 @@ function renderCard(s){
   const row=(k,v)=>v?`<dt>${k}</dt><dd>${v}</dd>`:'';
   const parent=(n,t)=>(n||t)?`${esc(n||'')}${n&&t?' · ':''}${telLink(t)}`:'';
   const ag=ageOf(p.birthDate);
-  const body=row('גיל',ag!=null?`${ag} <span class="sub">(נולד ${fmtDMY(p.birthDate)})</span>`:'')+row('טלפון',telLink(p.phone))+row('מייל',mailLink(p.email))+row('כתובת',esc(p.address||''))+row('אב',parent(p.fatherName,p.fatherPhone))+row('אם',parent(p.motherName,p.motherPhone))+row('מייל הורים',mailLink(p.parentEmail));
+  const body=row('גיל',ag!=null?`${ag} <span class="sub">(נולד ${fmtDMY(p.birthDate)})</span>`:'')+row('טלפון',telLink(p.phone))+row('מייל',mailLink(p.email))+row('כתובת',esc(p.address||''))+row('הורה 1',parent(p.fatherName,p.fatherPhone))+row('הורה 2',parent(p.motherName,p.motherPhone))+row('מייל הורים',mailLink(p.parentEmail));
   $('shCard').innerHTML=`<div class="row" style="justify-content:space-between"><h2>כרטיס תלמיד</h2>${has('students')&&!S.ro?'<button class="btn small" data-act="pfEdit">עריכה</button>':''}</div>
   <div class="card"><div class="photo">${ph===null?'':photoBox(ph,s.name)}</div>
   <div style="display:grid;gap:6px;min-width:0"><b style="font-size:1.1rem">${esc(s.name)}</b><span class="muted">${esc(metaOf(s)||'')}</span>
@@ -882,10 +882,10 @@ function parseRows(rows){
   const H=hi>=0?rows[hi]:[];
   const find=re=>H.findIndex(c=>re.test(c));
   let full=find(/^(שם|שם מלא|שם התלמיד|שם תלמיד|שם ושם משפחה)$/),first=find(/^שם פרטי/),last=find(/^שם משפחה/),grade=find(/כיתה|שכבה/),room=find(/חדר/);
-  const isF=c=>/אב(?!ל)|אבא/.test(c),isM=c=>/אם(?!ת)|אמא/.test(c);
+  const isF=c=>/אב(?!ל)|אבא|הורה\s*1/.test(c),isM=c=>/אם(?!ת)|אמא|הורה\s*2/.test(c);
   const col={fatherName:H.findIndex(c=>/שם/.test(c)&&isF(c)),fatherPhone:H.findIndex(c=>/(טל|נייד|פלאפון)/.test(c)&&isF(c)),
     motherName:H.findIndex(c=>/שם/.test(c)&&isM(c)),motherPhone:H.findIndex(c=>/(טל|נייד|פלאפון)/.test(c)&&isM(c)),
-    birthDate:H.findIndex(c=>/לידה/.test(c)),parentEmail:H.findIndex(c=>/(מייל|אימייל|דוא)/.test(c)&&/הור/.test(c)),address:H.findIndex(c=>/כתובת|יישוב|ישוב/.test(c)&&!/מייל/.test(c)),
+    birthDate:H.findIndex(c=>/תאריך לידה|^לידה/.test(c)),parentEmail:H.findIndex(c=>/(מייל|אימייל|דוא)/.test(c)&&/הור/.test(c)),address:(i=>i>=0?i:H.findIndex(c=>/כתובת|יישוב|ישוב/.test(c)&&!/מייל|מקום חינוך|בית ספר/.test(c)))(H.findIndex(c=>/^(כתובת|יישוב|ישוב)$/.test(c))),
     email:H.findIndex(c=>/(מייל|אימייל|דוא)/.test(c)&&!/הור|אב|אם/.test(c)),phone:H.findIndex(c=>/(טל|נייד|פלאפון)/.test(c)&&!/הור|אב|אם/.test(c))};
   if(hi<0){full=0;grade=-1;room=-1}
   if(full<0&&first<0&&last<0)full=find(/שם/);
@@ -1110,7 +1110,7 @@ async function buildReport(){
     XLSX.utils.book_append_sheet(wb,sheet(rows,[18,6,6,10,20,16]),'תלמידים');
   }
   if($('rk-contacts').checked&&has('personal')){
-    const rows=[['שם','כיתה','חדר','טלפון','מייל','כתובת','שם האב','טלפון האב','שם האם','טלפון האם','מייל הורים','תאריך לידה','גיל']];
+    const rows=[['שם','כיתה','חדר','טלפון','מייל','כתובת','שם הורה 1','טלפון הורה 1','שם הורה 2','טלפון הורה 2','מייל הורים','תאריך לידה','גיל']];
     st.forEach(s=>{const p=S.profiles.get(s.id)||{};rows.push([...base(s),...PF.map(k=>k==='birthDate'?fmtDMY(p[k]):(p[k]||'')),ageOf(p.birthDate)??''])});
     XLSX.utils.book_append_sheet(wb,sheet(rows,[18,6,6,13,22,26,12,13,12,13,22,11,5]),'אנשי קשר');
   }
