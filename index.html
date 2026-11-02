@@ -24,7 +24,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-02-6";
+const APP_VERSION = "2026-11-02-7";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -357,6 +357,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
         <select id="newRoom" aria-label="חדר"><option value="">חדר</option><option>101</option><option>102</option><option>103</option><option>104</option><option>105</option><option>106</option><option>107</option><option>108</option><option>109</option><option>110</option><option>111</option><option>112</option><option>113</option><option>114</option><option>115</option></select>
       </div>
       <div><button class="btn primary" type="submit">הוסף</button></div>
+      <div id="dupMsg" class="notice" hidden></div>
       <details open>
         <summary>ייבוא מקובץ אקסל</summary>
         <div style="display:grid;gap:8px;margin-top:8px">
@@ -374,6 +375,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
         </div>
       </details>
     </form></div>
+    <div id="dupList"></div>
     <input id="q" type="search" placeholder="חיפוש לפי שם או חדר" aria-label="חיפוש">
     <div id="stuList"></div>
   </section>
@@ -602,6 +604,9 @@ function moveList(list,showName){
 }
 
 function renderStudents(){
+  {const g=new Map();for(const s of S.students.values()){const k=normName(s.name);if(!k)continue;if(!g.has(k))g.set(k,[]);g.get(k).push(s)}
+   const dups=[...g.values()].filter(a=>a.length>1);
+   $('dupList').innerHTML=dups.length&&has('students')?`<div class="notice" style="display:grid;gap:6px"><span>נמצאו תלמידים שמופיעים יותר מפעם אחת. פתחו כל אחד ובדקו אם צריך להסיר את הכפילות:</span>${dups.map(a=>`<div class="row" style="gap:6px"><b>${esc(a[0].name)}</b>${a.map((s,i)=>`<button class="btn small" type="button" data-act="open" data-id="${s.id}">רשומה ${i+1}${s.grade?' · '+esc(s.grade):''}${s.room?' · '+esc(s.room):''}</button>`).join('')}</div>`).join('')}</div>`:''}
   const q=S.q.trim();let st=sorted();
   if(q)st=st.filter(s=>(s.name||'').includes(q)||(s.room||'').includes(q));
   if(!S.students.size){$('stuList').innerHTML=`<div class="empty">${S.ready?'הרשימה ריקה. הוסיפו את התלמיד הראשון בטופס למעלה.':'טוען…'}</div>`;return}
@@ -859,6 +864,8 @@ async function goBack(id){
   try{await db.doc('status/'+id).set({state:'in',at:Date.now(),by:S.me,byName:S.myName});await db.collection('moves').add({sid:id,type:'back',at:Date.now(),by:S.me,byName:S.myName});toast('נרשמה חזרה')}catch(e){fail(e)}
 }
 const normRoom=r=>{const d=String(r||'').trim().match(/\d+/);return d?d[0]:String(r||'').trim()};
+const normName=n=>String(n||'').replace(/["'״׳`]/g,'').replace(/\s+/g,' ').trim();
+function findDup(name,exceptId){const k=normName(name);if(!k)return null;for(const s of S.students.values())if(s.id!==exceptId&&normName(s.name)===k)return s;return null}
 function splitName(full){const p=String(full||'').replace(/\s+/g,' ').trim().split(' ');return [p[0]||'',p.slice(1).join(' ')]}
 async function addStudent(first,last,room,grade){
   first=String(first||'').trim();last=String(last||'').trim();if(!first&&!last)return;
@@ -882,13 +889,13 @@ function parseRows(rows){
     email:H.findIndex(c=>/(מייל|אימייל|דוא)/.test(c)&&!/הור|אב|אם/.test(c)),phone:H.findIndex(c=>/(טל|נייד|פלאפון)/.test(c)&&!/הור|אב|אם/.test(c))};
   if(hi<0){full=0;grade=-1;room=-1}
   if(full<0&&first<0&&last<0)full=find(/שם/);
-  const existing=new Set([...S.students.values()].map(s=>(s.name||'').replace(/\s+/g,' ')));
+  const existing=new Set([...S.students.values()].map(s=>normName(s.name)));
   const out=[],seen=new Set();let dup=0,noGrade=0;
   for(const r of rows.slice(hi+1)){
     let fn=first>=0?(r[first]||'').trim():'',ln=last>=0?(r[last]||'').trim():'';
     if(!fn&&!ln&&full>=0)[fn,ln]=splitName(r[full]);
     const name=[fn,ln].filter(Boolean).join(' ').replace(/\s+/g,' ');if(!name)continue;
-    if(existing.has(name)||seen.has(name)){dup++;continue}seen.add(name);
+    if(existing.has(normName(name))||seen.has(normName(name))){dup++;continue}seen.add(normName(name));
     const g=grade>=0?normGrade(r[grade]):'';if(!g)noGrade++;
     const pf={};for(const k in col)if(col[k]>=0&&r[col[k]])pf[k]=r[col[k]];if(pf.birthDate)pf.birthDate=parseBirth(pf.birthDate);
     out.push({name,first:fn,last:ln,grade:g,room:room>=0?normRoom(r[room]):'',pf});
@@ -931,8 +938,13 @@ document.addEventListener('click',async e=>{
     case'open':openSheet(id);break;
     case'close':closeSheet();break;
     case'bulk':{const lines=$('bulk').value.split('\n').map(l=>l.trim()).filter(Boolean);if(!lines.length)return;b.disabled=true;let n=0;
-      for(const l of lines){const [f,la,gr,rm]=l.split(/[,\t]/).map(x=>(x||'').trim());try{await addStudent(f,la,rm,gr);n++}catch(e){fail(e);break}}
-      b.disabled=false;$('bulk').value='';toast(`נוספו ${n} תלמידים`);break}
+      let skip=[];const seenB=new Set();
+      for(const l of lines){const [f,la,gr,rm]=l.split(/[,\t]/).map(x=>(x||'').trim());const nm=normName([f,la].join(' '));if(!nm)continue;
+        if(findDup(nm)||seenB.has(nm)){skip.push(nm);continue}seenB.add(nm);
+        try{await addStudent(f,la,rm,gr);n++}catch(e){fail(e);break}}
+      b.disabled=false;$('bulk').value=skip.length?skip.join('\n'):'';
+      toast(`נוספו ${n} תלמידים`+(skip.length?` · ${skip.length} כבר קיימים ולא נוספו`:''));break}
+    case'dupForce':{S.forceAdd=true;$('addForm').requestSubmit();break}
     case'handle':b.disabled=true;try{await db.doc('notes/'+id).update({handled:{by:S.me,byName:S.myName,at:Date.now()}});toast('סומן כטופל')}catch(e){fail(e);b.disabled=false}break;
     case'reopen':try{await db.doc('notes/'+id).update({handled:null});toast('ההתראה נפתחה מחדש')}catch(e){fail(e)}break;
     case'menu':menu(!S.menuOpen);break;
@@ -959,7 +971,11 @@ document.addEventListener('click',async e=>{
   }
 });
 
-$('addForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const nm=($('newFirst').value+' '+$('newLast').value).trim();try{await addStudent($('newFirst').value,$('newLast').value,$('newRoom').value,$('newGrade').value);toast('נוסף: '+nm);$('newFirst').value='';$('newLast').value='';$('newFirst').focus()}catch(err){fail(err)}});
+$('addForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const nm=($('newFirst').value+' '+$('newLast').value).trim();
+  const dm=$('dupMsg'),d=findDup(nm),force=S.forceAdd;S.forceAdd=false;dm.hidden=true;
+  if(d&&!force){dm.innerHTML=`<div style="display:grid;gap:8px">${esc(d.name)} כבר נמצא ברשימה${d.grade?' · כיתה '+esc(d.grade):''}${d.room?' · חדר '+esc(d.room):''}. התלמיד לא נוסף שוב.<div class="row"><button class="btn small" type="button" data-act="open" data-id="${d.id}">פתח את הכרטיס שלו</button><button class="btn small" type="button" data-act="dupForce">זה תלמיד אחר עם אותו שם, הוסף</button></div></div>`;dm.hidden=false;return}
+  try{await addStudent($('newFirst').value,$('newLast').value,$('newRoom').value,$('newGrade').value);toast('נוסף: '+nm);$('newFirst').value='';$('newLast').value='';$('newFirst').focus()}catch(err){fail(err)}});
+['newFirst','newLast'].forEach(i=>$(i).addEventListener('input',()=>{$('dupMsg').hidden=true}));
 $('outForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const sid=$('outStudent').value;if(!sid){toast('בחרו תלמיד');return}
   const reason=[$('outReason').value,$('outOther').value.trim()].filter(Boolean).join(' · ');const bv=$('outBack').value;const backBy=bv?new Date(bv).getTime():null;const at=Date.now();
   try{await db.doc('status/'+sid).set({state:'out',reason,outAt:at,backBy,by:S.me,byName:S.myName});await db.collection('moves').add({sid,type:'out',reason,backBy,at,by:S.me,byName:S.myName});
@@ -969,6 +985,7 @@ $('noteForm').addEventListener('submit',async e=>{e.preventDefault();if(!db||!S.
   try{await db.collection('notes').add(doc);$('noteText').value='';toast(kind==='התנהגות'?'ההערה נשמרה ונשלחה למנהל':'ההערה נשמרה')}catch(err){fail(err)}});
 $('noteKind').addEventListener('change',e=>{const b=e.target.value==='התנהגות';$('noteSev').hidden=!b;$('noteHint').hidden=!b});
 $('editForm').addEventListener('submit',async e=>{e.preventDefault();if(!db||!S.sel)return;const firstName=$('edFirst').value.trim(),lastName=$('edLast').value.trim();const name=[firstName,lastName].filter(Boolean).join(' ');if(!name)return;
+  {const d=findDup(name,S.sel);if(d){toast('כבר קיים תלמיד בשם '+d.name+'. השם לא נשמר');return}}
   try{await db.doc('students/'+S.sel).update({name,firstName,lastName,room:$('edRoom').value,grade:$('edGrade').value});toast('נשמר')}catch(err){fail(err)}});
 $('xlFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;
   if(!window.XLSX){toast('רכיב קריאת האקסל לא נטען. רעננו את הדף ונסו שוב');return}
