@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-05";
+const APP_VERSION = "2026-11-03-06";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -758,7 +758,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <span class="muted" style="font-size:.9rem">קובץ אקסל אחד עם כל הנתונים: תלמידים, פרטים אישיים, יציאות, הערות, נוכחות לילה והשכמה (90 יום אחרונים), בדיקות חדרים וצוות. מומלץ פעם בשבוע; האתר יזכיר לך.</span>
       <div class="row" style="gap:8px"><button class="btn primary" type="button" data-act="backup" id="bkBtn">הורד גיבוי מלא</button><span class="muted" id="bkLast" style="font-size:.9rem"></span></div></div>
     <div class="panel audit"><div class="row" style="justify-content:space-between"><h2>🕓 יומן פעילות</h2><button class="btn small" type="button" data-act="auditLoad">רענן</button></div>
-      <span class="muted" style="font-size:.9rem">מי שינה או מחק מה ומתי: תלמידים, הרשאות, הערות, יציאות ופרטים אישיים.</span>
+      <span class="muted" style="font-size:.9rem">כל פעולה של כל איש צוות: נוכחות ערב, השכמה, יציאות, הערות, תלמידים, הרשאות, תחזוקה, מרכז למידה ושבתות. אפשר לסנן לפי איש צוות או סוג פעולה.</span>
       <div id="auditList"></div></div>
   </section>
 </div></main>
@@ -1692,35 +1692,56 @@ window.addEventListener('online',()=>{netState();toast('החיבור חזר. ה�
 window.addEventListener('offline',netState);
 
 /* ---------- activity log ---------- */
-const AUD_COL={students:'תלמיד',status:'יציאה / חזרה',profiles:'פרטים אישיים',photos:'תמונת תלמיד',notes:'הערה',staff:'עובד והרשאות',staffProfiles:'כרטיס עובד',settings:'הגדרות',schedule:'מערכת שבועית',config:'מנהל ראשי',inspections:'בדיקת חדר'};
-const AUD_RE=/^(students|status|profiles|photos|notes|staff|staffProfiles|settings|schedule|config|inspections)\/[^/]+$/;
+const AUD_COL={students:'תלמיד',status:'יציאה / חזרה',profiles:'פרטים אישיים',photos:'תמונת תלמיד',notes:'הערה',staff:'עובד והרשאות',staffProfiles:'כרטיס עובד',settings:'הגדרות',schedule:'מערכת שבועית',config:'מנהל ראשי',inspections:'בדיקת חדר',nightcount:'נוכחות ערב',morning:'השכמה',moves:'יומן יציאות',maint:'תחזוקה',learn:'מרכז למידה',shabbat:'שבת'};
+const AUD_TOP=/^(students|status|profiles|photos|notes|staff|staffProfiles|settings|schedule|config|inspections|moves|maint|learn|shabbat)\/[^/]+$/,AUD_SUB=/^(nightcount|morning)\/([^/]+)\/marks\/([^/]+)$/;
+function audParse(path){let m=path.match(AUD_SUB);if(m)return {col:m[1],id:m[3],date:m[2]};if(AUD_TOP.test(path)){const [col,id]=path.split('/');return {col,id}}return null}
+const stuName=id=>S.students.get(id)?.name||'';
 function audLabel(col,id,data){
-  if(['students','status','profiles','photos'].includes(col))return S.students.get(id)?.name||data?.name||'';
-  if(col==='notes'){const n=S.notes.find(x=>x.id===id)||data||{};return S.students.get(n.sid)?.name||''}
+  if(['students','status','profiles','photos','nightcount','morning'].includes(col))return stuName(id)||data?.name||'';
+  if(col==='notes'){const n=S.notes.find(x=>x.id===id)||data||{};return stuName(n.sid)}
+  if(col==='moves'){const m=data||S.moves.find(x=>x.id===id)||{};return stuName(m.sid)}
   if(col==='staff'||col==='staffProfiles')return (S.staff.find(x=>x.uid===id||x.id===id)||{}).name||data?.name||'';
   if(col==='inspections')return 'חדר '+(data?.room||id.split('_')[1]||'');
+  if(col==='maint'){const m=data?.room?data:(S.mt||[]).find(x=>x.id===id);return m?mtPlace(m):''}
+  if(col==='learn'){const x=data?.subject?data:(S.ln||[]).find(y=>y.id===id);return x?.subject||''}
+  if(col==='shabbat')return data?.title||fmtShort(id);
   return id}
-function audDetail(col,op,d){if(op==='delete'||!d)return'';
+function audDetail(col,op,d,date){
+  if(op==='delete')return col==='nightcount'||col==='morning'?'ביטול סימון':'';if(!d)return'';
+  if(col==='nightcount')return (d.s==='p'?(d.late?'הגיע באיחור':'נוכח'):'חסר')+(date?' · ערב '+fmtShort(date):'');
+  if(col==='morning')return ({up:'קם',no:'לא קם',sick:'חולה'})[d.s]||'';
   if(col==='staff'&&d.perms)return (d.active===false?'מושבת · ':'')+'הרשאות: '+PERMS.filter(([k])=>d.perms[k]).map(([,l])=>l).join(', ');
   if(col==='status')return d.state==='out'?(d.long?'היעדרות ממושכת':'יציאה')+(d.reason?': '+d.reason:''):'חזר';
+  if(col==='moves')return (d.type==='out'?'יציאה':'חזרה')+(d.reason?': '+d.reason:'');
   if(col==='notes'&&d.handled)return 'סומן כטופל';
   if(col==='notes')return (d.kind||'')+(d.text?': '+String(d.text).slice(0,60):'');
   if(col==='students')return [d.name,d.grade?'כיתה '+d.grade:'',d.room?'חדר '+d.room:''].filter(Boolean).join(' · ');
   if(col==='inspections')return 'ציון '+(d.score??'');
+  if(col==='maint')return d.status&&!d.desc?({open:'נפתח מחדש',prog:'סומן בטיפול',done:'סומן כתוקן'})[d.status]||'':(d.cat||'')+(d.desc?': '+String(d.desc).slice(0,60):'');
+  if(col==='learn')return (d.type||'')+(d.sids?' · '+d.sids.length+' משתתפים':'');
+  if(col==='shabbat')return Object.keys(d).some(k=>k.startsWith('marks'))?'עדכון נשארים/בבית':d.staff!=null&&Object.keys(d).length===1?'צוות תורן: '+d.staff:'';
   return Object.keys(d).filter(k=>!['by','byName','at','updatedAt','editedAt','editedBy','editedByName'].includes(k)).slice(0,6).join(', ')}
-function setupAudit(){const DR=firebase.firestore.DocumentReference;if(!DR||DR.prototype.__aud)return;DR.prototype.__aud=true;
+function audLog(op,path,data){if(!S.me)return;const p=audParse(path);if(!p)return;if(p.col==='photos'&&op!=='delete')return;
+  return {at:Date.now(),by:S.me,byName:S.myName||'',op,col:p.col,id:p.id,label:audLabel(p.col,p.id,data),detail:audDetail(p.col,op,data,p.date)}}
+function setupAudit(){const DR=firebase.firestore.DocumentReference,CR=firebase.firestore.CollectionReference;if(!DR||DR.prototype.__aud)return;DR.prototype.__aud=true;let adding=0;
   ['set','update','delete'].forEach(m=>{const o=DR.prototype[m];DR.prototype[m]=function(...a){
-    const path=this.path,r=o.apply(this,a);
-    if(AUD_RE.test(path)&&S.me){const [col,id]=path.split('/');
-      if(!(col==='notes'&&m==='set')&&!(col==='photos'&&m!=='delete')){
-        const e={at:Date.now(),by:S.me,byName:S.myName||'',op:m,col,id,label:audLabel(col,id,a[0]),detail:audDetail(col,m,a[0])};
-        r.then(()=>db.collection('audit').add(e).catch(()=>{}),()=>{})}}
-    return r}})}
+    const e=adding?null:audLog(m,this.path,a[0]),r=o.apply(this,a);
+    if(e)r.then(()=>db.collection('audit').add(e).catch(()=>{}),()=>{});return r}});
+  if(CR&&CR.prototype.add){const oa=CR.prototype.add;CR.prototype.add=function(d){
+    const path=this.path;adding++;let r;try{r=oa.call(this,d)}finally{adding--}
+    if(path!=='audit')r.then(ref=>{const e=audLog('add',path+'/'+ref.id,d);if(e)db.collection('audit').add(e).catch(()=>{})},()=>{});return r}}}
+S.audF={by:'',col:''};
 async function loadAudit(){if(!S.owner||S.tab!=='staff'||!db)return;const el=$('auditList');
-  try{const q=await db.collection('audit').orderBy('at','desc').limit(120).get();const L=q.docs.map(d=>d.data());
-    const OP={set:'שמירה',update:'עדכון',delete:'מחיקה'};
-    el.innerHTML=L.length?`<div class="list log">`+L.map(e=>`<div class="item"><span class="time">${when(e.at)}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(e.byName||'')}</b> · ${OP[e.op]||e.op} ${esc(AUD_COL[e.col]||e.col)}${e.label?' · <b>'+esc(e.label)+'</b>':''}${e.detail?`<span class="meta">${esc(e.detail)}</span>`:''}</span><span class="chip ${e.op==='delete'?'bad':''}">${OP[e.op]||e.op}</span></div>`).join('')+`</div>`:'<div class="empty">עדיין אין רישומים. מעכשיו כל שינוי יירשם כאן.</div>'}
+  try{const q=await db.collection('audit').orderBy('at','desc').limit(400).get();S.audL=q.docs.map(d=>d.data());renderAudit()}
   catch(e){el.innerHTML=`<div class="notice">לא ניתן לטעון את היומן (${esc(e.code||'')}). ייתכן שחוקי האבטחה עוד לא עודכנו.</div>`}}
+function renderAudit(){const el=$('auditList'),A=S.audL||[];const OP={set:'שמירה',update:'עדכון',delete:'מחיקה',add:'הוספה'};
+  const people=[...new Set([...A.map(e=>e.byName).filter(Boolean),...S.staff.map(s=>s.name).filter(Boolean)])],cols=[...new Set(A.map(e=>e.col))];
+  const L=A.filter(e=>(!S.audF.by||e.byName===S.audF.by)&&(!S.audF.col||e.col===S.audF.col));
+  const cntBy=n=>A.filter(e=>e.byName===n).length;
+  el.innerHTML=`<div class="grid2" style="margin:8px 0"><select id="audBy" aria-label="סינון לפי איש צוות"><option value="">כל הצוות (${A.length})</option>${people.map(n=>`<option ${S.audF.by===n?'selected':''} value="${esc(n)}">${esc(n)} (${cntBy(n)})</option>`).join('')}</select><select id="audCol" aria-label="סינון לפי סוג"><option value="">כל הפעולות</option>${cols.map(c=>`<option ${S.audF.col===c?'selected':''} value="${esc(c)}">${esc(AUD_COL[c]||c)}</option>`).join('')}</select></div>`
+   +(L.length?`<div class="list log">`+L.slice(0,200).map(e=>`<div class="item"><span class="time">${when(e.at)}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(e.byName||'')}</b> · ${esc(AUD_COL[e.col]||e.col)}${e.label?' · <b>'+esc(e.label)+'</b>':''}${e.detail?`<span class="meta">${esc(e.detail)}</span>`:''}</span><span class="chip ${e.op==='delete'?'bad':''}">${OP[e.op]||e.op}</span></div>`).join('')+`</div>`
+    :`<div class="empty">${A.length?'אין פעולות שמתאימות לסינון.':'עדיין אין רישומים. מעכשיו כל פעולה של כל איש צוות תירשם כאן.'}</div>`)}
+document.addEventListener('change',e=>{if(e.target.id==='audBy'){S.audF.by=e.target.value;renderAudit()}if(e.target.id==='audCol'){S.audF.col=e.target.value;renderAudit()}});
 
 /* ---------- phone notifications ---------- */
 const canNotify=()=>'Notification' in window;
