@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-28";
+const APP_VERSION = "2026-11-03-29";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -309,6 +309,34 @@ main section:not([hidden]){animation:secIn .22s ease}
 .fu{display:grid;gap:6px}.fu .item{flex-wrap:wrap}
 .pw-row{display:grid;gap:8px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--surface)}.pw-row.sent{background:var(--ok-bg)}
 .pw-row textarea{min-height:140px}.steps5{display:grid;gap:8px}.steps5 label{display:grid;gap:3px;font-size:.88rem;color:var(--muted)}
+/* ---- desktop: full-width layout with a permanent side menu ---- */
+body.desk .drawer{transform:none;visibility:visible;box-shadow:none;width:240px;z-index:6}
+body.desk .drawer-bg,body.desk .menu-btn,body.desk .menu-close{display:none!important}
+body.desk .app{max-width:none;margin:0 240px 0 0}
+body.desk .drawer-head img{width:104px}
+body.desk .drawer-foot{flex-wrap:wrap}body.desk .drawer-foot .muted{flex-basis:100%}
+body.desk .drawer-list button{padding:8px 12px;font-size:.96rem}
+body.desk main .wrap,body.desk header .wrap{padding-left:28px;padding-right:28px}
+body.desk #tab-home{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+body.desk #tab-home>*{min-width:0}
+body.desk #tab-home>#hmHero,body.desk #tab-home>#hmNow,body.desk #tab-home>#hmDayP,body.desk #tab-home>#hmBoard,body.desk #tab-home>#hmBackup,body.desk #tab-home>#hmNotif,body.desk #tab-home>#hmTiles,body.desk #tab-home>#hmLate,body.desk #tab-home>#hmLn,body.desk #tab-home>div:last-child{grid-column:1/-1}
+body.desk #tab-stu{grid-template-columns:minmax(0,1fr) 400px;align-items:start}
+body.desk #tab-stu>div[data-perm="students"]{grid-column:2;grid-row:1/span 4;position:sticky;top:96px}
+body.desk #tab-stu>#dupList,body.desk #tab-stu>#q,body.desk #tab-stu>#stuList{grid-column:1}
+body.desk #tab-stu .grid4{grid-template-columns:1fr 1fr}
+body.desk #stuList .list,body.desk #outList .list,body.desk #homeList .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+body.desk #stuList .item,body.desk #outList .item,body.desk #homeList .item{border-inline-start:1px solid var(--line)}
+body.desk .sheet-bg{align-items:stretch;justify-content:flex-end}
+body.desk .sheet{max-width:640px;max-height:none;height:100%;border-radius:0;box-shadow:12px 0 40px rgba(0,0,0,.25)}
+@media (min-width:1500px){body.desk #countList,body.desk #mornList{grid-template-columns:repeat(3,minmax(0,1fr))}body.desk .bed-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}}
+/* ---- quick search (Ctrl+K) ---- */
+.cp-bg{position:fixed;inset:0;z-index:150;background:rgba(10,18,22,.45);display:flex;justify-content:center;align-items:flex-start;padding-top:12vh}
+.cp{width:min(560px,calc(100vw - 32px));background:var(--surface);border-radius:14px;padding:10px;display:grid;gap:8px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.cp input{font-size:1.05rem}
+.cp-list{display:grid;max-height:52vh;overflow:auto}
+.cp-list button{display:flex;gap:10px;align-items:center;padding:8px 10px;border:0;background:none;border-radius:9px;text-align:right;cursor:pointer;font:inherit;color:var(--ink)}
+.cp-list button.on,.cp-list button:hover{background:var(--soft)}
+.kbd{display:inline-block;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;font-size:.75rem;color:var(--muted);font-family:inherit}
 @media (prefers-reduced-motion:reduce){main section:not([hidden]),.skel{animation:none}.tour-hl,.tour-card{transition:none}}
 .pat{border:1px solid var(--warn);background:var(--warn-bg);border-radius:12px;padding:10px 12px;display:grid;gap:4px}
 .kpi .v{font:400 1.45rem var(--f-display);line-height:1.1}.kpi .l{font-size:.85rem;color:var(--muted)}.kpi .d{font-size:.78rem;font-weight:700}.kpi .d.up{color:var(--ok)}.kpi .d.dn{color:var(--bad)}
@@ -536,6 +564,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       </button>
       <div class="title-block" data-act="go" data-to="home" style="cursor:pointer" title="מסך הבית"><span class="kicker">נוכחות פנימייה</span><h1 id="pageTitle">נוכחות פנימייה</h1></div>
       <span class="night" id="nightLabel"></span>
+      <button class="btn small" id="cpBtn" data-act="cp" type="button" hidden title="חיפוש מהיר (Ctrl+K)" aria-label="חיפוש מהיר">🔍<span class="kbd desk-only" style="margin-inline-start:6px">Ctrl+K</span></button>
       <button class="btn small" id="acctBtn" data-act="acct" hidden aria-expanded="false" aria-controls="acctPanel"></button>
     </div>
     <div id="acctPanel" class="panel" hidden>
@@ -752,7 +781,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       </div>
       <div><button class="btn primary" type="submit">הוסף</button></div>
       <div id="dupMsg" class="notice" hidden></div>
-      <details open>
+      <details>
         <summary>ייבוא מקובץ אקסל</summary>
         <div style="display:grid;gap:8px;margin-top:8px">
           <span class="muted" style="font-size:.9rem">השורה הראשונה בקובץ צריכה להיות כותרות. חובה עמודת "שם" (או "שם פרטי" ו"שם משפחה"). אפשר להוסיף עמודות: כיתה, חדר, תאריך לידה, טלפון, מייל, כתובת, שם האב, טלפון האב, שם האם, טלפון האם, מייל הורים.</span>
@@ -989,6 +1018,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
   </section>
 </div></main>
 
+<div id="cpBg" class="cp-bg" hidden><div class="cp" role="dialog" aria-label="חיפוש מהיר"><input id="cpQ" type="search" placeholder="חיפוש תלמיד, חדר או מסך…" autocomplete="off" aria-label="חיפוש מהיר"><div id="cpList" class="cp-list"></div><span class="muted" style="font-size:.78rem">↑↓ לבחירה · Enter לפתיחה · Esc לסגירה</span></div></div>
 <div id="lrBg" class="sheet-bg" hidden>
   <form class="sheet" id="lrForm" role="dialog" aria-modal="true" aria-labelledby="lrT" style="display:grid;gap:12px">
     <div class="sheet-top"><h2 id="lrT" style="font-size:1.2rem"></h2><button class="btn small" type="button" data-act="lrClose">סגור</button></div>
@@ -1566,12 +1596,12 @@ const PERMS=[['count','נוכחות ערב'],['morning','השכמת בוקר'],[
 const ROLES={'עו"ס':['notes','personal','reports','mgr','learn'],'מדריך':['count','morning','out','notes','personal','rooms','learn'],'רכז':['count','morning','out','notes','students','personal','reports','rooms','maint','learn'],'סגן מנהל':['count','morning','out','notes','students','personal','reports','mgr','rooms','maint','learn'],'איש תחזוקה':['maint','rooms']};
 const presetPerms=r=>Object.fromEntries(PERMS.map(([k])=>[k,(ROLES[r]||[]).includes(k)]));
 function has(p){if(p==='any')return true;if(p==='owner')return !!S.owner;if(p==='stu')return has('notes')||has('students');return !!(S.perm&&S.perm[p])}
-function menu(open){S.menuOpen=open;const d=$('drawer');d.classList.toggle('open',open);d.setAttribute('aria-hidden',String(!open));$('drawerBg').hidden=!open;
+function menu(open){if(open&&document.body.classList.contains('desk'))return;S.menuOpen=open;const d=$('drawer');d.classList.toggle('open',open);d.setAttribute('aria-hidden',String(!open));$('drawerBg').hidden=!open;
   $('menuBtn').setAttribute('aria-expanded',String(open));document.body.style.overflow=open?'hidden':'';
   if(open){($('drawer').querySelector('[aria-selected="true"]:not([hidden])')||$('drawer').querySelector('.drawer-list button:not([hidden])'))?.focus()}else $('menuBtn').focus({preventScroll:true})}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.menuOpen)menu(false)});
 function applyPerms(){
-  const ok=S.permReady&&(S.owner||PERMS.some(([k])=>has(k)));S.access=ok;$('menuBtn').hidden=!ok;if(!ok&&S.menuOpen)menu(false);$('drawerUser').textContent=S.myName||'';if(!$('drawerLogo').src)$('drawerLogo').src=document.querySelector('.lg-logo').src;
+  const ok=S.permReady&&(S.owner||PERMS.some(([k])=>has(k)));S.access=ok;$('menuBtn').hidden=!ok;$('cpBtn').hidden=!ok;deskNav();if(!ok&&S.menuOpen)menu(false);$('drawerUser').textContent=S.myName||'';if(!$('drawerLogo').src)$('drawerLogo').src=document.querySelector('.lg-logo').src;
   document.querySelectorAll('[data-perm]').forEach(el=>el.hidden=!ok||!has(el.dataset.perm));
   S.mgr=ok&&has('mgr');setTimeout(renderBnav,0);
   $('topSum').hidden=!ok;
@@ -1814,6 +1844,7 @@ document.addEventListener('click',async e=>{
     case'handle':b.disabled=true;try{await db.doc('notes/'+id).update({handled:{by:S.me,byName:S.myName,at:Date.now()}});toast('סומן כטופל')}catch(e){fail(e);b.disabled=false}break;
     case'reopen':try{await db.doc('notes/'+id).update({handled:null});toast('ההתראה נפתחה מחדש')}catch(e){fail(e)}break;
     case'menu':menu(!S.menuOpen);break;
+    case'cp':cpOpen();break;
     case'menuClose':menu(false);break;
     case'menuOpen':menu(true);break;
     case'schDay':S.schDay=+b.dataset.d;S.schEdit=null;renderSched();break;
@@ -2704,6 +2735,28 @@ function renderPW(){if(S.tab!=='pw')return;subPU();if(!S.pw||S.pw.day!==ymd(new 
     return `<div class="pw-row ${u?'sent':''}"><div class="row" style="gap:8px">${av(s)}<b style="flex:1">${esc(s.name)} <small class="muted">${esc(s.grade||'')}</small></b>${u?`<span class="muted" style="font-size:.82rem">✓ נשלח ע"י ${esc(u.byName||'')}</span>`:''}<button class="btn small ${u?'':'primary'}" type="button" data-act="pwOpen" data-id="${s.id}">${op?'סגור':u?'שוב':'הכן הודעה'}</button></div>
      ${op?`<textarea id="pwT_${s.id}">${esc(pwDraft(s,ps[0]?.[0]||''))}</textarea><div class="row" style="gap:6px">${ps.map(([n,ph,l])=>`<button class="btn small primary" type="button" data-act="pwSend" data-id="${s.id}" data-ph="${waNum(ph)}">שלח ל${esc(n||l)} בוואטסאפ</button>`).join('')||'<span class="muted">אין טלפון של הורים בכרטיס.</span>'}<button class="btn small" type="button" data-act="pwSend" data-id="${s.id}" data-ph="">סמן כנשלח</button>${u?`<button class="btn small" type="button" data-act="pwUnsend" data-id="${s.id}">בטל סימון</button>`:''}</div>`:''}</div>`}).join('')||'<div class="empty">אין תלמידים ברשימה.</div>'}
 document.addEventListener('change',async e=>{if(e.target.id!=='pwUd')return;try{await db.doc('settings/app').set({updDay:+e.target.value},{merge:true});toast('יום העדכון נשמר')}catch(err){fail(err)}});
+/* ---------- desktop layout ---------- */
+const DESK=matchMedia('(min-width:1100px)');
+function deskNav(){const d=DESK.matches&&!!S.access;document.body.classList.toggle('desk',d);if(d){if(S.menuOpen){S.menuOpen=false;$('drawerBg').hidden=true;document.body.style.overflow=''}$('drawer').setAttribute('aria-hidden','false')}else if(!S.menuOpen)$('drawer').setAttribute('aria-hidden','true');document.querySelectorAll('.desk-only').forEach(e=>e.hidden=!DESK.matches)}
+DESK.addEventListener?.('change',deskNav);
+/* ---------- quick search (Ctrl+K or /) ---------- */
+function cpOpen(){if(!S.access)return;$('cpBg').hidden=false;$('cpQ').value='';S.cpI=0;cpRender();setTimeout(()=>$('cpQ').focus(),20)}
+function cpClose(){$('cpBg').hidden=true}
+function cpItems(q){q=q.trim();const T=[...document.querySelectorAll('.drawer-list button[data-tab]')].filter(b=>!b.hidden).map(b=>({k:'t',id:b.dataset.tab,l:b.querySelector('.lbl').textContent}));
+  if(!q)return T;const m=x=>(x.l||'').includes(q)||(x.sub||'').includes(q);
+  const St=allSorted().map(s=>({k:'s',id:s.id,l:s.name||'',sub:[s.grade?'כיתה '+s.grade:'',s.room?'חדר '+s.room:''].filter(Boolean).join(' · '),s}));
+  return [...St.filter(m).slice(0,10),...T.filter(m)]}
+function cpRender(){const L=cpItems($('cpQ').value);S.cpL=L;S.cpI=Math.max(0,Math.min(S.cpI||0,L.length-1));
+  $('cpList').innerHTML=L.map((x,i)=>`<button type="button" class="${i===S.cpI?'on':''}" data-cp="${i}">${x.k==='s'?av(x.s):'<span class="av">↪</span>'}<span style="flex:1">${esc(x.l)}${x.sub?` <small class="muted">${esc(x.sub)}</small>`:''}</span><small class="muted">${x.k==='s'?'תלמיד':'מסך'}</small></button>`).join('')||'<span class="muted" style="padding:8px">לא נמצא</span>';
+  $('cpList').querySelector('.on')?.scrollIntoView({block:'nearest'})}
+function cpGo(i){const x=S.cpL?.[i];if(!x)return;cpClose();if(x.k==='s')openSheet(x.id);else $('t-'+x.id)?.click()}
+$('cpQ').addEventListener('input',()=>{S.cpI=0;cpRender()});
+$('cpQ').addEventListener('keydown',e=>{if(e.key==='ArrowDown'){S.cpI=Math.min((S.cpL||[]).length-1,(S.cpI||0)+1);cpRender();e.preventDefault()}else if(e.key==='ArrowUp'){S.cpI=Math.max(0,(S.cpI||0)-1);cpRender();e.preventDefault()}else if(e.key==='Enter'){cpGo(S.cpI||0);e.preventDefault()}else if(e.key==='Escape'){cpClose()}});
+$('cpList').addEventListener('click',e=>{const b=e.target.closest('[data-cp]');if(b)cpGo(+b.dataset.cp)});
+$('cpBg').addEventListener('click',e=>{if(e.target.id==='cpBg')cpClose()});
+document.addEventListener('keydown',e=>{const tg=e.target,typing=/INPUT|TEXTAREA|SELECT/.test(tg.tagName)||tg.isContentEditable;
+  if((e.ctrlKey||e.metaKey)&&e.code==='KeyK'){e.preventDefault();cpOpen();return}
+  if(!typing&&e.key==='/'&&$('cpBg').hidden&&!e.ctrlKey&&!e.metaKey){e.preventDefault();cpOpen()}});
 /* ---------- guided tour ---------- */
 const TOUR=[['#hmHero','מסך הבית','כאן רואים מי במשמרת, מה היום בלוח השנה, ואת הכפתור האדום לספירת חירום.'],
   ['#hmDayP','ציר הזמן','סדר היום מ-06:00 עד חצות: המערכת השבועית ושעות הסגירה של ההשכמה, נוכחות הערב וכיבוי האורות.'],
