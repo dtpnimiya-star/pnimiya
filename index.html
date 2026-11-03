@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-31";
+const APP_VERSION = "2026-11-03-32";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -2958,6 +2958,7 @@ document.addEventListener('change',async e=>{const t=e.target;if(t.dataset?.sh&&
   await roSave(k,[...dutyOn(k),{u,n,sh}]);toast(`${n} שובץ ליום ${DAYN[new Date(k+'T12:00').getDay()]} ${fmtShort(k)}`)});
 /* ---------- lights-out check ---------- */
 S.lmarks=new Map();S.prevLights=new Map();
+const lSelf=g=>!!(S.settings?.lightsSelf?.[g]??(g==='יב'));
 function renderLights(){if(S.tab!=='lights')return;subRq();renderRq();roundHead('lHead','כיבוי אורות','lights');
   const all=sorted().filter(s=>!isOut(s.id)),M=S.lmarks,ro=S.ro||!has('count');
   const inR=all.filter(s=>M.get(s.id)?.s==='p').length,nr=all.filter(s=>M.get(s.id)?.s==='a'),un=all.length-inR-nr.length;
@@ -2969,17 +2970,19 @@ function renderLights(){if(S.tab!=='lights')return;subRq();renderRq();roundHead(
   const canSetG=S.owner||has('mgr'),now=Date.now();let h='';
   const gList=[...new Set(st.map(s=>s.grade||'-'))].sort((x,y)=>dmin(lgT(x)||'23:59')-dmin(lgT(y)||'23:59'));
   for(const g of gList){const gst=st.filter(s=>(s.grade||'-')===g),t=lgT(g)||S.settings?.lightsBy||'23:00',gAll=all.filter(s=>(s.grade||'-')===g),gDone=gAll.filter(s=>M.get(s.id)).length,isT=S.night===nightKey(),over=isT&&gDone<gAll.length&&now>gDlTs(S.night,t);
-    h+=`<div class="round-h" style="margin-top:6px;${over?'background:linear-gradient(135deg,var(--bad),#8e2a20)':''}"><div class="r1"><b>${g==='-'?'ללא כיתה':'כיתה '+g}</b><span class="dl ${over?'over':''}">${over?'⏰ הזמן עבר · ':'🌙 כיבוי אורות '}${canSetG&&g!=='-'?`<input type="time" data-lg="${g}" value="${lgT(g)}" aria-label="שעת כיבוי אורות לכיתה ${g}">`:t}</span></div><div class="r1" style="font-size:.9rem"><span>סומנו ${gDone} מתוך ${gAll.length}</span>${gDone<gAll.length&&!ro?`<button class="btn small" type="button" data-act="lGrade" data-g="${g}" style="background:#fff;color:#16222A">✓ כל הכיתה בחדרים</button>`:''}</div></div>`;
+    h+=`<div class="round-h" style="margin-top:6px;${over?'background:linear-gradient(135deg,var(--bad),#8e2a20)':''}"><div class="r1"><b>${g==='-'?'ללא כיתה':'כיתה '+g}</b><span class="dl ${over?'over':''}">${over?'⏰ הזמן עבר · ':lSelf(g)?'🌙 כיבוי עצמאי · סיור ב-':'🌙 כיבוי אורות '}${canSetG&&g!=='-'?`<input type="time" data-lg="${g}" value="${lgT(g)}" aria-label="שעת כיבוי אורות לכיתה ${g}">`:t}</span></div><div class="r1" style="font-size:.9rem"><span>סומנו ${gDone} מתוך ${gAll.length}</span>${gDone<gAll.length&&!ro?`<button class="btn small" type="button" data-act="lGrade" data-g="${g}" style="background:#fff;color:#16222A">✓ כל הכיתה בחדרים</button>`:''}</div></div>`;
   for(const [room,list] of groupRooms(gst)){const open=list.filter(s=>!M.get(s.id));
     h+=`<div class="room"><div class="room-h"><span>חדר ${esc(room)}</span>${open.length&&!ro?`<button class="btn small" data-act="lRoom" data-room="${esc(room)}" data-g="${g}">✓ כולם בחדר</button>`:''}</div><div class="list">`;
     for(const s of list){const m=M.get(s.id),ev=S.marks.get(s.id);
-      const meta=[s.grade?'כיתה '+s.grade:'',ev?.s==='a'?'⚠ חסר בנוכחות הערב':ev?.late?'הגיע באיחור בערב':'',m?(m.s==='p'?'בחדר':'לא בחדר'+(m.r?' ('+m.r+')':''))+' · '+tf.format(new Date(m.at))+' · '+byName(m.by):''].filter(Boolean).join(' · ');
-      h+=`<div class="item">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${esc(meta)}</span></button>${canNN()?`<button class="nn-btn ${nightNotes(s.id).length?'has':''}" type="button" data-act="nn" data-id="${s.id}" title="הערת לילה">🌙${nightNotes(s.id).length?' '+nightNotes(s.id).length:''}</button>`:''}<div class="seg"><button class="p" aria-pressed="${m?.s==='p'}" data-act="lMark" data-id="${s.id}" data-v="p" ${ro?'disabled':''}>✓ בחדר</button><button class="a" aria-pressed="${m?.s==='a'}" data-act="lMark" data-id="${s.id}" data-v="a" ${ro?'disabled':''}>✗ לא בחדר</button></div>
+      const meta=[s.grade?'כיתה '+s.grade:'',ev?.s==='a'?'⚠ חסר בנוכחות הערב':ev?.late?'הגיע באיחור בערב':'',m?(m.s==='p'?(lSelf(s.grade)?'ישן'+(m.sl?' מ-'+m.sl:''):'בחדר'):'לא בחדר'+(m.r?' ('+m.r+')':''))+' · '+tf.format(new Date(m.at))+' · '+byName(m.by):''].filter(Boolean).join(' · ');
+      h+=`<div class="item">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${esc(meta)}</span></button>${canNN()?`<button class="nn-btn ${nightNotes(s.id).length?'has':''}" type="button" data-act="nn" data-id="${s.id}" title="הערת לילה">🌙${nightNotes(s.id).length?' '+nightNotes(s.id).length:''}</button>`:''}<div class="seg"><button class="p" aria-pressed="${m?.s==='p'}" data-act="lMark" data-id="${s.id}" data-v="p" ${ro?'disabled':''}>${lSelf(s.grade)?'😴 ישן':'✓ בחדר'}</button><button class="a" aria-pressed="${m?.s==='a'}" data-act="lMark" data-id="${s.id}" data-v="a" ${ro?'disabled':''}>✗ לא בחדר</button></div>
+        ${m?.s==='p'&&lSelf(s.grade)&&!ro?`<label class="muted" style="font-size:.85rem;display:flex;gap:6px;align-items:center">הלך לישון ב-<input type="time" class="lt-sl" data-id="${s.id}" value="${esc(m.sl||'')}" style="width:auto"></label>`:''}
         ${m?.s==='a'&&!ro?`<select class="ab-r lt-r" data-id="${s.id}" aria-label="איפה הוא"><option value="">איפה הוא? בחר…</option>${['בחדר של חבר','במקלחת / שירותים','אצל המדריך','חולה – במרפאה','לא ידוע – בבירור'].map(r=>`<option ${m.r===r?'selected':''}>${r}</option>`).join('')}</select>`:''}</div>`}
     h+='</div></div>'}}
   $('lList').innerHTML=h}
 $('lq').addEventListener('input',()=>renderLights());
 document.addEventListener('change',async e=>{const g=e.target.dataset?.lg;if(!g||!e.target.value)return;try{await db.doc('settings/app').set({lightsG:{[g]:e.target.value}},{merge:true});toast(`כיבוי אורות כיתה ${g}: ${e.target.value}`)}catch(err){fail(err)}});
+document.addEventListener('change',async e=>{if(!e.target.classList?.contains('lt-sl')||!e.target.value)return;try{await OW(db.doc('lights/'+S.night+'/marks/'+e.target.dataset.id).update({sl:e.target.value}));toast('נשמר')}catch(err){fail(err)}});
 document.addEventListener('change',async e=>{if(!e.target.classList?.contains('lt-r'))return;try{await OW(db.doc('lights/'+S.night+'/marks/'+e.target.dataset.id).update({r:e.target.value}));toast('נשמר')}catch(err){fail(err)}});
 /* ---------- activity attendance (trips, buses, meals) ---------- */
 S.ac=[];S.acPick=new Set();
