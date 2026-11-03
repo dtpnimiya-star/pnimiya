@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-32";
+const APP_VERSION = "2026-11-03-33";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -329,6 +329,52 @@ body.desk #stuList .item,body.desk #outList .item,body.desk #homeList .item{bord
 body.desk .sheet-bg{align-items:stretch;justify-content:flex-end}
 body.desk .sheet{max-width:640px;max-height:none;height:100%;border-radius:0;box-shadow:12px 0 40px rgba(0,0,0,.25)}
 @media (min-width:1500px){body.desk #countList,body.desk #mornList{grid-template-columns:repeat(3,minmax(0,1fr))}body.desk .bed-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}}
+/* ---- visual refresh ---- */
+:root{--shadow:0 1px 2px rgba(16,40,70,.06),0 8px 22px -14px rgba(16,40,70,.28)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px -14px rgba(0,0,0,.6)}}:root[data-theme="dark"]{--shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px -14px rgba(0,0,0,.6)}
+.panel,.tile,.hm-more,.list,.room-card,.bed-room,.pw-row{box-shadow:var(--shadow);border-color:color-mix(in srgb,var(--line) 65%,transparent)}.panel{border-radius:16px}
+.btn.primary{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 82%,#fff),var(--accent));box-shadow:0 2px 6px -2px color-mix(in srgb,var(--accent) 60%,transparent)}
+.ph{display:flex;align-items:center;gap:10px}.ic{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--tone,var(--accent)) 15%,transparent)}
+.ic::before{content:"";width:18px;height:18px;background:var(--tone,var(--accent));-webkit-mask:var(--ii) center/contain no-repeat;mask:var(--ii) center/contain no-repeat}
+.i-pin{--ii:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2021V4M5%204h11l-2%204%202%204H5%22/%3E%3C/svg%3E")}.i-pin{--tone:#E08A2E}
+.i-log{--ii:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%203h11a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6zM6%203v18M10%208h5M10%2012h5%22/%3E%3C/svg%3E")}.i-log{--tone:#3E8EDE}
+.i-pot{--ii:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2010h16v5a5%205%200%200%201-5%205H9a5%205%200%200%201-5-5zM2%2010h20M9%206c0-1%201-1%201-2M14%206c0-1%201-1%201-2%22/%3E%3C/svg%3E")}.i-pot{--tone:#2EAA6E}
+.i-spark{--ii:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203v4M12%2017v4M3%2012h4M17%2012h4M6%206l2.5%202.5M15.5%2015.5L18%2018M6%2018l2.5-2.5M15.5%208.5L18%206%22/%3E%3C/svg%3E")}.i-spark{--tone:#1F9E8F}
+.i-trophy{--ii:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%204h8v5a4%204%200%200%201-8%200zM8%206H5a3%203%200%200%200%203%204M16%206h3a3%203%200%200%201-3%204M12%2013v4M9%2021h6M12%2017v4%22/%3E%3C/svg%3E")}.i-trophy{--tone:#C9A227}
+.i-gift{--ii:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2011h16v10H4zM3%207h18v4H3zM12%207v14M12%207c-2-4-6-3-4%200M12%207c2-4%206-3%204%200%22/%3E%3C/svg%3E")}.i-gift{--tone:#D45A9A}
+.i-cal{--ii:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%206h16v15H4zM4%2010h16M8%203v4M16%203v4%22/%3E%3C/svg%3E")}.i-cal{--tone:#7A5AD0}
+.i-chart{--ii:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2020V10M10%2020V4M16%2020v-7M22%2020H2%22/%3E%3C/svg%3E")}.i-chart{--tone:#3E8EDE}
+.i-check{--ii:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M10%206h10M10%2012h10M10%2018h10M3%206l1.5%201.5L7%205M3%2012l1.5%201.5L7%2011M3%2018l1.5%201.5L7%2017%22/%3E%3C/svg%3E")}.i-check{--tone:#0E5DB4}
+.i-smile{--ii:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2021a9%209%200%201%200%200-18%209%209%200%200%200%200%2018zM8.5%2014.5s1.3%202%203.5%202%203.5-2%203.5-2M9%209.5h.01M15%209.5h.01%22/%3E%3C/svg%3E")}
+#hmFuP,#hmDishP,#hmCleanP,#hmLogP,#hmLbP,#hmBdP,#hmNextP,#hmPerP,#hmRoundsP{border-top:3px solid var(--tone)}
+#hmFuP{--tone:#E08A2E}#hmLogP{--tone:#3E8EDE}#hmDishP{--tone:#2EAA6E}#hmCleanP{--tone:#1F9E8F}#hmLbP{--tone:#C9A227}#hmBdP{--tone:#D45A9A}#hmNextP{--tone:#7A5AD0}#hmPerP{--tone:#3E8EDE}#hmRoundsP{--tone:#0E5DB4}
+.home-hero{padding:18px 20px;border-radius:20px;box-shadow:var(--shadow);background:var(--hero,var(--surface));overflow:hidden}
+.home-hero [data-act=tvOn]{left:16px!important;top:14px!important}.home-hero .em-btn{left:16px!important;top:52px!important}
+.hero-m{--hero:linear-gradient(120deg,#FFF3D1 0%,#FDF8EC 45%,#E3EEFF 100%)}.hero-d{--hero:linear-gradient(120deg,#DDEBFF 0%,#F3F8FF 55%,#FFF6DF 100%)}
+.hero-e{--hero:linear-gradient(120deg,#FFE1CC 0%,#F7E9F1 50%,#DCDDFB 100%)}.hero-n{--hero:linear-gradient(120deg,#16224A 0%,#24346B 60%,#3A3F7E 100%)}
+.hero-n .hi,.hero-n .dt,.hero-n .duty,.hero-n .muted{color:#EAF0FF!important}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .hero-m{--hero:linear-gradient(120deg,#3A2F17,#1B2433 60%,#16263E)}:root:not([data-theme="light"]) .hero-d{--hero:linear-gradient(120deg,#17304F,#1A2330 60%,#2E2A1A)}:root:not([data-theme="light"]) .hero-e{--hero:linear-gradient(120deg,#3B2418,#2A2030 55%,#22264A)}}
+:root[data-theme="dark"] .hero-m{--hero:linear-gradient(120deg,#3A2F17,#1B2433 60%,#16263E)}:root[data-theme="dark"] .hero-d{--hero:linear-gradient(120deg,#17304F,#1A2330 60%,#2E2A1A)}:root[data-theme="dark"] .hero-e{--hero:linear-gradient(120deg,#3B2418,#2A2030 55%,#22264A)}
+.home-hero .hi{font-size:1.9rem}
+.tile{position:relative;overflow:hidden}.tile .t-l svg{width:18px;height:18px;padding:5px;border-radius:8px;background:var(--soft);color:var(--accent);box-sizing:content-box}
+.tile .t-bar{height:6px;border-radius:9px;background:var(--soft);overflow:hidden;margin-top:2px}.tile .t-bar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--ok),color-mix(in srgb,var(--ok) 60%,#9be3b8))}
+.tile.alert .t-bar i{background:linear-gradient(90deg,var(--bad),#f2a29a)}
+.t-n.bump{animation:pop .5s ease}
+.dayline .now{width:4px;background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+.dayline .now::after{background:var(--accent);color:var(--accent-ink);padding:1px 8px;border-radius:99px;top:-19px}
+.dayline .mk svg{width:13px;height:13px;vertical-align:-2px;margin-inline-end:2px}
+.sheet{border-top:6px solid var(--gcol,var(--accent))}.sheet-top{flex-wrap:wrap}.sh-id{display:flex;align-items:center;gap:12px;min-width:0}.sh-id .av{width:56px;height:56px;font-size:1.05rem}
+.av[data-g="ט"]{background:color-mix(in srgb,var(--gc-0) 16%,var(--surface));color:var(--gc-0)}.av[data-g="י"]{background:color-mix(in srgb,var(--gc-1) 16%,var(--surface));color:var(--gc-1)}
+.av[data-g="יא"]{background:color-mix(in srgb,var(--gc-2) 16%,var(--surface));color:var(--gc-2)}.av[data-g="יב"]{background:color-mix(in srgb,var(--gc-3) 16%,var(--surface));color:var(--gc-3)}
+.empty:not(.cal-d){font-size:1rem;padding:26px 16px}.empty:not(.cal-d)::before{content:"";display:block;width:46px;height:46px;margin:0 auto 10px;background:var(--accent);opacity:.35;-webkit-mask:var(--ii) center/contain no-repeat;mask:var(--ii) center/contain no-repeat}
+.empty{--ii:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2021a9%209%200%201%200%200-18%209%209%200%200%200%200%2018zM8.5%2014.5s1.3%202%203.5%202%203.5-2%203.5-2M9%209.5h.01M15%209.5h.01%22/%3E%3C/svg%3E")}
+.hm-more>summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.hm-more>summary::-webkit-details-marker{display:none}.hm-more>summary::after{content:"▾";margin-inline-start:auto;color:var(--muted);transition:transform .15s}.hm-more[open]>summary::after{transform:rotate(180deg)}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:400;overflow:hidden}.confetti i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:cf 1.9s cubic-bezier(.2,.6,.4,1) forwards}
+@keyframes cf{to{transform:translateY(105vh) rotate(720deg);opacity:.9}}
+.tv .spot{border-radius:18px;padding:18px 22px;background:linear-gradient(120deg,rgba(255,255,255,.12),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.15);animation:secIn .5s ease}
+.tv .spot h3{margin:0 0 10px;font-size:1.5rem}.tv .spot .big{font-size:2.2rem;font-weight:700}.tv .spot ul{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:1.35rem}.tv .spot li{display:flex;justify-content:space-between;gap:12px}
+.tv .dots{display:flex;gap:6px;justify-content:center;margin-top:10px}.tv .dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3)}.tv .dots i.on{background:#fff}
+@media (prefers-reduced-motion:reduce){.confetti{display:none}.t-n.bump{animation:none}}
 /* ---- calmer home + grouped menu ---- */
 .uhide{display:none!important}
 .hm-more{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
@@ -661,17 +707,17 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <div id="hmNotif"></div>
     <div class="home-tiles" id="hmTiles"></div>
     <div id="hmLate"></div>
-    <div class="panel" id="hmRoundsP"><h2>דיווחים להיום</h2><div id="hmRounds"></div></div>
-    <div class="panel" id="hmFuP" hidden><h2>📌 מעקבים להיום</h2><div id="hmFu" class="fu"></div></div>
-    <div class="panel" id="hmDishP" hidden><h2 id="hmDishH">🍲 תורנות שטיפת סירים</h2><div id="hmDish"></div></div>
-    <div class="panel" id="hmCleanP" hidden><h2 id="hmCleanH"></h2><div id="hmClean"></div></div>
-    <div class="panel" id="hmLogP" hidden><h2>📝 יומן משמרת</h2><div id="hmLog"></div></div>
+    <div class="panel" id="hmRoundsP"><h2 class="ph"><span class="ic i-check"></span>דיווחים להיום</h2><div id="hmRounds"></div></div>
+    <div class="panel" id="hmFuP" hidden><h2 class="ph"><span class="ic i-pin"></span>מעקבים להיום</h2><div id="hmFu" class="fu"></div></div>
+    <div class="panel" id="hmDishP" hidden><h2 class="ph"><span class="ic i-pot"></span><span id="hmDishH">תורנות שטיפת סירים</span></h2><div id="hmDish"></div></div>
+    <div class="panel" id="hmCleanP" hidden><h2 class="ph"><span class="ic i-spark"></span><span id="hmCleanH"></span></h2><div id="hmClean"></div></div>
+    <div class="panel" id="hmLogP" hidden><h2 class="ph"><span class="ic i-log"></span>יומן משמרת</h2><div id="hmLog"></div></div>
     <div id="hmLn"></div>
-    <details class="hm-more" id="hmMore"><summary><b>📊 נתונים ומידע נוסף</b> <small class="muted">סיכום תקופה, תחרות השבוע, ימי הולדת, לוח שנה, חוסרים בנתונים</small></summary><div class="hm-more-in">
-    <div class="panel" id="hmPerP" hidden><div class="row" style="justify-content:space-between"><h2 style="margin:0">סיכום תקופה</h2><div class="seg" id="hmPerSeg"><button type="button" data-act="per" data-p="1">היום</button><button type="button" data-act="per" data-p="7">שבוע</button><button type="button" data-act="per" data-p="30">חודש</button></div></div><div id="hmPer" style="margin-top:10px"></div></div>
-    <div class="panel" id="hmLbP" hidden><h2>🏆 תחרות השבוע</h2><div id="hmLb"></div></div>
-    <div class="panel" id="hmBdP" hidden><h2>🎂 ימי הולדת</h2><div id="hmBd"></div></div>
-    <div class="panel" id="hmNextP"><h2>בקרוב בלוח השנה</h2><div id="hmNext"></div></div>
+    <details class="hm-more" id="hmMore"><summary><span class="ic i-chart"></span><b>נתונים ומידע נוסף</b> <small class="muted">סיכום תקופה, תחרות השבוע, ימי הולדת, לוח שנה, חוסרים בנתונים</small></summary><div class="hm-more-in">
+    <div class="panel" id="hmPerP" hidden><div class="row" style="justify-content:space-between"><h2 class="ph" style="margin:0"><span class="ic i-chart"></span>סיכום תקופה</h2><div class="seg" id="hmPerSeg"><button type="button" data-act="per" data-p="1">היום</button><button type="button" data-act="per" data-p="7">שבוע</button><button type="button" data-act="per" data-p="30">חודש</button></div></div><div id="hmPer" style="margin-top:10px"></div></div>
+    <div class="panel" id="hmLbP" hidden><h2 class="ph"><span class="ic i-trophy"></span>תחרות השבוע</h2><div id="hmLb"></div></div>
+    <div class="panel" id="hmBdP" hidden><h2 class="ph"><span class="ic i-gift"></span>ימי הולדת</h2><div id="hmBd"></div></div>
+    <div class="panel" id="hmNextP"><h2 class="ph"><span class="ic i-cal"></span>בקרוב בלוח השנה</h2><div id="hmNext"></div></div>
     <div id="hmGaps"></div>
     <div id="hmLinksW"><h2 style="margin-bottom:8px">מעבר מהיר</h2><div class="home-links" id="hmLinks"></div></div>
     </div></details>
@@ -1074,7 +1120,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 <div id="sheetBg" class="sheet-bg" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shName">
     <div class="sheet-top">
-      <h2 id="shName" style="font-size:1.3rem"></h2>
+      <div class="sh-id"><span id="shAv"></span><h2 id="shName" style="font-size:1.3rem"></h2></div>
       <span class="row" style="gap:6px"><button class="btn small" data-act="stuMonth" data-perm="stu">📄 דוח חודשי</button><button class="btn small" data-act="stuRep" data-perm="reports">📊 דוח תלמיד</button><button class="btn small" data-act="close">סגור</button></span>
     </div>
     <div id="shStatus"></div>
@@ -1264,7 +1310,7 @@ function roundStat(k){const date=k==='morn'?S.mornDate:S.night,key=RK[k][1],T=tp
   const dlTs=new Date(date+'T'+dl).getTime()+(k!=='morn'&&toMin(dl)<360?864e5:0);
   const isToday=date===(k==='morn'?ymd(new Date()):nightKey()),over=act&&isToday&&(done<tot||req>0)&&Date.now()>dlTs;
   return {dlTs,date,key,dl,act,done,tot,req,isToday,over,complete:done>=tot&&!req,grades:T.grades}}
-function roundHead(el,title,k){const r=roundStat(k),canSet=S.owner||has('mgr');
+function roundHead(el,title,k){const r=roundStat(k),canSet=S.owner||has('mgr');{S.rdC=S.rdC||{};const key=k+'|'+r.date,full=r.act&&r.tot>0&&r.done>=r.tot;if(S.rdC[key]===false&&full){confetti();toast('🎉 כל הכבוד! '+title+' הושלמה')}S.rdC[key]=full}
   $(el).innerHTML=r.act?`<div class="r1"><b>${title}</b><span class="dl ${r.over?'over':''}">${r.over?'⏰ הזמן עבר · ':'● פתוח עד '}${k==='lights'&&lightsTimes().length?r.dl+' (לפי כיתה)':canSet?`<input type="time" data-dl="${r.key}" value="${r.dl}" aria-label="שעת סגירה">`:r.dl}</span></div>
    <div class="r1" style="font-size:.9rem"><span>${nf.format(new Date(r.date+'T12:00'))}${r.grades.length?' · כיתות '+r.grades.join(', '):''}${roundDuty(k,r.date).length?' · תורן: '+esc(dutyNames(roundDuty(k,r.date))):''}</span><span>סומנו ${r.done} מתוך ${r.tot}${r.req?` · <b>חסרות ${r.req} תשובות חובה</b>`:''}</span></div><div class="bar2"><i style="width:${r.tot?r.done/r.tot*100:0}%"></i></div>`
    :`<div class="r1"><b>${title}</b><span class="dl">${wkHome(r.date,k!=='morn')?'🏠 סוף שבוע – התלמידים בבית':'אין סבב מתוכנן ביום '+DAYN[new Date(r.date+'T12:00').getDay()]}</span></div><div style="font-size:.9rem">${nf.format(new Date(r.date+'T12:00'))} · אפשר לסמן בכל זאת</div>`;
@@ -2645,7 +2691,7 @@ function clDuty(r,wed){const L=clRes(r);if(!L.length)return null;const ov=S.clea
 function subClean(){const wed=wedOf(ymd(new Date()));if(!db||!S.access||S.clSub===wed)return;S.clSub=wed;S.subs.push(db.doc('inspections/clean_'+wed).onSnapshot(d=>{S.clean=d.exists?d.data():{wed,rooms:{}};renderClean();if(S.tab==='rooms')renderIns()},()=>{}))}
 function renderClean(){const P=$('hmCleanP');if(!P)return;const n=new Date(),d=n.getDay(),show=S.access&&(d===3||(d===2&&n.getHours()>=18))&&(has('rooms')||has('count')||S.mgr);P.hidden=!show;if(!show)return;subClean();
   const wed=wedOf(ymd(n)),ed=has('rooms')&&!S.ro,R0=roomsList().filter(r=>!STAFF_ROOMS.has(r)&&clRes(r).length),dn=R0.filter(r=>S.clean?.wed===wed&&S.clean.rooms?.[r]?.done).length;
-  $('hmCleanH').textContent=(d===3?'🧹 ניקיון חדרים היום':'🧹 מחר ניקיון חדרים')+` · ${dn}/${R0.length} בוצעו`;
+  $('hmCleanH').textContent=(d===3?'ניקיון חדרים היום':'מחר ניקיון חדרים')+` · ${dn}/${R0.length} בוצעו`;
   $('hmClean').innerHTML=`<div class="clean">${R0.map(r=>{const s=clDuty(r,wed),x=S.clean?.wed===wed?S.clean.rooms?.[r]:null,done=x?.done;
     return `<div class="r ${done?'done':''}"><b>חדר ${r}</b><span style="flex:1">${s?av(s):''} ${esc(s?.name||'—')}${s&&isOut(s.id)?' <span class="pill warn">לא בפנימייה</span>':''}${done?` <small class="muted">✓ ${esc(x.byName||'')}</small>`:''}</span>${ed?`<button class="btn small" type="button" data-act="clSwap" data-r="${r}" title="להעביר את התורנות לתלמיד הבא בחדר">⇄ החלף</button><button class="btn small ${done?'':'primary'}" type="button" data-act="clDone" data-r="${r}" data-sid="${s?.id||''}">${done?'ביטול':'✓ בוצע'}</button>`:''}</div>`}).join('')}</div><span class="muted" style="font-size:.8rem">התורנות מתחלפת כל שבוע בין התלמידים בחדר, לפי סדר המיטות.</span>`}
 /* ---------- staff meeting ---------- */
@@ -2723,7 +2769,7 @@ function renderFu(){const P=$('hmFuP');if(!P)return;const today=ymd(new Date()),
   P.hidden=!S.access||!R.length;$('hmFu').innerHTML=R.join('')}
 /* ---------- student sheet: late incidents + parent contact log ---------- */
 const PCK={call:'שיחת טלפון',meet:'פגישה',msg:'הודעה',hard:'שיחה קשה'};
-function renderShX(){const sid=S.sel,a=$('shLate'),b=$('shPc');if(!a||!b||!sid)return;
+function renderShX(){const sid=S.sel,a=$('shLate'),b=$('shPc');if(!a||!b||!sid)return;{const s0=S.students.get(sid);if(s0){$('shAv').innerHTML=av(s0);document.querySelector('#sheetBg .sheet').style.setProperty('--gcol',gColor(s0.grade))}}
   const L=(S.lateinc||[]).filter(x=>x.sid===sid);
   a.innerHTML=L.length?`<div style="display:grid;gap:8px"><h2>⏰ חזרות באיחור (${L.length})</h2><div class="list">${L.slice(0,8).map(x=>`<div class="item"><span style="flex:1">${fmtShort(ymd(new Date(x.back)))} · איחור של ${lrDelay(x)}${x.why?' · '+esc(x.why):''}<span class="meta">${x.ok?'נראה בסדר':'<b class="bad">לא נראה בסדר</b>'} · ${x.parentAt?'ההורים עודכנו':'ההורים לא עודכנו'}${x.fu?.due?' · שיחת מעקב '+(x.fu.done?'התקיימה':fmtShort(x.fu.due)):''}</span></span><button class="btn small" type="button" data-act="lrPrint" data-id="${x.id}">🖨</button></div>`).join('')}</div>${L.length>=2?'<span class="muted" style="font-size:.85rem">יש כאן דפוס: כדאי לברר בשיחה ולשנות משהו בתכנון (שעת יציאה, מלווה, דרך אחרת).</span>':''}</div>`:'';
   if(!(has('notes')||has('personal')||S.mgr)){b.innerHTML='';return}
@@ -2778,7 +2824,7 @@ async function dishDraw(re,btn){const k=thuOf(ymd(new Date())),D=S.dish||{},G=di
 function renderDish(){const P=$('hmDishP');if(!P)return;const show=S.access&&(has('count')||has('rooms')||S.mgr);P.hidden=!show;if(!show)return;subDish();
   const today=ymd(new Date()),k=thuOf(today),D=S.dish||{},h=D.hist?.[k],G=dishGroups(),gi=h?h.gi:((+D.gi||0)%Math.max(1,G.length)),grades=G[gi]||[],ed=!S.ro&&(has('count')||has('rooms')||S.mgr);
   const pool=allSorted().filter(s=>grades.includes(s.grade)),left=pool.filter(s=>!(D.used||{})[s.id]).length;
-  $('hmDishH').textContent=`🍲 תורן שטיפת סירים וכלים · יום חמישי ${fmtShort(k)}`;
+  $('hmDishH').textContent=`תורן שטיפת סירים וכלים · יום חמישי ${fmtShort(k)}`;
   const past=Object.entries(D.hist||{}).filter(([d])=>d<k).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,6);
   $('hmDish').innerHTML=(h?`<div class="item" style="flex-wrap:wrap;background:${h.done?'var(--ok-bg)':'var(--soft)'};border-radius:10px;border:0">${S.students.get(h.sid)?av(S.students.get(h.sid)):''}<span style="flex:1"><b>${esc(h.name)}</b> <small class="muted">כיתה ${esc(h.grade)}</small><span class="meta">הוגרל מקבוצת ${esc(h.g)} ע"י ${esc(h.byName||'')}${h.done?' · ✓ שטף'+(h.doneBy?' (סימן '+esc(h.doneBy)+')':''):''}</span></span>${ed?`<button class="btn small ${h.done?'':'primary'}" type="button" data-act="dishDone">${h.done?'ביטול':'✓ שטף'}</button>${h.done?'':'<button class="btn small" type="button" data-act="dishRe" title="למשל אם התלמיד לא בפנימייה">🎲 הגרל מחדש</button>'}`:''}</div>`
     :`<div class="row" style="justify-content:space-between;gap:8px"><span>השבוע מגרילים מ<b>${grades.length>1?'כיתות ':'כיתה '}${esc(grades.join(' + '))}</b> <small class="muted">· נשארו ${left} מתוך ${pool.length} שעוד לא שטפו בסבב הזה</small></span>${ed?'<button class="btn primary" type="button" data-act="dishDraw">🎲 הגרלה</button>':''}</div>`)
@@ -2787,6 +2833,13 @@ function renderDish(){const P=$('hmDishP');if(!P)return;const show=S.access&&(ha
      ${G.map(g=>{const P2=allSorted().filter(s=>g.includes(s.grade)),u=P2.filter(s=>(D.used||{})[s.id]);return `<span class="muted">${esc(g.join('+'))}: ${u.length} מתוך ${P2.length} כבר שטפו בסבב הנוכחי</span>`}).join('')}
      ${past.length?past.map(([d,x])=>`<span>${fmtShort(d)} · ${esc(x.name)} <small class="muted">(${esc(x.g)})</small>${x.done?' ✓':''}</span>`).join(''):'<span class="muted">עוד אין היסטוריה.</span>'}
    </div></details>`}
+function confetti(){const c=document.createElement('div');c.className='confetti';const col=['#0E5DB4','#C9A227','#2EAA6E','#E08A2E','#D45A9A','#5AA7FF'];
+  c.innerHTML=Array.from({length:46},(_,i)=>`<i style="left:${Math.random()*100}%;background:${col[i%col.length]};animation-delay:${Math.random()*.35}s;transform:rotate(${Math.random()*180}deg)"></i>`).join('');document.body.appendChild(c);setTimeout(()=>c.remove(),2600)}
+function tvSpot(){const S2=[];const D=compData();if(D.rooms.length)S2.push(['🏆 תחרות החדרים השבוע',`<ul>${D.rooms.slice(0,5).map((x,i)=>`<li><b>${i===0&&x.t>0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':''}חדר ${x.r}</b><span>${x.t} נק׳</span></li>`).join('')}</ul>`]);
+  const k=thuOf(ymd(new Date())),h=S.dish?.hist?.[k];if(h)S2.push(['🍲 תורן שטיפת סירים – יום חמישי',`<div class="big">${esc(h.name)}</div><div>כיתה ${esc(h.grade)}${h.done?' · ✓ בוצע':''}</div>`]);
+  const ev=events().filter(e=>e.to>=ymd(new Date())).slice(0,4);if(ev.length)S2.push(['📅 בקרוב',`<ul>${ev.map(e=>`<li><b>${esc(e.name)}</b><span>${rangeTxt(e.from,e.to)}</span></li>`).join('')}</ul>`]);
+  const bd=typeof birthdays==='function'?birthdays(7):[];if(bd.length)S2.push(['🎂 ימי הולדת השבוע',`<ul>${bd.slice(0,5).map(x=>`<li><b>${esc(x.s.name)}</b><span>${x.i===0?'היום! 🎉':x.i===1?'מחר':fmtShort(x.k)}</span></li>`).join('')}</ul>`]);
+  if(!S2.length)return '';const i=Math.floor(Date.now()/15000)%S2.length;return `<div class="spot"><h3>${S2[i][0]}</h3>${S2[i][1]}${S2.length>1?`<div class="dots">${S2.map((_,j)=>`<i class="${j===i?'on':''}"></i>`).join('')}</div>`:''}</div>`}
 /* ---------- home customisation ---------- */
 const HM_SECT=[['hmDayP','ציר הזמן'],['hmBoard','הודעות לצוות'],['hmTiles','מספרים מהירים'],['hmLate','מי לא חזר בזמן'],['hmRoundsP','דיווחים להיום'],['hmFuP','מעקבים להיום'],['hmDishP','תורנות שטיפת סירים'],['hmCleanP','ניקיון חדרים'],['hmLogP','יומן משמרת'],['hmLn','מרכז למידה'],['hmMore','נתונים ומידע נוסף']];
 S.hmHide=new Set();try{S.hmHide=new Set(JSON.parse(localStorage.getItem('pn-hm-hide')||'[]'))}catch{}
@@ -3060,13 +3113,14 @@ $('pf-hbM').innerHTML='<option value="">חודש</option>'+HBM.map(m=>`<option>$
 /* ---------- home ---------- */
 const dayMin=v=>{const m=toMin(v);return m<360?m+1440:m};
 const tPct=v=>Math.max(0,Math.min(100,((dayMin(v)-360)/(1440-360))*100));
+const DLI={'השכמה':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>','נוכחות ערב':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>','כיבוי אורות':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>'};
 function renderDay(){const el=$('hmDay');if(!el)return;const n=new Date(),now=n.getHours()*60+n.getMinutes(),today=ymd(n);
   const wb=S.settings?.wakeBy||'07:10',cb=S.settings?.countBy||'20:00',inn=allSorted().filter(s=>!isOut(s.id));
   const wDone=S.mornDate===today&&inn.length&&inn.every(s=>S.wake.get(s.id)),cDone=S.night===nightKey()&&inn.length&&inn.every(s=>S.marks.get(s.id));
   const M=[['morn','השכמה'],['count','נוכחות ערב'],['lights','כיבוי אורות']].map(([k,l])=>{const r=roundStat(k);const dl=k==='morn'&&S.mornDate!==today?wb:k!=='morn'&&S.night!==nightKey()?(tplOf(k).times[n.getDay()]||S.settings?.[RK[k][1]]||RK[k][2]):r.dl;const d=r.isToday&&r.tot>0&&r.done>=r.tot,LT=k==='lights'?lightsTimes():[];return LT.length>1?[LT[0][1],l,d,!d&&r.isToday&&r.over,LT[0][1]+'–'+LT[LT.length-1][1]]:[dl,l,d,!d&&r.isToday&&r.over]});
   const p=Math.max(0,Math.min(100,((now-360)/(1080))*100)),cl=v=>Math.max(0,Math.min(100,v));
   const SI=(S.sched?schDayItems(n.getDay()):[]).filter(x=>x.from&&toMin(x.from)<1440).map(x=>{const a=Math.max(360,toMin(x.from)),b=Math.min(1440,x.to?toMin(x.to):a+30),r=cl((a-360)/10.8),w=Math.max(1.2,cl((b-360)/10.8)-r);return `<span class="blk ${now>=a&&now<b?'cur':''}" style="right:${r}%;width:${w}%;background:${SK[x.k]?.[1]||'var(--soft)'}" title="${esc(x.from+(x.to?'–'+x.to:'')+' '+x.title)}">${w>4?esc(x.title):''}</span>`}).join('');
-  el.innerHTML=`${SI}<div class="tr"></div>${M.map(([t,l,d,o,ds])=>`<span class="mk ${d?'done':o?'over':''}" style="right:${tPct(t)}%">${d?'✓ ':''}${l}<br>${ds||t}</span>`).join('')}${now>=360?`<span class="now" style="right:${p}%" data-t="עכשיו ${pad(n.getHours())}:${pad(n.getMinutes())}"></span>`:''}`}
+  el.innerHTML=`${SI}<div class="tr"></div>${M.map(([t,l,d,o,ds])=>`<span class="mk ${d?'done':o?'over':''}" style="right:${tPct(t)}%">${d?'✓ ':DLI[l]||''}${l}<br>${ds||t}</span>`).join('')}${now>=360?`<span class="now" style="right:${p}%" data-t="עכשיו ${pad(n.getHours())}:${pad(n.getMinutes())}"></span>`:''}`}
 function renderRounds(){const el=$('hmRounds');if(!el)return;if(S.access)subRq();const n=new Date(),today=ymd(n),now=hm(n.getTime()),inn=allSorted().filter(s=>!isOut(s.id)),R=[];
   [['השכמה','morn','morning'],['נוכחות ערב','count','count'],['כיבוי אורות','lights','count']].forEach(([l,k,p])=>{if(!(has(p)||S.mgr))return;const r=roundStat(k);if(r.isToday&&r.act)R.push([l,k,r.done,r.tot,r.dl,r.req,r.over])});
   if(S.unIns&&S.insWeek===weekOf(today)){const RS=roomsList().filter(r=>!STAFF_ROOMS.has(r));R.push(['בדיקת חדרים (השבוע)','rooms',RS.filter(r=>S.ins.has(r)).length,RS.length,''])}
@@ -3088,7 +3142,7 @@ function renderPeriod(){const P=$('hmPerP');if(!P)return;P.hidden=!S.mgr;if(!S.m
   const k=(v,l,dd)=>`<div class="kpi"><span class="v">${v==null?'—':v}</span><span class="l">${l}</span>${dd}</div>`;
   $('hmPer').innerHTML=`<div class="kpis">${k(a.att==null?null:a.att+'%','נוכחות בערב',d(a.att,b.att,true,'%'))}${k(a.wake==null?null:a.wake+'%','קמו בזמן',d(a.wake,b.wake,true,'%'))}${k(a.ab,'היעדרויות בערב',d(a.ab,b.ab,false))}${k(a.beh,'הערות התנהגות',d(a.beh,b.beh,false))}${k(a.pr2,'שבחים',d(a.pr2,b.pr2,true))}${N>1?k(a.ontime==null?null:a.ontime+'%','נוכחות ערב הושלמה בזמן',d(a.ontime,b.ontime,true,'%')):''}${k(a.ex,'יציאות',d(a.ex,b.ex,false))}</div>${perSparks()}`}
 S.tv=false;
-function tvOpen(on){S.tv=on;const el=$('tv');el.hidden=!on;document.body.style.overflow=on?'hidden':'';if(on){try{document.documentElement.requestFullscreen?.()}catch{}renderTV();S.tvInt=setInterval(renderTV,30000)}else{clearInterval(S.tvInt);try{document.fullscreenElement&&document.exitFullscreen()}catch{}}}
+function tvOpen(on){S.tv=on;const el=$('tv');el.hidden=!on;document.body.style.overflow=on?'hidden':'';if(on){try{document.documentElement.requestFullscreen?.()}catch{}renderTV();S.tvInt=setInterval(renderTV,15000)}else{clearInterval(S.tvInt);try{document.fullscreenElement&&document.exitFullscreen()}catch{}}}
 function renderTV(){if(!S.tv)return;const el=$('tv'),n=new Date(),today=ymd(n),hb=heb(today),st=allSorted(),inn=st.filter(s=>!isOut(s.id)),late=lateOuts(st),out=st.length-inn.length;
   const rc=roundStat('count'),rm=roundStat('morn'),mtO=(S.mt||[]).filter(m=>(m.status||'open')!=='done'),mtB=mtO.filter(m=>m.urg===3).length;
   const absent=inn.filter(s=>S.marks.get(s.id)?.s==='a'),noUp=inn.filter(s=>S.wake.get(s.id)?.s==='no');
@@ -3101,6 +3155,7 @@ function renderTV(){if(!S.tv)return;const el=$('tv'),n=new Date(),today=ymd(n),h
   <div class="panel" style="background:transparent;border:0;padding:0"><div class="dayline" id="tvDay"></div></div>
   <div class="k">${card(inn.length+'<small style="font-size:1.2rem;opacity:.7">/'+st.length+'</small>','בפנימייה','good')}${card(out,'מחוץ לפנימייה')}${card(late.length,'לא חזרו בזמן',late.length?'bad':'')}
    ${rc.act?card(rc.done+'/'+rc.tot,'נוכחות ערב'+(rc.isToday?'':' (ערב '+fmtShort(rc.date)+')'),rc.over?'bad':'',bar(rc.done,rc.tot)):''}${rm.act?card(rm.done+'/'+rm.tot,'השכמה',rm.over?'bad':'',bar(rm.done,rm.tot)):''}${(()=>{const rl=roundStat('lights');return rl.act&&rl.done?card(rl.done+'/'+rl.tot,'כיבוי אורות',rl.over?'bad':'',bar(rl.done,rl.tot)):''})()}${card(mtO.length,'תקלות פתוחות',mtB?'bad':'',mtB?`<span class="l">⚠ ${mtB} בטיחות</span>`:'')}</div>
+  ${tvSpot()}
   <div class="g">${lst('⏰ לא חזרו בזמן',late.map(s=>{const t=S.status.get(s.id);return `<li><b>${esc(s.name)}</b><span>${hm(t.backBy)} · ${ago(t.backBy)}</span></li>`}),'כולם חזרו בזמן 👍')}
    ${lst('✗ חסרים בנוכחות הערב',absent.map(s=>{const m=S.marks.get(s.id);return `<li><b>${esc(s.name)}</b><span>${esc(m.r||'')} ${esc(s.grade||'')}</span></li>`}),rc.done?'אין חסרים':'הנוכחות עוד לא התחילה')}
    ${noUp.length?lst('😴 לא קמו הבוקר',noUp.map(s=>`<li><b>${esc(s.name)}</b><span>${esc(s.grade||'')}</span></li>`),''):''}
@@ -3120,12 +3175,13 @@ function renderHome(){
   const first=(S.myName||'').split(' ')[0];
   const wkTxt=(()=>{const d=now.getDay(),h=now.getHours();if(isYesh(today)&&[5,6].includes(d))return '🕍 שבת ישיבה – כולם בפנימייה';if((d===5&&h>=9)||d===6)return '🏠 סוף שבוע – התלמידים בבית, חוזרים ביום ראשון';return ''})();
   const calTxt=offK.has(ti.k)?(ti.k==='c'?'חג':'חופשה')+(ti.l?' · '+ti.l:''):ti.k==='t'?(ti.l||'טיול'):ti.k==='l'?'תחילת לימודים 12:00':ti.l||(ti.k==='s'?'שבת':'יום לימודים');
+  $('hmHero').className='home-hero hero-'+(h>=5&&h<11?'m':h>=11&&h<17?'d':h>=17&&h<21?'e':'n');
   $('hmHero').innerHTML=`${S.mgr||has('count')?'<button type="button" class="btn small" data-act="tvOn" style="position:absolute;left:0;top:0;width:auto">🖥 מסך גדול</button>':''}${S.access&&!S.ro?'<button type="button" class="btn small em-btn" data-act="emStart" style="position:absolute;left:0;top:38px;width:auto">🚨 ספירת חירום</button>':''}<h2 class="hi">${greet}${first?', '+esc(first):''}</h2>${(()=>{const D=dutyNow();if(!D.L.length)return '';const me=D.L.some(y=>y.u===S.me);return `<span class="duty">🧑‍🏫 <b>${D.on?'במשמרת עכשיו':'במשמרת הערב'}:</b> ${esc(dutyTxt(D.k))} <span class="muted">(${D.on?'עד '+shT():shF()+'–'+shT()})</span>${me?` <span class="pill ok">${D.on?'את/ה במשמרת עכשיו':'את/ה במשמרת הערב'}</span>`:dutyOn(addD(D.k,1)).some(y=>y.u===S.me)?' <span class="pill">את/ה במשמרת מחר</span>':''}</span>`})()}<span class="dt">${hb?hNum(hb.day)+' '+hb.m+' · ':''}${nf.format(now)}</span><span><span class="pill" style="background:${dotC(ti.k==='w'?'x':ti.k)};color:var(--ink)">${esc(calTxt)}</span>${wkTxt?` <span class="pill" style="background:${isYesh(today)?'var(--cal-y)':'var(--home-bg)'};color:var(--ink)">${wkTxt}</span>`:''}</span>`;
   const ni=S.sched?schNowInfo():null;
   $('hmNow').innerHTML=ni&&(ni.cur||ni.next)?`<button type="button" class="calnote" data-act="go" data-to="sched" style="width:100%;text-align:right;cursor:pointer;font:inherit;color:var(--ink);background:${ni.cur?SK[ni.cur.k]?.[1]:'var(--soft)'}"><span style="display:grid;gap:2px"><span>עכשיו: ${ni.cur?esc(ni.cur.title)+' · <bdi dir="ltr">'+esc(ni.cur.from)+(ni.cur.to?'–'+esc(ni.cur.to):'')+'</bdi>':'אין פעילות מתוכננת'}</span>${ni.next?`<span class="muted" style="font-weight:400">הבא: ${esc(ni.next.title)} · ${esc(ni.next.from)}</span>`:''}</span></button>`:'';
   const ico=t=>$('t-'+t)?.querySelector('svg')?.outerHTML.replace('class="ni"','')||'';
   const st=allSorted(),act=st.filter(s=>!isOut(s.id)),tiles=[];
-  const tile=(to,label,n,sub,alert)=>tiles.push(`<button type="button" class="tile ${alert?'alert':''}" data-act="go" data-to="${to}"><span class="t-l">${ico(to)}${label}</span><span class="t-n">${n}</span><span class="t-s">${sub}</span></button>`);
+  S.tv0=S.tv0||{};const tile=(to,label,n,sub,alert)=>{const m=/^(\d+)\/(\d+)$/.exec(String(n)),bump=S.tv0[to]!=null&&S.tv0[to]!==String(n);S.tv0[to]=String(n);tiles.push(`<button type="button" class="tile ${alert?'alert':''}" data-act="go" data-to="${to}"><span class="t-l">${ico(to)}${label}</span><span class="t-n ${bump?'bump':''}">${n}</span>${m&&+m[2]?`<span class="t-bar"><i style="width:${Math.min(100,+m[1]/+m[2]*100)}%"></i></span>`:''}<span class="t-s">${sub}</span></button>`)};
   if(has('stu'))tile('stu','תלמידים',st.length,`<b>${act.length}</b> בפנימייה · <b>${st.length-act.length}</b> בחוץ`);
   if(has('count')){let p=0,a=0;act.forEach(s=>{const m=S.marks.get(s.id)?.s;if(m==='p')p++;else if(m==='a')a++});const u=act.length-p-a;
     tile('count','נוכחות ערב',`${p}/${act.length}`,a?`<b>${a}</b> חסרים · ${u} לא נבדקו`:u?`${u} לא נבדקו`:'כולם נבדקו',a>0)}
