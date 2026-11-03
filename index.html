@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-29";
+const APP_VERSION = "2026-11-03-30";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -650,6 +650,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <div id="hmLate"></div>
     <div class="panel" id="hmFuP" hidden><h2>📌 מעקבים להיום</h2><div id="hmFu" class="fu"></div></div>
     <div class="panel" id="hmLogP" hidden><h2>📝 יומן משמרת</h2><div id="hmLog"></div></div>
+    <div class="panel" id="hmDishP" hidden><h2 id="hmDishH">🍲 תורנות שטיפת סירים</h2><div id="hmDish"></div></div>
     <div class="panel" id="hmCleanP" hidden><h2 id="hmCleanH"></h2><div id="hmClean"></div></div>
     <div class="panel" id="hmLbP" hidden><h2>🏆 תחרות השבוע</h2><div id="hmLb"></div></div>
     <div id="hmGaps"></div>
@@ -1845,6 +1846,10 @@ document.addEventListener('click',async e=>{
     case'reopen':try{await db.doc('notes/'+id).update({handled:null});toast('ההתראה נפתחה מחדש')}catch(e){fail(e)}break;
     case'menu':menu(!S.menuOpen);break;
     case'cp':cpOpen();break;
+    case'dishDraw':dishDraw(false,b);break;
+    case'dishRe':if(armed(b,'בטוח? להגריל מחדש'))dishDraw(true,b);break;
+    case'dishDone':{const k=thuOf(ymd(new Date())),h=S.dish?.hist?.[k];if(!h)break;try{await db.doc('duty/dish').set({hist:{[k]:{done:!h.done,doneAt:Date.now(),doneBy:S.myName||''}}},{merge:true})}catch(e){fail(e)}break}
+    case'dishGroups':{const cur=dishGroups().map(g=>g.join('+')).join(', '),v=prompt('סדר הקבוצות להגרלה, מופרד בפסיקים. כיתות שמוגרלות יחד מחברים ב-+\nלמשל: ט+י, יא, יב',cur);if(!v)break;const G=v.split(',').map(x=>x.split('+').map(y=>y.trim()).filter(y=>GRADES.includes(y))).filter(x=>x.length);if(!G.length){toast('לא זוהו כיתות');break}try{await db.doc('duty/dish').set({groups:G.map(g=>g.join('+')),gi:0},{merge:true});toast('סדר הקבוצות נשמר')}catch(e){fail(e)}break}
     case'menuClose':menu(false);break;
     case'menuOpen':menu(true);break;
     case'schDay':S.schDay=+b.dataset.d;S.schEdit=null;renderSched();break;
@@ -2156,8 +2161,8 @@ window.addEventListener('online',()=>{netState();toast('החיבור חזר. ה�
 window.addEventListener('offline',netState);
 
 /* ---------- activity log ---------- */
-const AUD_COL={lateinc:'אירוע איחור',pcontact:'קשר עם הורים',pupd:'עדכון שבועי להורים',students:'תלמיד',status:'יציאה / חזרה',profiles:'פרטים אישיים',photos:'תמונת תלמיד',notes:'הערה',staff:'עובד והרשאות',staffProfiles:'כרטיס עובד',settings:'הגדרות',schedule:'מערכת שבועית',config:'מנהל ראשי',inspections:'בדיקת חדר',nightcount:'נוכחות ערב',morning:'השכמה',moves:'יומן יציאות',maint:'תחזוקה',learn:'מרכז למידה',shabbat:'שבת',activities:'פעילות / טיול',lights:'כיבוי אורות',emergency:'ספירת חירום',shiftlog:'יומן משמרת'};
-const AUD_TOP=/^(lateinc|pcontact|pupd|students|status|profiles|photos|notes|staff|staffProfiles|settings|schedule|config|inspections|moves|maint|learn|shabbat|activities|emergency|shiftlog)\/[^/]+$/,AUD_SUB=/^(nightcount|morning|lights)\/([^/]+)\/marks\/([^/]+)$/;
+const AUD_COL={duty:'תורנות',lateinc:'אירוע איחור',pcontact:'קשר עם הורים',pupd:'עדכון שבועי להורים',students:'תלמיד',status:'יציאה / חזרה',profiles:'פרטים אישיים',photos:'תמונת תלמיד',notes:'הערה',staff:'עובד והרשאות',staffProfiles:'כרטיס עובד',settings:'הגדרות',schedule:'מערכת שבועית',config:'מנהל ראשי',inspections:'בדיקת חדר',nightcount:'נוכחות ערב',morning:'השכמה',moves:'יומן יציאות',maint:'תחזוקה',learn:'מרכז למידה',shabbat:'שבת',activities:'פעילות / טיול',lights:'כיבוי אורות',emergency:'ספירת חירום',shiftlog:'יומן משמרת'};
+const AUD_TOP=/^(duty|lateinc|pcontact|pupd|students|status|profiles|photos|notes|staff|staffProfiles|settings|schedule|config|inspections|moves|maint|learn|shabbat|activities|emergency|shiftlog)\/[^/]+$/,AUD_SUB=/^(nightcount|morning|lights)\/([^/]+)\/marks\/([^/]+)$/;
 function audParse(path){let m=path.match(AUD_SUB);if(m)return {col:m[1],id:m[3],date:m[2]};if(AUD_TOP.test(path)){const [col,id]=path.split('/');return {col,id}}return null}
 const stuName=id=>S.students.get(id)?.name||'';
 function audLabel(col,id,data){
@@ -2735,6 +2740,35 @@ function renderPW(){if(S.tab!=='pw')return;subPU();if(!S.pw||S.pw.day!==ymd(new 
     return `<div class="pw-row ${u?'sent':''}"><div class="row" style="gap:8px">${av(s)}<b style="flex:1">${esc(s.name)} <small class="muted">${esc(s.grade||'')}</small></b>${u?`<span class="muted" style="font-size:.82rem">✓ נשלח ע"י ${esc(u.byName||'')}</span>`:''}<button class="btn small ${u?'':'primary'}" type="button" data-act="pwOpen" data-id="${s.id}">${op?'סגור':u?'שוב':'הכן הודעה'}</button></div>
      ${op?`<textarea id="pwT_${s.id}">${esc(pwDraft(s,ps[0]?.[0]||''))}</textarea><div class="row" style="gap:6px">${ps.map(([n,ph,l])=>`<button class="btn small primary" type="button" data-act="pwSend" data-id="${s.id}" data-ph="${waNum(ph)}">שלח ל${esc(n||l)} בוואטסאפ</button>`).join('')||'<span class="muted">אין טלפון של הורים בכרטיס.</span>'}<button class="btn small" type="button" data-act="pwSend" data-id="${s.id}" data-ph="">סמן כנשלח</button>${u?`<button class="btn small" type="button" data-act="pwUnsend" data-id="${s.id}">בטל סימון</button>`:''}</div>`:''}</div>`}).join('')||'<div class="empty">אין תלמידים ברשימה.</div>'}
 document.addEventListener('change',async e=>{if(e.target.id!=='pwUd')return;try{await db.doc('settings/app').set({updDay:+e.target.value},{merge:true});toast('יום העדכון נשמר')}catch(err){fail(err)}});
+/* ---------- Thursday pot-washing duty (weekly draw) ---------- */
+const thuOf=k=>addD(k,(4-new Date(k+'T12:00').getDay()+7)%7);
+const dishGroups=()=>(S.dish?.groups||['ט+י','יא','יב']).map(g=>String(g).split('+').filter(Boolean));
+function subDish(){if(!db||S.unDish||!S.access)return;S.unDish=1;S.subs.push(db.doc('duty/dish').onSnapshot(d=>{S.dish=d.exists?d.data():{};renderDish()},()=>{}))}
+async function dishDraw(re,btn){const k=thuOf(ymd(new Date())),D=S.dish||{},G=dishGroups();if(!G.length)return;const prev=D.hist?.[k];
+  const gi=re&&prev?prev.gi:((+D.gi||0)%G.length),grades=G[gi],used={...(D.used||{})};
+  if(re&&prev?.sid)delete used[prev.sid];
+  let pool=allSorted().filter(s=>grades.includes(s.grade)&&!(isOut(s.id)&&S.status.get(s.id)?.long));
+  if(!pool.length){toast('אין תלמידים בקבוצה '+grades.join('+'));return}
+  let avail=pool.filter(s=>!used[s.id]&&(!re||s.id!==prev?.sid)),reset=false;
+  if(!avail.length){pool.forEach(s=>delete used[s.id]);avail=pool.filter(s=>!re||s.id!==prev?.sid);reset=true}
+  if(!avail.length)avail=pool;
+  const s=avail[Math.floor(Math.random()*avail.length)];used[s.id]=k;
+  btn&&(btn.disabled=true);
+  try{const up={...D,used,hist:{...(D.hist||{}),[k]:{sid:s.id,name:s.name,grade:s.grade||'',g:grades.join('+'),gi,done:false,at:Date.now(),by:S.me,byName:S.myName||'',left:avail.length-1}}};up.gi=re?(+D.gi||0):(gi+1)%G.length;if(!D.groups)up.groups=G.map(g=>g.join('+'));
+    await db.doc('duty/dish').set(up);toast(`${reset?'כולם בקבוצה כבר עשו תורנות – התחיל סבב חדש. ':''}הוגרל: ${s.name}`);buzz()}catch(e){fail(e)}
+  btn&&(btn.disabled=false)}
+function renderDish(){const P=$('hmDishP');if(!P)return;const show=S.access&&(has('count')||has('rooms')||S.mgr);P.hidden=!show;if(!show)return;subDish();
+  const today=ymd(new Date()),k=thuOf(today),D=S.dish||{},h=D.hist?.[k],G=dishGroups(),gi=h?h.gi:((+D.gi||0)%Math.max(1,G.length)),grades=G[gi]||[],ed=!S.ro&&(has('count')||has('rooms')||S.mgr);
+  const pool=allSorted().filter(s=>grades.includes(s.grade)),left=pool.filter(s=>!(D.used||{})[s.id]).length;
+  $('hmDishH').textContent=`🍲 תורן שטיפת סירים וכלים · יום חמישי ${fmtShort(k)}`;
+  const past=Object.entries(D.hist||{}).filter(([d])=>d<k).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,6);
+  $('hmDish').innerHTML=(h?`<div class="item" style="flex-wrap:wrap;background:${h.done?'var(--ok-bg)':'var(--soft)'};border-radius:10px;border:0">${S.students.get(h.sid)?av(S.students.get(h.sid)):''}<span style="flex:1"><b>${esc(h.name)}</b> <small class="muted">כיתה ${esc(h.grade)}</small><span class="meta">הוגרל מקבוצת ${esc(h.g)} ע"י ${esc(h.byName||'')}${h.done?' · ✓ שטף'+(h.doneBy?' (סימן '+esc(h.doneBy)+')':''):''}</span></span>${ed?`<button class="btn small ${h.done?'':'primary'}" type="button" data-act="dishDone">${h.done?'ביטול':'✓ שטף'}</button>${h.done?'':'<button class="btn small" type="button" data-act="dishRe" title="למשל אם התלמיד לא בפנימייה">🎲 הגרל מחדש</button>'}`:''}</div>`
+    :`<div class="row" style="justify-content:space-between;gap:8px"><span>השבוע מגרילים מ<b>${grades.length>1?'כיתות ':'כיתה '}${esc(grades.join(' + '))}</b> <small class="muted">· נשארו ${left} מתוך ${pool.length} שעוד לא שטפו בסבב הזה</small></span>${ed?'<button class="btn primary" type="button" data-act="dishDraw">🎲 הגרלה</button>':''}</div>`)
+   +`<details style="margin-top:6px"><summary class="muted" style="cursor:pointer;font-size:.88rem">סדר הקבוצות והיסטוריה</summary><div style="display:grid;gap:6px;margin-top:6px;font-size:.9rem">
+     <span>סדר הקבוצות: ${G.map((g,i)=>`<b style="${i===((+D.gi||0)%G.length)&&!h?'color:var(--accent)':''}">${esc(g.join('+'))}</b>`).join(' ← ')}${S.mgr&&!S.ro?' <button class="btn small" type="button" data-act="dishGroups">שינוי</button>':''}</span>
+     ${G.map(g=>{const P2=allSorted().filter(s=>g.includes(s.grade)),u=P2.filter(s=>(D.used||{})[s.id]);return `<span class="muted">${esc(g.join('+'))}: ${u.length} מתוך ${P2.length} כבר שטפו בסבב הנוכחי</span>`}).join('')}
+     ${past.length?past.map(([d,x])=>`<span>${fmtShort(d)} · ${esc(x.name)} <small class="muted">(${esc(x.g)})</small>${x.done?' ✓':''}</span>`).join(''):'<span class="muted">עוד אין היסטוריה.</span>'}
+   </div></details>`}
 /* ---------- desktop layout ---------- */
 const DESK=matchMedia('(min-width:1100px)');
 function deskNav(){const d=DESK.matches&&!!S.access;document.body.classList.toggle('desk',d);if(d){if(S.menuOpen){S.menuOpen=false;$('drawerBg').hidden=true;document.body.style.overflow=''}$('drawer').setAttribute('aria-hidden','false')}else if(!S.menuOpen)$('drawer').setAttribute('aria-hidden','true');document.querySelectorAll('.desk-only').forEach(e=>e.hidden=!DESK.matches)}
@@ -3065,7 +3099,7 @@ function renderHome(){
   if(db&&(has('learn')||has('count')))subLn();
   {const up=(has('learn')||has('count'))?lnUpcoming().slice(0,2):[];$('hmLn').innerHTML=up.length?`<button type="button" class="calnote" data-act="go" data-to="learn" style="width:100%;text-align:right;font:inherit;color:var(--ink);cursor:pointer">📚 היום במרכז הלמידה: ${up.map(x=>`<b>${esc(x.subject)}</b> ${x.from} (${(x.sids||[]).length} רשומים)`).join(' · ')}</button>`:''}
   {const late=has('out')||S.mgr?lateOuts(st):[];$('hmLate').innerHTML=late.length?`<div class="late-p"><h2>⏰ היו אמורים לחזור ולא חזרו (${late.length})</h2><div class="list">${lateList(late)}</div></div>`:''}
-  renderBirthdays();renderBackupNote();renderNotifBtn();renderBoard();renderDay();renderRounds();renderPeriod();if(S.tv)renderTV();if(db&&S.access){subLog();subEm()}renderLog();renderComp();renderGaps();renderClean();renderFu();tourAuto();
+  renderBirthdays();renderBackupNote();renderNotifBtn();renderBoard();renderDay();renderRounds();renderPeriod();if(S.tv)renderTV();if(db&&S.access){subLog();subEm()}renderLog();renderComp();renderGaps();renderClean();renderDish();renderFu();tourAuto();
   const nx=events().filter(e=>e.to>=today).slice(0,3);
   $('hmNextP').hidden=!nx.length;
   $('hmNext').innerHTML=nx.map(e=>`<div class="ev"><i style="background:${dotC(e.k)}"></i><span class="when">${rangeTxt(e.from,e.to)}</span><b>${esc(e.name)}</b></div>`).join('');
@@ -3262,7 +3296,7 @@ $('newStaff').addEventListener('submit',async e=>{e.preventDefault();if(!S.owner
 });
 
 /* ---------- Firebase: data ---------- */
-function unsubAll(){S.subs.forEach(f=>{try{f()}catch{}});S.subs=[];S.unEm=S.unLog=S.unMt=S.unLn=S.unShab=S.unAc=0;S.clSub=null;S.unPu=null;S.mtLoaded=S.lnLoaded=false;if(unMarks){unMarks();unMarks=null}if(S.unWake){S.unWake();S.unWake=null}if(S.unPrev){S.unPrev();S.unPrev=null}}
+function unsubAll(){S.subs.forEach(f=>{try{f()}catch{}});S.subs=[];S.unEm=S.unLog=S.unMt=S.unLn=S.unShab=S.unAc=0;S.clSub=null;S.unPu=null;S.unDish=0;S.mtLoaded=S.lnLoaded=false;if(unMarks){unMarks();unMarks=null}if(S.unWake){S.unWake();S.unWake=null}if(S.unPrev){S.unPrev();S.unPrev=null}}
 function subscribeAll(){
   unsubAll();S.unMt=S.unLn=S.unShab=null;if(!S.access)return;setTimeout(()=>{subMt();if(has('learn'))subLn()},0);
   const timer=setTimeout(()=>{if(!S.ready){S.ready=true;sys('לא ניתן להתחבר לנתונים כרגע. ייתכן שמה שמוצג אינו מעודכן.');renderAll()}},10000);
