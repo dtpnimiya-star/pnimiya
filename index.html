@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-44";
+const APP_VERSION = "2026-11-03-45";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -948,6 +948,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 
   <!-- תחזוקה -->
   <section id="tab-maint" hidden style="display:grid;gap:14px">
+    <details class="panel" id="fixLinkP" hidden></details>
     <form id="mtForm" class="panel">
       <h2>🔧 דיווח תקלה</h2>
       <div class="grid2">
@@ -1050,6 +1051,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
   <!-- דוחות -->
   <section id="tab-rep" hidden style="display:grid;gap:16px">
     <div class="panel" id="smP" hidden><div class="row" style="justify-content:space-between"><h2>📋 דוח לישיבת צוות</h2><div class="seg" id="smSeg"></div></div><span class="muted" style="font-size:.88rem">תלמידים שחוזרים על אותה בעיה כמה פעמים, עם המספרים, וגם מי שבלט לטובה. <button class="btn small" type="button" data-act="go" data-to="meet">לניהול הישיבה המלא ←</button></span><div id="sm"></div></div>
+    <div class="panel" id="wkEduP" hidden><h2>📨 סיכום שבועי למחנכים</h2><span class="muted" style="font-size:.88rem">סיכום של 7 הימים האחרונים לכל כיתה. הוא לא נשלח לבד: אפשר לערוך את הנוסח ואז לשלוח במייל, בוואטסאפ או להעתיק.</span><div id="wkEdu" style="display:grid;gap:8px;margin-top:8px"></div></div>
     <form id="repForm" class="panel">
       <h2>הפקת דוח לאקסל</h2>
       <div class="grid2">
@@ -1952,6 +1954,12 @@ document.addEventListener('click',async e=>{
     case'taskSave':{const s2=S.students.get(S.sel),t=$('tkT').value.trim();if(!t){toast('כתבו משימה');break}await planSave(goalsOf(s2),[...tasksOf(s2),{t,due:$('tkDue').value,who:$('tkWho').value.trim(),done:false,at:Date.now()}]);toast('המשימה נשמרה');break}
     case'taskDel':{const s2=S.students.get(S.sel);await planSave(goalsOf(s2),tasksOf(s2).filter((x,i)=>i!==+b.dataset.i));break}
     case'mtRm':S.mtRm=S.mtRm===b.dataset.r?'':b.dataset.r;renderMt();break;
+    case'wkMail':{const g=b.dataset.g,E=S.settings?.educators||{},t=S.wkTxt[g]??wkEduText(g);location.href=mailHref(E[g],`סיכום שבועי – כיתה ${g}`,t);break}
+    case'wkWa':{const g=b.dataset.g;window.open('https://wa.me/?text='+encodeURIComponent(S.wkTxt[g]??wkEduText(g)),'_blank');break}
+    case'wkCopy':{const g=b.dataset.g,t=S.wkTxt[g]??wkEduText(g);try{await navigator.clipboard.writeText(t);toast('הועתק')}catch{toast('לא הצלחתי להעתיק')}break}
+    case'wkReset':delete S.wkTxt[b.dataset.g];renderWkEdu();break;
+    case'fixCopy':try{await navigator.clipboard.writeText(fixUrl(S.fixKey));toast('הקישור הועתק')}catch{toast('לא הצלחתי להעתיק')}break;
+    case'fixNew':await fixNew(b);break;
     case'paReq':await paReq(b);break;
     case'paCopy':{const u=paUrl(b.dataset.id);try{await navigator.clipboard.writeText(u);toast('הקישור הועתק')}catch{prompt('העתיקו את הקישור:',u)}break}
     case'paDel':{if(!armed(b,'בטוח?'))break;try{await OW(db.doc('pappr/'+b.dataset.id).delete());S.pa=S.pa.filter(x=>x.id!==b.dataset.id);renderPa()}catch(e){fail(e)}break}
@@ -2388,7 +2396,7 @@ async function loadTrends(force){if(!S.mgr||!db)return;const today=ymd(new Date(
     const get=(c,k)=>Promise.race([db.collection(c+'/'+k+'/marks').get(),new Promise((_,j)=>setTimeout(()=>j('timeout'),15000))]).then(q=>new Map(q.docs.filter(d=>d.id[0]!=='_').map(d=>[d.id,d.data()]))).catch(()=>new Map());
     const morn=await Promise.all(days.map(k=>get('morning',k)));const night=await Promise.all(days.slice(-31).map(k=>get('nightcount',k)));
     S.trend={days,morn,night};S.trendDay=today;S.trendAt=Date.now()}finally{S.trendBusy=false}
-  renderTrends();renderPeriod();renderSM();renderMeet()}
+  renderTrends();renderPeriod();renderSM();renderMeet();renderWkEdu()}
 function renderTrends(){if(!S.trend||!$('trends'))return;const {days,morn}=S.trend,night=S.trend.night.slice(-14);
   const weeks=[];for(let w=0;w<8;w++)weeks.push(days.slice(w*7,w*7+7));
   const lateW=GRADES.map(g=>weeks.map((wk,wi)=>wk.reduce((a,k,i)=>{const m=morn[wi*7+i];let c=0;m.forEach((x,sid)=>{if(S.students.get(sid)?.grade===g&&isLate(x))c++});return a+c},0)));
@@ -2597,7 +2605,7 @@ function fillMtRooms(pre){const s=$('mtRoom'),v=pre||s.value;s.innerHTML=mtRooms
 function subMt(){if(!db||S.unMt)return;S.unMt=1;S.subs.push(db.collection('maint').orderBy('at','desc').limit(300).onSnapshot(q=>{if(S.mtLoaded&&canMt())q.docChanges().forEach(ch=>{if(ch.type!=='added')return;const m=ch.doc.data();if(m.by!==S.me&&m.at>S.loadAt){toast('🔧 תקלה חדשה: '+mtPlace(m));notify(m.urg===3?'⚠ תקלת בטיחות':m.urg===2?'תקלה חשובה':'תקלה חדשה',mtPlace(m)+' · '+(m.cat||'')+': '+String(m.desc||'').slice(0,100),'mt-'+ch.doc.id)}});S.mtLoaded=true;
   S.mt=q.docs.map(d=>({id:d.id,...d.data()}));{const n=S.mt.filter(m=>(m.status||'open')==='open').length;$('mtBadge').textContent=n;$('mtBadge').hidden=!n||!canMt()}renderMt();renderHome()},onErr))}
 function mtPlace(m){return m.room==='common'?'שטח משותף':m.room==='other'?(m.place||'אחר'):'חדר '+m.room+(m.place?' · '+m.place:'')}
-function renderMt(){if(S.tab!=='maint')return;if(!$('mtRoom').options.length)fillMtRooms();
+function renderMt(){if(S.tab!=='maint')return;subFix();renderFixLink();if(!$('mtRoom').options.length)fillMtRooms();
   const cnt=k=>S.mt.filter(m=>(m.status||'open')===k).length;
   document.querySelectorAll('[data-act="mtF"]').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.f===S.mtF);b.textContent=MT_ST[b.dataset.f][0].replace('פתוחה','פתוחות').replace('תוקנה','תוקנו')+' '+cnt(b.dataset.f)});
   renderMtMap();mtSeen();
@@ -2778,6 +2786,63 @@ async function autoLate(id){try{if(!(has('count')||S.owner)||S.night!==nightKey(
 function xlsxLoad(){if(window.XLSX)return Promise.resolve();if(S.xlsxL)return S.xlsxL;S.xlsxL=new Promise(r=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';sc.onload=()=>r();sc.onerror=()=>{S.xlsxL=null;r()};document.head.appendChild(sc)});return S.xlsxL}
 async function autoBackup(){if(PA||!S.owner||S.tv||!document.body.classList.contains('desk'))return;if(!S.settings){S.bkAutoT=0;return}const a=bkAge();if(a!=null&&a<7)return;
   const k='pn-bk-auto-'+ymd(new Date());try{if(localStorage.getItem(k))return;localStorage.setItem(k,'1')}catch{}await xlsxLoad();if(!window.XLSX)return;toast('מוריד גיבוי שבועי אוטומטי למחשב…');await doBackup(null)}
+/* ---------- weekly summary for class educators (sent by hand) ---------- */
+S.wkTxt={};
+function wkEduText(g){const T=S.trend;if(!T)return '';const N=7,days=T.days.slice(-N),morn=T.morn.slice(-N),night=T.night.slice(-N),st=allSorted().filter(s=>(s.grade||'-')===g),ids=new Set(st.map(s=>s.id));
+  const from=new Date(days[0]+'T00:00').getTime(),nm=id=>S.students.get(id)?.name||'',cnt=()=>new Map(),inc=(m,id)=>m.set(id,(m.get(id)||0)+1),lst=m=>[...m].sort((a,b)=>b[1]-a[1]).map(([id,n])=>nm(id)+(n>1?' ('+n+')':''));
+  let pres=0,tot=0;const ab=cnt(),abA=cnt(),lt=cnt(),wl=cnt(),wn=cnt();
+  night.forEach(M=>M.forEach((x,id)=>{if(!ids.has(id))return;tot++;if(x.s==='p')pres++;if(x.s==='a'){if(x.ap)inc(abA,id);else inc(ab,id)}if(x.late)inc(lt,id)}));
+  morn.forEach(M=>M.forEach((x,id)=>{if(!ids.has(id))return;if(isLate(x))inc(wl,id);else if(x?.s==='no')inc(wn,id)}));
+  const N2=(S.notes||[]).filter(n=>n.at>=from&&ids.has(n.sid)),beh=cnt(),pr=new Map();N2.forEach(n=>{if(isBeh(n))inc(beh,n.sid);else if(isPraise(n))pr.set(n.sid,(pr.get(n.sid)||0)+ptsOf(n))});
+  const flag=st.filter(s=>(ab.get(s.id)||0)>=2||(wn.get(s.id)||0)>=2||(wl.get(s.id)||0)>=3||(lt.get(s.id)||0)>=3||(beh.get(s.id)||0)>=2).map(s=>{const p=[];const a=ab.get(s.id),b=wn.get(s.id),c=wl.get(s.id),d=lt.get(s.id),e=beh.get(s.id);if(a)p.push(a+' ערבים חסר בלי אישור');if(d)p.push(d+' הגעות באיחור בערב');if(c)p.push(c+' פעמים קם מאוחר');if(b)p.push(b+' פעמים לא קם');if(e)p.push(e+' הערות התנהגות');return s.name+' – '+p.join(', ')});
+  const cs=typeof clStreaks==='function'?clStreaks().filter(z=>ids.has(z.sid)):[];
+  let clC=0,clA=0;const clAb=cnt();for(const a of (S.clAtt||new Map()).values()){if(a.date<days[0])continue;(a.came||[]).forEach(id=>{if(ids.has(id))clC++});(a.absent||[]).forEach(id=>{if(ids.has(id)&&!(a.came||[]).includes(id)){clA++;inc(clAb,id)}})}
+  const lnM=(S.ln||[]).filter(x=>x.date>=days[0]).reduce((t,x)=>t+lnMins(x)*(x.sids||[]).filter(id=>ids.has(id)).length,0);
+  const L=[],sec=(t,a)=>{if(a.length){L.push(t+':');a.forEach(x=>L.push('• '+x));L.push('')}};
+  L.push(`סיכום שבועי – ${g==='-'?'ללא כיתה':'כיתה '+g} – ${fmtShort(days[0])}–${fmtShort(days[N-1])}`,'');
+  L.push(`נוכחות ערב: ${tot?Math.round(pres/tot*100)+'%':'—'}${tot?` (${pres} מתוך ${tot} סימונים)`:''}`,'');
+  sec('⚠ דורשים תשומת לב',[...flag,...cs.map(z=>`${nm(z.sid)} – לא הגיע ${z.n} פעמים ברצף לחוג ${z.name}`)]);
+  sec('חסרו בנוכחות ערב בלי אישור',lst(ab));sec('חסרו באישור',lst(abA));sec('הגיעו באיחור בערב',lst(lt));sec('קמו מאוחר',lst(wl));sec('לא קמו',lst(wn));sec('הערות התנהגות',lst(beh));
+  if(pr.size)sec('🌟 בלטו לטובה',[...pr].sort((a,b)=>b[1]-a[1]).slice(0,6).map(([id,p])=>nm(id)+' ('+p+' נק׳)'));
+  if(clC+clA)sec('חוגים',[`השתתפות: ${Math.round(clC/(clC+clA)*100)}% (${clC} מתוך ${clC+clA})`,...(clAb.size?['לא הגיעו: '+lst(clAb).join(', ')]:[])]);
+  if(lnM)sec('מרכז למידה',[`${hrs(lnM)} שעות לימוד בסך הכול בכיתה השבוע`]);
+  if(!flag.length&&!ab.size&&!lt.size&&!wl.size&&!wn.size&&!beh.size)L.push('✓ שבוע תקין – בלי חיסורים, איחורים או הערות.','');
+  L.push('נשלח ממערכת הנוכחות של הפנימייה');return L.join('\n')}
+function renderWkEdu(){const P=$('wkEduP');if(!P)return;P.hidden=!S.mgr;if(!S.mgr||S.tab!=='rep')return;if(!S.trend){$('wkEdu').innerHTML=SKEL;loadTrends();return}
+  const E=S.settings?.educators||{},gs=GRADES.filter(g=>allSorted().some(s=>s.grade===g));
+  $('wkEdu').innerHTML=gs.map(g=>{const t=S.wkTxt[g]??wkEduText(g);return `<details class="mr-grade" ${S.wkOpen===g?'open':''} ontoggle="if(this.open)S.wkOpen='${g}'"><summary><b>כיתה ${g}</b> <small class="muted">${E[g]?esc(E[g]):'אין מייל למחנך'}</small></summary>
+    <textarea class="wkT" data-g="${g}" rows="12" style="width:100%;margin-top:8px;font:inherit;font-size:.9rem">${esc(t)}</textarea>
+    <div class="row" style="gap:6px;margin-top:6px">${E[g]?`<button class="btn small primary" type="button" data-act="wkMail" data-g="${g}">📧 שלח במייל למחנך</button>`:''}<button class="btn small" type="button" data-act="wkWa" data-g="${g}">💬 וואטסאפ</button><button class="btn small" type="button" data-act="wkCopy" data-g="${g}">📋 העתק</button>${S.wkTxt[g]!=null?`<button class="btn small" type="button" data-act="wkReset" data-g="${g}">↺ חזרה לנוסח המקורי</button>`:''}</div></details>`}).join('')||'<div class="empty">אין תלמידים.</div>'}
+document.addEventListener('input',e=>{if(e.target.classList?.contains('wkT'))S.wkTxt[e.target.dataset.g]=e.target.value});
+/* ---------- link for students to report faults ---------- */
+const FIXQ=new URLSearchParams(location.search).get('fix');
+const fixUrl=k=>SITE_URL+'?fix='+k;
+function renderFixLink(){const el=$('fixLinkP');if(!el)return;const can=(S.owner||has('mgr'))&&!S.ro;el.hidden=!(can||S.fixKey);if(el.hidden)return;const k=S.fixKey;
+  el.innerHTML=`<summary style="font-weight:600;cursor:pointer">🔗 קישור לתלמידים לדיווח על תקלות</summary><div style="display:grid;gap:8px;margin-top:8px">
+   <span class="muted" style="font-size:.88rem">תלמידים פותחים את הקישור בטלפון ומדווחים על תקלה בלי להיכנס למערכת. הדיווח מופיע כאן ברשימת התקלות עם הסימון "דיווח תלמיד". אם הקישור הגיע למי שלא צריך, אפשר להחליף אותו והקודם יפסיק לעבוד.</span>
+   ${k?`<input readonly value="${esc(fixUrl(k))}" dir="ltr" onclick="this.select()" aria-label="קישור לדיווח"><div class="row" style="gap:6px"><button class="btn small primary" type="button" data-act="fixCopy">📋 העתק קישור</button><a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent('קישור לדיווח על תקלות בפנימייה (חדר, מקלחת, חשמל וכו׳):\n'+fixUrl(k))}">💬 שלח בוואטסאפ</a>${can?'<button class="btn small" type="button" data-act="fixNew">🔄 החלף קישור</button>':''}</div>`:can?'<div><button class="btn small primary" type="button" data-act="fixNew">צור קישור</button></div>':''}</div>`}
+function subFix(){if(!db||S.unFix)return;S.unFix=1;S.subs.push(db.doc('settings/fix').onSnapshot(d=>{S.fixKey=d.exists?d.data().key||'':'';renderFixLink()},()=>{}))}
+async function fixNew(b){if(S.fixKey&&!armed(b,'הקישור הקודם יפסיק לעבוד. בטוח?'))return;const k=[...crypto.getRandomValues(new Uint8Array(12))].map(x=>x.toString(36).padStart(2,'0')).join('').slice(0,18);
+  try{await OW(db.doc('settings/fix').set({key:k,at:Date.now(),by:S.me,byName:S.myName||''}));S.fixKey=k;renderFixLink();toast('נוצר קישור חדש')}catch(e){fail(e)}}
+async function fixPage(key){const v=document.createElement('main');v.id='paView';document.body.appendChild(v);const logo=document.querySelector('.lg-logo')?.src||'';
+  const rooms=mtRooms().filter(([r])=>!STAFF_ROOMS.has(r)),cats=[...document.querySelectorAll('#mtCat option')].map(o=>o.textContent);let photo=null;
+  const box=h=>{v.innerHTML=`<div class="pa-card" style="text-align:right">${logo?`<img src="${logo}" alt="" class="pa-logo">`:''}<div class="muted" style="font-size:.9rem;text-align:center">ישיבה לצעירים דעת תבונות · פנימייה</div>${h}</div>`};
+  const form=()=>{box(`<h1 style="text-align:center">🔧 דיווח על תקלה</h1>
+    <label class="muted" style="display:grid;gap:4px">השם שלך<input id="fxName" maxlength="40" required></label>
+    <label class="muted" style="display:grid;gap:4px">איפה?<select id="fxRoom">${rooms.map(([r,l])=>`<option value="${esc(r)}">${esc(l)}</option>`).join('')}</select></label>
+    <input id="fxPlace" maxlength="60" placeholder="מקום מדויק (לא חובה), למשל: מקלחת, מיטה 2" aria-label="מקום מדויק">
+    <label class="muted" style="display:grid;gap:4px">סוג התקלה<select id="fxCat">${cats.map(c=>`<option>${esc(c)}</option>`).join('')}</select></label>
+    <label class="muted" style="display:grid;gap:4px">מה קרה?<textarea id="fxDesc" rows="3" maxlength="500" required></textarea></label>
+    <label class="muted" style="display:grid;gap:4px">כמה דחוף?<select id="fxUrg"><option value="1">🔵 רגיל</option><option value="2">🟡 חשוב</option><option value="3">🔴 מסוכן – צריך טיפול מיידי</option></select></label>
+    <label class="btn" style="cursor:pointer;text-align:center">📷 צירוף תמונה (לא חובה)<input type="file" id="fxPhoto" accept="image/*" hidden></label><span id="fxPh" class="muted" style="font-size:.85rem;text-align:center"></span>
+    <div class="pa-btns"><button class="btn primary" type="button" id="fxSend">שלח דיווח</button></div>
+    <span class="muted" style="font-size:.82rem;text-align:center">בתקלה מסוכנת (חשמל, מים, אש) – פנו מיד גם למדריך התורן.</span>`);
+    $('fxPhoto').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{photo=await resizePhoto(f);$('fxPh').textContent='✓ תמונה צורפה'}catch{$('fxPh').textContent='לא הצלחתי לקרוא את התמונה'}};
+    $('fxSend').onclick=async()=>{const name=$('fxName').value.trim().slice(0,40),desc=$('fxDesc').value.trim().slice(0,500);if(!name){$('fxName').focus();return}if(!desc){$('fxDesc').focus();return}
+      const d={room:$('fxRoom').value,place:$('fxPlace').value.trim().slice(0,60),cat:$('fxCat').value,urg:+$('fxUrg').value,desc,status:'open',at:Date.now(),by:'student',byName:'תלמיד: '+name,src:'stu',key};if(photo&&photo.length<380000)d.photo=photo;
+      $('fxSend').disabled=true;try{await db.collection('maint').add(d);box(`<h1 style="text-align:center">✓ תודה!</h1><p style="text-align:center">הדיווח התקבל והצוות יטפל בו.</p><div class="pa-btns"><button class="btn" type="button" id="fxMore">דיווח על תקלה נוספת</button></div>`);photo=null;$('fxMore').onclick=form}
+      catch(e){$('fxSend').disabled=false;box(`<h1 style="text-align:center">לא הצלחנו לשלוח</h1><p style="text-align:center">ייתכן שהקישור הוחלף. בקשו מהצוות קישור חדש, או דווחו למדריך התורן.</p><div class="pa-btns"><button class="btn" type="button" id="fxMore">נסו שוב</button></div>`);$('fxMore').onclick=form}}};
+  form()}
 /* ---------- learning centre ---------- */
 S.ln=[];S.lnT='new';S.lnSel=new Set();
 function subLn(){if(!db||S.unLn)return;S.unLn=1;S.subs.push(db.collection('learn').orderBy('at','desc').limit(500).onSnapshot(q=>{if(S.lnLoaded&&has('count'))q.docChanges().forEach(ch=>{const x=ch.doc.data();if(ch.type==='added'&&x.absent?.length&&x.by!==S.me&&x.at>S.loadAt)notify('לא הגיעו לשיעור',`${x.subject||''}: ${x.absent.map(id=>S.students.get(id)?.name||'').join(', ')}`,'lnab-'+ch.doc.id)});S.lnLoaded=true;const all=q.docs.map(d=>({id:d.id,...d.data()}));S.lnSlots=all.filter(x=>x.slot);S.ln=all.filter(x=>!x.slot);renderLearn();renderSheet();if(S.tab==='home')renderHome()},onErr))}
@@ -3424,7 +3489,7 @@ const dmy=k=>k.slice(8)+'.'+k.slice(5,7);
 function datesBetween(a,b){const out=[];const d=new Date(a+'T12:00'),e=new Date(b+'T12:00');while(d<=e&&out.length<93){out.push(ymd(d));d.setDate(d.getDate()+1)}return out}
 function setRange(k){const to=new Date(),from=new Date();if(k==='month')from.setDate(1);else from.setDate(from.getDate()-(+k-1));$('repFrom').value=ymd(from);$('repTo').value=ymd(to)}
 function renderRep(){
-  if(S.tab!=='rep')return;renderSM();
+  if(S.tab!=='rep')return;renderSM();if(!document.activeElement?.classList?.contains('wkT'))renderWkEdu();
   if(!$('repFrom').value)setRange(7);
   const canNotes=has('notes')||has('mgr');$('rk-notes-l').hidden=!canNotes;$('rk-contacts-l').hidden=!has('personal');
   {const sel=$('repStu'),v=sel.value,st=[...S.students.values()].sort((a,b)=>GRADES.indexOf(a.grade)-GRADES.indexOf(b.grade)||(a.name||'').localeCompare(b.name||'','he'));
@@ -3609,7 +3674,7 @@ $('newStaff').addEventListener('submit',async e=>{e.preventDefault();if(!S.owner
 });
 
 /* ---------- Firebase: data ---------- */
-function unsubAll(){S.subs.forEach(f=>{try{f()}catch{}});S.subs=[];S.unEm=S.unLog=S.unMt=S.unLn=S.unShab=S.unAc=S.unCl=S.unPa=0;S.paLoaded=false;S.clSub=null;S.unPu=null;S.unDish=0;S.mtLoaded=S.lnLoaded=false;if(unMarks){unMarks();unMarks=null}if(S.unWake){S.unWake();S.unWake=null}if(S.unPrev){S.unPrev();S.unPrev=null}}
+function unsubAll(){S.subs.forEach(f=>{try{f()}catch{}});S.subs=[];S.unEm=S.unLog=S.unMt=S.unLn=S.unShab=S.unAc=S.unCl=S.unPa=S.unFix=0;S.paLoaded=false;S.clSub=null;S.unPu=null;S.unDish=0;S.mtLoaded=S.lnLoaded=false;if(unMarks){unMarks();unMarks=null}if(S.unWake){S.unWake();S.unWake=null}if(S.unPrev){S.unPrev();S.unPrev=null}}
 function subscribeAll(){
   unsubAll();S.unMt=S.unLn=S.unShab=null;if(!S.access)return;setTimeout(()=>{subMt();if(has('learn'))subLn();subCl();subPa()},0);
   const timer=setTimeout(()=>{if(!S.ready){S.ready=true;sys('לא ניתן להתחבר לנתונים כרגע. ייתכן שמה שמוצג אינו מעודכן.');renderAll()}},10000);
@@ -3666,7 +3731,7 @@ function addEyes(){document.querySelectorAll('input[type=password]').forEach(inp
   b.addEventListener('click',()=>{const show=inp.type==='password';inp.type=show?'text':'password';b.innerHTML=show?EYE_OFF:EYE;
     b.setAttribute('aria-label',show?'הסתר סיסמה':'הצג סיסמה');b.setAttribute('aria-pressed',String(show));inp.focus()});
   w.appendChild(b)})}
-async function checkUpdate(){if(PA)return;try{const t=await (await fetch('./?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/APP_VERSION = "([^"]+)"/);
+async function checkUpdate(){if(PA||FIXQ)return;try{const t=await (await fetch('./?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/APP_VERSION = "([^"]+)"/);
   if(m&&m[1]!==APP_VERSION){const k='pn-upd-'+m[1];let tried=false;try{tried=sessionStorage.getItem(k)}catch{}if(!tried){try{sessionStorage.setItem(k,'1')}catch{}location.replace('./?v='+encodeURIComponent(m[1]))}}}catch{}}
 /* ---------- view options & bottom nav ---------- */
 function setTheme(v){S.theme=v;if(v==='dark'||v==='light')document.documentElement.dataset.theme=v;else delete document.documentElement.dataset.theme;
@@ -3679,7 +3744,7 @@ function renderBnav(){const n=$('bnav');const tabs=BN.filter(t=>{const b=$('t-'+
   n.innerHTML=tabs.map(t=>`<button type="button" data-act="go" data-to="${t}" ${S.tab===t?'aria-current="page"':''}>${ico(t)}<span>${lbl[t]}</span></button>`).join('')+`<button type="button" data-act="menuOpen">${'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'}<span>עוד</span></button>`}
 const PA=(()=>{try{return new URLSearchParams(location.search).get('pa')}catch{return null}})();
 function start(){
-  if(PA)document.body.classList.add('pa-mode');
+  if(PA||FIXQ)document.body.classList.add('pa-mode');
   try{setTheme(localStorage.getItem('pn-theme')||'auto');setBig(!!localStorage.getItem('pn-big'))}catch{}
   {const inApp=matchMedia('(display-mode: standalone)').matches||document.referrer.startsWith('android-app://');
    if(/Android/i.test(navigator.userAgent)&&!inApp)document.querySelectorAll('.apk-dl').forEach(a=>a.hidden=false)}
@@ -3693,6 +3758,7 @@ function start(){
   firebase.initializeApp(FIREBASE_CONFIG);
   auth=firebase.auth();db=firebase.firestore();
   if(PA){paPage(PA);return}
+  if(FIXQ){fixPage(FIXQ);return}
   window.addEventListener('load',()=>setTimeout(xlsxLoad,4000));
   db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
   setupAudit();setInterval(()=>{if(S.access)checkLateReturns()},60000);
