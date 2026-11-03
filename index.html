@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-42";
+const APP_VERSION = "2026-11-03-43";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -330,6 +330,7 @@ body.desk .sheet-bg{align-items:stretch;justify-content:flex-end}
 body.desk .sheet{max-width:640px;max-height:none;height:100%;border-radius:0;box-shadow:12px 0 40px rgba(0,0,0,.25)}
 @media (min-width:1500px){body.desk #countList,body.desk #mornList{grid-template-columns:repeat(3,minmax(0,1fr))}body.desk .bed-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}}
 /* ---- visual refresh ---- */
+body.pa-mode>*:not(#paView){display:none!important}#paView{min-height:100vh;display:grid;place-items:center;padding:16px}.pa-card{max-width:440px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:grid;gap:12px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.08)}.pa-card h1{font-size:1.35rem;margin:0}.pa-logo{max-width:170px;margin:0 auto}.pa-info{background:var(--soft);border-radius:12px;padding:12px;display:grid;gap:4px;font-size:1.05rem}.pa-btns{display:grid;gap:8px}.pa-btns .btn{padding:14px;font-size:1.05rem}
 .dayline .cb{position:absolute;top:32px;height:17px;border-radius:5px;font-size:.62rem;line-height:15px;padding:0 3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:center;background:color-mix(in srgb,var(--accent) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);color:var(--ink)}.dayline .cb.done{background:var(--ok-bg);border-color:var(--ok)}.dayline .cb.cur{outline:2px solid var(--accent);z-index:1}
 .chipS .av{width:30px;height:30px;font-size:.66rem}.chipS:has(.av){padding-inline-start:3px!important}.chipS img{pointer-events:none}.bed{min-height:40px}.bed-grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
 :root{--shadow:0 1px 2px rgba(16,40,70,.06),0 8px 22px -14px rgba(16,40,70,.28)}
@@ -811,8 +812,10 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       </div>
       <label class="muted" for="outBack" style="font-size:.9rem">חזרה צפויה</label>
       <input type="datetime-local" id="outBack">
-      <div><button class="btn primary" type="submit">רשום יציאה</button></div>
+      <div class="row" style="gap:8px"><button class="btn primary" type="submit">רשום יציאה</button><button class="btn" type="button" data-act="paReq">📲 שלח להורים לאישור</button></div>
+      <span class="muted" style="font-size:.85rem">אפשר לשלוח להורים קישור לאישור היציאה לפני שהתלמיד יוצא. כשההורים מאשרים, האישור נשמר ביציאה.</span>
     </form>
+    <div id="paList" hidden></div>
     <form id="absForm" class="panel writer">
       <h2>רישום היעדרות ממושכת</h2>
       <span class="muted" style="font-size:.9rem;margin-top:-6px">לתלמיד שנעדר כמה ימים, שבוע או יותר. בזמן ההיעדרות הוא לא ייספר כחסר בלילה ובהשכמה.</span>
@@ -1238,7 +1241,6 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 <nav class="bnav" id="bnav" aria-label="ניווט מהיר" hidden></nav>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 document.documentElement.dir='rtl';document.documentElement.lang='he';
 const $=id=>document.getElementById(id);
@@ -1398,12 +1400,12 @@ function renderOut(){
   {const a=$('absStudent'),c=a.value;a.innerHTML=sel.innerHTML;if(ins.some(s=>s.id===c))a.value=c;if(!$('absFrom').value){$('absFrom').value=ymd(new Date());setAbsLen(7)}absDaysTxt()}
   const outs=st.filter(s=>isOut(s.id)&&!isHome(s.id)).sort((a,b)=>(S.status.get(a.id).backBy||9e15)-(S.status.get(b.id).backBy||9e15));
   $('outList').innerHTML=outs.length?`<div class="list">`+outs.map(s=>{const t=S.status.get(s.id),late=t.backBy&&t.backBy<Date.now();
-    return `<div class="item"><button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${t.long?`היעדרות ממושכת · ${esc(t.reason||'')} · ${fmtShort(t.from)}–${fmtShort(t.to)} (${absLen(t.from,t.to)} ימים)`:`${esc(t.reason||'')} · יצא ${when(t.outAt)}${t.backBy?' · חזרה '+when(t.backBy):''}`}</span></button>${late?'<span class="chip bad">באיחור</span>':t.long?'<span class="chip" style="background:var(--home-bg)">בבית</span>':''}${S.ro?'':`<button class="btn small" data-act="back" data-id="${s.id}">חזר</button>`}</div>`}).join('')+`</div>`
+    return `<div class="item"><button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${t.long?`היעדרות ממושכת · ${esc(t.reason||'')} · ${fmtShort(t.from)}–${fmtShort(t.to)} (${absLen(t.from,t.to)} ימים)`:`${esc(t.reason||'')} · יצא ${when(t.outAt)}${t.backBy?' · חזרה '+when(t.backBy):''}${t.pa?' · ✓ אישור הורים':''}`}</span></button>${late?'<span class="chip bad">באיחור</span>':t.long?'<span class="chip" style="background:var(--home-bg)">בבית</span>':''}${S.ro?'':`<button class="btn small" data-act="back" data-id="${s.id}">חזר</button>`}</div>`}).join('')+`</div>`
     :`<div class="empty">${S.ready?(st.some(s=>isHome(s.id))?'אין יציאות פתוחות כרגע.':S.grade?'כל התלמידים בכיתה הזו בפנימייה.':'כל התלמידים בפנימייה.'):'טוען…'}</div>`;
   {const hs=st.filter(s=>isHome(s.id)).sort((a,b)=>(S.status.get(a.id).backBy||9e15)-(S.status.get(b.id).backBy||9e15));$('homeP').hidden=!hs.length;
    $('homeList').innerHTML=hs.length?`<div class="list">`+hs.map(s=>{const t=S.status.get(s.id),late=t.backBy&&t.backBy<Date.now();
     return `<div class="item"><button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${esc(t.reason||'')} · ${fmtShort(t.from)}–${fmtShort(t.to)} (${absLen(t.from,t.to)} ימים)</span></button>${late?'<span class="chip bad">באיחור</span>':'<span class="chip" style="background:var(--home-bg)">בבית</span>'}${S.ro?'':`<button class="btn small" data-act="back" data-id="${s.id}">חזר</button>`}</div>`}).join('')+`</div>`:''}
-  renderIO();
+  renderIO();renderPa();
   $('moveLog').innerHTML=moveList(S.moves.filter(m=>{const s=S.students.get(m.sid);return !S.grade||(s&&inFilter(s))}).slice(0,40),true);
 }
 const lateOuts=list=>list.filter(s=>{const t=S.status.get(s.id);return t&&t.state==='out'&&t.backBy&&t.backBy<Date.now()}).sort((a,b)=>S.status.get(a.id).backBy-S.status.get(b.id).backBy);
@@ -1416,7 +1418,7 @@ function renderIO(){const el=$('ioBoard');if(!el)return;const st=sorted(),late=l
 function moveList(list,showName){
   if(!list.length)return `<div class="empty">אין רישומים עדיין.</div>`;
   return `<div class="list log">`+list.map(m=>{const s=S.students.get(m.sid);
-    return `<div class="item"><span class="time">${when(m.at)}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere">${showName?`<b>${esc(s?.name||'תלמיד שהוסר')}</b> `:''}${m.type==='out'?'יצא':'חזר'}${m.reason?' · '+esc(m.reason):''}<span class="meta">${esc(byName(m.by))}</span></span><span class="chip ${m.type==='out'?'warn':'ok'}">${m.type==='out'?'יציאה':'חזרה'}</span></div>`}).join('')+`</div>`;
+    return `<div class="item"><span class="time">${when(m.at)}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere">${showName?`<b>${esc(s?.name||'תלמיד שהוסר')}</b> `:''}${m.type==='out'?'יצא':'חזר'}${m.reason?' · '+esc(m.reason):''}${m.pa?' · ✓ באישור ההורים ('+esc(m.pa)+')':''}<span class="meta">${esc(byName(m.by))}</span></span><span class="chip ${m.type==='out'?'warn':'ok'}">${m.type==='out'?'יציאה':'חזרה'}</span></div>`}).join('')+`</div>`;
 }
 
 function renderStudents(){
@@ -1795,7 +1797,7 @@ async function roomAll(room){
   if(refs.length)toast(`${refs.length} סומנו נוכחים`,async()=>{for(const r of refs)await OW(r.delete())});
 }
 async function goBack(id){const t0=S.status.get(id);
-  try{await OW(db.doc('status/'+id).set({state:'in',at:Date.now(),by:S.me,byName:S.myName}));await OW(db.collection('moves').add({sid:id,type:'back',at:Date.now(),by:S.me,byName:S.myName}));toast('נרשמה חזרה');if(t0?.backBy&&!t0.long&&Date.now()-t0.backBy>5*6e4)lrOpen(id,t0)}catch(e){fail(e)}
+  try{await OW(db.doc('status/'+id).set({state:'in',at:Date.now(),by:S.me,byName:S.myName}));await OW(db.collection('moves').add({sid:id,type:'back',at:Date.now(),by:S.me,byName:S.myName}));toast('נרשמה חזרה');autoLate(id);if(t0?.backBy&&!t0.long&&Date.now()-t0.backBy>5*6e4)lrOpen(id,t0)}catch(e){fail(e)}
 }
 const normRoom=r=>{const d=String(r||'').trim().match(/\d+/);return d?d[0]:String(r||'').trim()};
 const normName=n=>String(n||'').replace(/["'״׳`]/g,'').replace(/\s+/g,' ').trim();
@@ -1950,6 +1952,10 @@ document.addEventListener('click',async e=>{
     case'taskSave':{const s2=S.students.get(S.sel),t=$('tkT').value.trim();if(!t){toast('כתבו משימה');break}await planSave(goalsOf(s2),[...tasksOf(s2),{t,due:$('tkDue').value,who:$('tkWho').value.trim(),done:false,at:Date.now()}]);toast('המשימה נשמרה');break}
     case'taskDel':{const s2=S.students.get(S.sel);await planSave(goalsOf(s2),tasksOf(s2).filter((x,i)=>i!==+b.dataset.i));break}
     case'mtRm':S.mtRm=S.mtRm===b.dataset.r?'':b.dataset.r;renderMt();break;
+    case'paReq':await paReq(b);break;
+    case'paCopy':{const u=paUrl(b.dataset.id);try{await navigator.clipboard.writeText(u);toast('הקישור הועתק')}catch{prompt('העתיקו את הקישור:',u)}break}
+    case'paDel':{if(!armed(b,'בטוח?'))break;try{await OW(db.doc('pappr/'+b.dataset.id).delete());S.pa=S.pa.filter(x=>x.id!==b.dataset.id);renderPa()}catch(e){fail(e)}break}
+    case'paGo':{const x=S.pa.find(y=>y.id===b.dataset.id);if(!x)break;b.disabled=true;const at=Date.now(),px={pa:x.pName||'הורה',paAt:x.pAt||at};try{await OW(db.doc('status/'+x.sid).set({state:'out',reason:x.reason||'',outAt:at,backBy:x.backBy||null,by:S.me,byName:S.myName,...px}));await OW(db.collection('moves').add({sid:x.sid,type:'out',reason:x.reason||'',backBy:x.backBy||null,at,by:S.me,byName:S.myName,...px}));await OW(db.doc('pappr/'+x.id).update({used:true}));toast('נרשמה יציאה באישור ההורים')}catch(e){fail(e)}break}
     case'clT':S.clT=b.dataset.t;renderClubs(true);break;
     case'clDay':{const t=ymd(new Date()),k=addD(S.clDate||t,+b.dataset.d);S.clDate=k>=t?'':k;renderClubs(true);break}
     case'clMk':b.disabled=true;await clMark(b.dataset.c,b.dataset.id,b.dataset.v);b.disabled=false;break;
@@ -1989,7 +1995,7 @@ document.addEventListener('click',async e=>{
     case'acMark':{const a=S.ac.find(y=>y.id===S.acSel);if(!a)break;const id=b.dataset.id,v=a.marks?.[id]===b.dataset.v?firebase.firestore.FieldValue.delete():b.dataset.v;buzz();try{await OW(db.doc('activities/'+a.id).update({['marks.'+id]:v}))}catch(e){fail(e)}break}
     case'acAllP':{const a=S.ac.find(y=>y.id===S.acSel);if(!a)break;const u={};(a.sids||[]).forEach(id=>{if(!a.marks?.[id])u['marks.'+id]='p'});if(!Object.keys(u).length)break;try{await OW(db.doc('activities/'+a.id).update(u));toast('כל מי שלא סומן סומן כנמצא')}catch(e){fail(e)}break}
     case'acDel':if(armed(b,'בטוח? למחוק')){try{await OW(db.doc('activities/'+S.acSel).delete());S.acSel='';toast('הפעילות נמחקה')}catch(e){fail(e)}}break;
-    case'tutXl':{if(!window.XLSX){toast('רכיב האקסל לא נטען');break}const per=tutorRows(),wb=XLSX.utils.book_new();
+    case'tutXl':{if(!window.XLSX){xlsxLoad();toast('רכיב האקסל נטען… נסו שוב בעוד כמה שניות');break}const per=tutorRows(),wb=XLSX.utils.book_new();
       const sum=[['מורה / חונך','מפגשים','שעות']].concat([...per].map(([t,L])=>[t,L.length,+(L.reduce((a,x)=>a+lnMins(x),0)/60).toFixed(2)]));
       const det=[['מורה / חונך','תאריך','משעה','עד','דקות','מקצוע','סוג','משתתפים']].concat([...per].flatMap(([t,L])=>L.sort((a,b)=>a.date.localeCompare(b.date)).map(x=>[t,x.date.split('-').reverse().join('/'),x.from,x.to,lnMins(x),x.subject||'',x.type||'',(x.sids||[]).length])));
       XLSX.utils.book_append_sheet(wb,sheet(sum,[22,10,10]),'סיכום');XLSX.utils.book_append_sheet(wb,sheet(det,[22,12,8,8,8,16,14,10]),'פירוט');XLSX.writeFile(wb,`שעות מורים ${S.tutM}.xlsx`);break}
@@ -2106,7 +2112,8 @@ $('absForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)retur
     $('absOther').value='';$('absStudent').value='';toast('ההיעדרות נרשמה')}catch(err){fail(err)}});
 $('outForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const sid=$('outStudent').value;if(!sid){toast('בחרו תלמיד');return}
   const reason=[$('outReason').value,$('outOther').value.trim()].filter(Boolean).join(' · ');const bv=$('outBack').value;const backBy=bv?new Date(bv).getTime():null;const at=Date.now();
-  try{await db.doc('status/'+sid).set({state:'out',reason,outAt:at,backBy,by:S.me,byName:S.myName});await db.collection('moves').add({sid,type:'out',reason,backBy,at,by:S.me,byName:S.myName});
+  const pa=paOk(sid),px=pa?{pa:pa.pName||'הורה',paAt:pa.pAt||at}:{};
+  try{await db.doc('status/'+sid).set({state:'out',reason,outAt:at,backBy,by:S.me,byName:S.myName,...px});await db.collection('moves').add({sid,type:'out',reason,backBy,at,by:S.me,byName:S.myName,...px});if(pa)OW(db.doc('pappr/'+pa.id).update({used:true})).catch(()=>{});
     $('outOther').value='';$('outBack').value='';$('outStudent').value='';toast('נרשמה יציאה')}catch(err){fail(err)}});
 $('noteForm').addEventListener('submit',async e=>{e.preventDefault();if(!db||!S.sel)return;const text=$('noteText').value.trim();if(!text)return;
   const kind=$('noteKind').value,doc={sid:S.sel,kind,text,at:Date.now(),by:S.me,byName:S.myName};if(kind==='התנהגות')doc.sev=+$('noteSev').value;
@@ -2116,7 +2123,7 @@ $('editForm').addEventListener('submit',async e=>{e.preventDefault();if(!db||!S.
   {const d=findDup(name,S.sel);if(d){toast('כבר קיים תלמיד בשם '+d.name+'. השם לא נשמר');return}}
   try{await db.doc('students/'+S.sel).update({name,firstName,lastName,room:$('edRoom').value,grade:$('edGrade').value});toast('נשמר')}catch(err){fail(err)}});
 $('xlFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;
-  if(!window.XLSX){toast('רכיב קריאת האקסל לא נטען. רעננו את הדף ונסו שוב');return}
+  if(!window.XLSX){await xlsxLoad()}if(!window.XLSX){toast('רכיב קריאת האקסל לא נטען. בדקו את החיבור ונסו שוב');return}
   try{const wb=XLSX.read(await f.arrayBuffer());const ws=wb.Sheets[wb.SheetNames[0]];
     S.xl=parseRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false}));renderXl()}
   catch{toast('לא הצלחתי לקרוא את הקובץ. ודאו שזה קובץ אקסל או CSV')}});
@@ -2256,8 +2263,8 @@ window.addEventListener('online',()=>{netState();toast('החיבור חזר. ה�
 window.addEventListener('offline',netState);
 
 /* ---------- activity log ---------- */
-const AUD_COL={clubs:'חוג',clubAtt:'נוכחות בחוג',duty:'תורנות',lateinc:'אירוע איחור',pcontact:'קשר עם הורים',pupd:'עדכון שבועי להורים',students:'תלמיד',status:'יציאה / חזרה',profiles:'פרטים אישיים',photos:'תמונת תלמיד',notes:'הערה',staff:'עובד והרשאות',staffProfiles:'כרטיס עובד',settings:'הגדרות',schedule:'מערכת שבועית',config:'מנהל ראשי',inspections:'בדיקת חדר',nightcount:'נוכחות ערב',morning:'השכמה',moves:'יומן יציאות',maint:'תחזוקה',learn:'מרכז למידה',shabbat:'שבת',activities:'פעילות / טיול',lights:'כיבוי אורות',emergency:'ספירת חירום',shiftlog:'יומן משמרת'};
-const AUD_TOP=/^(clubs|clubAtt|duty|lateinc|pcontact|pupd|students|status|profiles|photos|notes|staff|staffProfiles|settings|schedule|config|inspections|moves|maint|learn|shabbat|activities|emergency|shiftlog)\/[^/]+$/,AUD_SUB=/^(nightcount|morning|lights)\/([^/]+)\/marks\/([^/]+)$/;
+const AUD_COL={pappr:'אישור הורים ליציאה',clubs:'חוג',clubAtt:'נוכחות בחוג',duty:'תורנות',lateinc:'אירוע איחור',pcontact:'קשר עם הורים',pupd:'עדכון שבועי להורים',students:'תלמיד',status:'יציאה / חזרה',profiles:'פרטים אישיים',photos:'תמונת תלמיד',notes:'הערה',staff:'עובד והרשאות',staffProfiles:'כרטיס עובד',settings:'הגדרות',schedule:'מערכת שבועית',config:'מנהל ראשי',inspections:'בדיקת חדר',nightcount:'נוכחות ערב',morning:'השכמה',moves:'יומן יציאות',maint:'תחזוקה',learn:'מרכז למידה',shabbat:'שבת',activities:'פעילות / טיול',lights:'כיבוי אורות',emergency:'ספירת חירום',shiftlog:'יומן משמרת'};
+const AUD_TOP=/^(pappr|clubs|clubAtt|duty|lateinc|pcontact|pupd|students|status|profiles|photos|notes|staff|staffProfiles|settings|schedule|config|inspections|moves|maint|learn|shabbat|activities|emergency|shiftlog)\/[^/]+$/,AUD_SUB=/^(nightcount|morning|lights)\/([^/]+)\/marks\/([^/]+)$/;
 function audParse(path){let m=path.match(AUD_SUB);if(m)return {col:m[1],id:m[3],date:m[2]};if(AUD_TOP.test(path)){const [col,id]=path.split('/');return {col,id}}return null}
 const stuName=id=>S.students.get(id)?.name||'';
 function audLabel(col,id,data){
@@ -2334,7 +2341,7 @@ async function notify(title,body,tag){if(!canNotify()||Notification.permission!=
   try{const reg=await navigator.serviceWorker?.getRegistration();if(reg){await reg.showNotification(title,opt);return}}catch{}
   try{new Notification(title,opt)}catch{}}
 function notifyNote(n){if(!S.mgr||!isBeh(n)||(sevOf(n)<3&&!n.imp))return;const s=S.students.get(n.sid);notify(n.imp?'⚠ הערה חשובה':'הערת התנהגות חמורה',`${s?.name||''}: ${String(n.text||'').slice(0,120)}`,'note-'+(n.id||n.at))}
-function checkLateReturns(){try{lnRemind()}catch{}try{const r=roundStat('lights');if(r.act&&r.isToday&&lightsTimes().length){const D0=roundDuty('lights',r.date),mine=!D0.length||D0.some(x=>x.u===S.me);lightsTimes().forEach(([g,t])=>{const L=allSorted().filter(s=>!isOut(s.id)&&s.grade===g),un=L.filter(s=>!S.lmarks.get(s.id)).length;if(!un)return;const left=Math.round((gDlTs(r.date,t)-Date.now())/6e4);
+function checkLateReturns(){try{lnRemind()}catch{}try{clRemind()}catch{}try{const r=roundStat('lights');if(r.act&&r.isToday&&lightsTimes().length){const D0=roundDuty('lights',r.date),mine=!D0.length||D0.some(x=>x.u===S.me);lightsTimes().forEach(([g,t])=>{const L=allSorted().filter(s=>!isOut(s.id)&&s.grade===g),un=L.filter(s=>!S.lmarks.get(s.id)).length;if(!un)return;const left=Math.round((gDlTs(r.date,t)-Date.now())/6e4);
   if(left>0&&left<=10&&has('count')&&mine)notify(`כיבוי אורות כיתה ${g} בעוד ${left} דקות`,`${t} · עדיין ${un} תלמידים לא נבדקו`,'lg-pre-'+g+'-'+r.date);
   if(left<0&&left>-120&&S.mgr)notify(`כיבוי אורות כיתה ${g} לא הושלם`,`עברה השעה ${t}: ${un} תלמידים לא נבדקו`,'lg-over-'+g+'-'+r.date)})}}catch{}try{['count','lights','morn'].forEach(k=>{if(!has(RK[k][3])&&!S.mgr)return;const r=roundStat(k);if(!r.act||!r.isToday||r.complete)return;const left=Math.round((r.dlTs-Date.now())/6e4),nm=({count:'נוכחות ערב',lights:'כיבוי אורות',morn:'השכמה'})[k];
   const D0=roundDuty(k,r.date);if(left>0&&left<=10&&has(RK[k][3])&&(!D0.length||D0.some(x=>x.u===S.me)))notify(`עוד ${left} דקות נסגר: ${nm}`,`סומנו ${r.done} מתוך ${r.tot}${r.req?' · חסרות תשובות לשאלות הפתיחה':''}`,'pre-'+k+'-'+r.date);
@@ -2390,7 +2397,8 @@ function renderTrends(){if(!S.trend||!$('trends'))return;const {days,morn}=S.tre
   $('trends').innerHTML=heat('איחורים להשכמה',lateW,'214,120,30')+'<div style="height:12px"></div>'+heat('הערות התנהגות (כולל הערות לילה)',behW,'200,60,60')+'<span class="muted" style="font-size:.85rem">כל עמודה היא שבוע (מתחיל בתאריך שבראש העמודה). צבע כהה יותר = יותר מקרים.</span>';
   // students to watch (last 14 days)
   const t14=Date.now()-14*864e5,mi=morn.slice(-14),W=[];
-  for(const s of allSorted()){if(!inFilter(s))continue;const why=[];
+  const CS=clStreaks();
+  for(const s of allSorted()){if(!inFilter(s))continue;const why=[];CS.filter(z=>z.sid===s.id).forEach(z=>why.push(z.n+' פעמים ברצף לא הגיע לחוג '+z.name));
     const b=S.notes.filter(n=>n.sid===s.id&&isBeh(n)&&n.at>=t14).length;if(b>=3)why.push(b+' הערות התנהגות');
     const nn=S.notes.filter(n=>n.sid===s.id&&n.night&&n.at>=t14).length;if(nn>=2)why.push(nn+' הערות לילה');
     const l=mi.filter(m=>isLate(m.get(s.id))).length;if(l>=3)why.push(l+' איחורים להשכמה');
@@ -2436,9 +2444,9 @@ document.addEventListener('change',e=>{if(e.target.classList?.contains('insNote'
 
 /* ---------- backup ---------- */
 function bkAge(){const t=S.settings?.backupAt;return t?Math.floor((Date.now()-t)/864e5):null}
-function renderBackupNote(){const el=$('hmBackup');if(!el)return;let sn=0;try{sn=+localStorage.getItem('pn-bk-sn')||0}catch{}if(!S.owner||sn>Date.now()){el.innerHTML='';return}const a=bkAge();
+function renderBackupNote(){const el=$('hmBackup');if(!el)return;if(S.owner&&!S.bkAutoT)S.bkAutoT=setTimeout(autoBackup,20000);let sn=0;try{sn=+localStorage.getItem('pn-bk-sn')||0}catch{}if(!S.owner||sn>Date.now()){el.innerHTML='';return}const a=bkAge();
   el.innerHTML=a==null||a>=7?`<div class="calnote" style="display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--hl-bg)"><span>💾 ${a==null?'עדיין לא נעשה גיבוי של הנתונים':'עברו '+a+' ימים מהגיבוי האחרון'}. מומלץ להוריד גיבוי פעם בשבוע.</span><span class="row" style="gap:6px"><button class="btn small" type="button" data-act="bkSnooze">אחר כך</button><button class="btn small primary" type="button" data-act="backup">הורד גיבוי</button></span></div>`:''}
-async function doBackup(b){if(!window.XLSX){toast('רכיב האקסל לא נטען');return}if(b){b.disabled=true;b.dataset.t=b.textContent;b.textContent='מכין גיבוי…'}
+async function doBackup(b){if(!window.XLSX)await xlsxLoad();if(!window.XLSX){toast('רכיב האקסל לא נטען. בדקו את החיבור');return}if(b){b.disabled=true;b.dataset.t=b.textContent;b.textContent='מכין גיבוי…'}
   try{const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};const fd=t=>t?new Date(t).toLocaleString('he-IL'):'';const nm=id=>S.students.get(id)?.name||id;
     const add=(name,rows)=>{if(rows.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),name)};
     const st=allSorted();
@@ -2453,6 +2461,7 @@ async function doBackup(b){if(!window.XLSX){toast('רכיב האקסל לא נט
     add('נוכחות ערב',[['ערב','תלמיד','מצב','נבדק ע"י'],...NC.map(([k,id,x])=>[k,nm(id),x.s==='p'?(x.late?'הגיע באיחור'+(x.lt?' '+hm(x.lt):'')+(x.r?' – '+x.r:''):'נוכח'):'חסר',x.byName||''])]);
     add('השכמה',[['תאריך','תלמיד','מצב','שעה','נרשם ע"י'],...MO.map(([k,id,x])=>[k,nm(id),x.s==='up'?'קם':x.s==='no'?'לא קם':'חולה',x.t?hm(x.t):'',x.byName||''])]);
     try{const I=await db.collection('inspections').get();add('בדיקות חדרים',[['שבוע','חדר','ציון',...INS.map(x=>x[1]),'הערה','נבדק ע"י'],...I.docs.filter(d=>!d.id.startsWith('clean_')).map(d=>{const x=d.data();return [x.week,x.room,x.score,...INS.map(([k])=>x.checks?.[k]?'✓':'✗'),x.note||'',x.byName||'']})])}catch{}
+    if(S.cl?.length){add('חוגים',[['חוג','ימים','משעה','עד','מדריך','מקום','תלמיד','כיתה'],...S.cl.flatMap(x=>(x.sids||[]).map(id=>[x.name,clDaysTxt(x),x.from||'',x.to||'',x.leader||'',x.place||'',nm(id),S.students.get(id)?.grade||'']))]);add('נוכחות בחוגים',[['תאריך','חוג','תלמיד','מצב','סומן ע"י'],...[...S.clAtt.values()].sort((a,b)=>a.date.localeCompare(b.date)).flatMap(a=>[...(a.came||[]).map(id=>[a.date,a.name,nm(id),'השתתף',a.byName||'']),...(a.absent||[]).filter(id=>!(a.came||[]).includes(id)).map(id=>[a.date,a.name,nm(id),'לא הגיע',a.byName||''])])])}
     add('צוות',[['שם','שם משתמש','תפקיד','פעיל','הרשאות'],...S.staff.map(s=>[s.name||'',s.username||'',s.role||'',s.active===false?'לא':'כן',PERMS.filter(([k])=>s.perms?.[k]).map(x=>x[1]).join(', ')])]);
     XLSX.writeFile(wb,`גיבוי פנימייה ${ymd(new Date())}.xlsx`);
     try{await db.doc('settings/app').set({...(S.settings||{}),backupAt:Date.now()})}catch{}
@@ -2691,7 +2700,7 @@ async function clSave(b){const p=b.dataset.p,id=b.dataset.c,g=s=>$(p+s),days=[..
   const d={name:g('Name').value.trim(),emo:g('Emo').value,days,from:g('From').value,to:g('To').value,leader:g('Leader').value.trim(),place:g('Place').value.trim(),cap:Math.max(0,Math.min(80,+g('Cap').value||0))};
   if(!d.name){toast('כתבו שם לחוג');return}if(!days.length){toast('בחרו לפחות יום אחד');return}if(!d.from||!d.to||toMin(d.to)<=toMin(d.from)){toast('שעת הסיום צריכה להיות אחרי ההתחלה');return}
   b.disabled=true;try{if(id){await OW(db.doc('clubs/'+id).update({...d,editedAt:Date.now(),editedBy:S.me,editedByName:S.myName||''}));S.clD.e=false;toast('החוג עודכן')}else{const r=db.collection('clubs').doc();await OW(r.set({...d,sids:[],active:true,at:Date.now(),by:S.me,byName:S.myName||''}));S.clSel=r.id;S.clD.n=false;toast('החוג נוסף – עכשיו אפשר לשבץ תלמידים')}}catch(e){fail(e)}b.disabled=false;renderClubs(true)}
-function clXl(){if(!window.XLSX){toast('רכיב האקסל לא נטען');return}const wb=XLSX.utils.book_new(),A=S.cl.filter(x=>x.active!==false),nm=id=>S.students.get(id)?.name||'',gr=id=>S.students.get(id)?.grade||'',dd=k=>k.split('-').reverse().join('/');
+function clXl(){if(!window.XLSX){xlsxLoad();toast('רכיב האקסל נטען… נסו שוב בעוד כמה שניות');return}const wb=XLSX.utils.book_new(),A=S.cl.filter(x=>x.active!==false),nm=id=>S.students.get(id)?.name||'',gr=id=>S.students.get(id)?.grade||'',dd=k=>k.split('-').reverse().join('/');
   const asg=[['חוג','ימים','משעה','עד','מדריך','מקום','תלמיד','כיתה']];A.forEach(x=>(x.sids||[]).filter(id=>S.students.has(id)).forEach(id=>asg.push([x.name,clDaysTxt(x),x.from,x.to,x.leader||'',x.place||'',nm(id),gr(id)])));
   const att=[['תאריך','חוג','תלמיד','כיתה','מצב','סומן על ידי']];[...S.clAtt.values()].sort((a,b)=>a.date.localeCompare(b.date)).forEach(a=>{(a.came||[]).forEach(id=>att.push([dd(a.date),a.name,nm(id),gr(id),'השתתף',a.byName||'']));(a.absent||[]).filter(id=>!(a.came||[]).includes(id)).forEach(id=>att.push([dd(a.date),a.name,nm(id),gr(id),'לא הגיע',a.byName||'']))});
   XLSX.utils.book_append_sheet(wb,sheet(asg,[18,14,8,8,14,14,18,6]),'שיבוץ');XLSX.utils.book_append_sheet(wb,sheet(att,[12,18,18,6,10,14]),'נוכחות');XLSX.writeFile(wb,`חוגים ${ymd(new Date())}.xlsx`)}
@@ -2703,6 +2712,7 @@ function stuClubs(sid){if(!S.cl.length)return '';const my=S.cl.filter(x=>x.activ
   if(!my.length&&!r.c&&!r.a&&!can)return '';
   return `<div class="goal"><b>🎨 חוגים</b>
    ${my.length?`<div class="row" style="gap:6px">${my.map(x=>{const p=r.per.get(x.id);return `<span class="chipS" style="background:${subjC(x.name)};cursor:default">${esc(x.emo||'🎯')} ${esc(x.name)} <small class="muted">${esc(clDaysTxt(x))} · ${clTime(x)}${p?' · השתתף '+p.c+'/'+(p.c+p.a):''}</small>${can?`<button type="button" data-act="shClRm" data-c="${x.id}" aria-label="הסר מהחוג ${esc(x.name)}" style="background:none;border:0;cursor:pointer;color:var(--muted);padding:0 2px;font:inherit">✕</button>`:''}</span>`}).join('')}</div>`:'<span class="muted" style="font-size:.9rem">לא משובץ לאף חוג.</span>'}
+   ${clStreaks().filter(z=>z.sid===sid).map(z=>`<span style="color:var(--bad);font-size:.88rem;font-weight:600">⚠ לא הגיע ${z.n} פעמים ברצף לחוג ${esc(z.name)}</span>`).join('')}
    ${r.c+r.a?`<span class="muted" style="font-size:.88rem">החודש: השתתף ב-${r.c} מפגשים, לא הגיע ל-${r.a} (${pctTxt(r.c,r.a)})</span>`:''}
    ${can&&others.length?`<select class="shCl" aria-label="שיבוץ לחוג"><option value="">➕ שיבוץ לחוג…</option>${others.map(x=>`<option value="${x.id}">${esc(x.emo||'')} ${esc(x.name)} – ${esc(clDaysTxt(x))} ${esc(x.from||'')}</option>`).join('')}</select>`:''}</div>`}
 document.addEventListener('change',async e=>{const t=e.target;
@@ -2716,6 +2726,58 @@ document.addEventListener('change',async e=>{const t=e.target;
     try{await OW(db.doc('clubs/'+x.id).update({sids:firebase.firestore.FieldValue.arrayUnion(sid)}));toast('שובץ ל'+x.name+(cf.length?' · ⚠ מתנגש עם '+cf.join(', '):''))}catch(err){fail(err)}}});
 document.addEventListener('input',e=>{if(e.target.id!=='clQ')return;S.clQ=e.target.value;renderClubs(true);const q=$('clQ');if(q){q.focus();const n=q.value.length;try{q.setSelectionRange(n,n)}catch{}}});
 $('tab-clubs').addEventListener('focusout',()=>{if(S.clPend){S.clPend=0;setTimeout(()=>renderClubs(),80)}});
+/* ---------- parent approval for exits ---------- */
+S.pa=[];S.paPh={};S.paPhL=new Set();
+const paUrl=id=>SITE_URL+'?pa='+id;
+const paWhen=t=>{try{return new Intl.DateTimeFormat('he-IL',{weekday:'long',day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(t))}catch{return new Date(t).toLocaleString('he-IL')}};
+const paTxt=(x,pn)=>`שלום${pn?' '+pn:''},\nכאן ${x.byName||'צוות הפנימייה'} מפנימיית דעת תבונות.\n${x.first||''} מבקש לצאת מהפנימייה${x.reason?' ('+x.reason+')':''}${x.backBy?', עם חזרה צפויה '+paWhen(x.backBy):''}.\nלאישור או לדחייה לחצו כאן:\n${paUrl(x.id)}\nתודה!`;
+function paOk(sid){return (S.pa||[]).find(x=>x.sid===sid&&x.status==='ok'&&!x.used&&Date.now()-x.at<2*864e5)}
+function subPa(){if(!db||S.unPa||!(has('out')||S.mgr))return;S.unPa=1;
+  S.subs.push(db.collection('pappr').where('at','>=',Date.now()-4*864e5).onSnapshot(q=>{const prev=new Map((S.pa||[]).map(x=>[x.id,x.status]));S.pa=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.at-a.at);
+    if(S.paLoaded)S.pa.forEach(x=>{if(prev.get(x.id)==='pending'&&(x.status==='ok'||x.status==='no')){const nm=S.students.get(x.sid)?.name||x.first||'',ok=x.status==='ok';toast(`${ok?'✓':'✗'} ההורים של ${nm} ${ok?'אישרו':'לא אישרו'} את היציאה`);notify(ok?'ההורים אישרו יציאה':'ההורים לא אישרו יציאה',`${nm}${x.pName?' · '+x.pName:''}${x.reason?' · '+x.reason:''}`,'pa-'+x.id)}});
+    S.paLoaded=true;renderPa()},onErr))}
+async function paPhones(sid){if(!(has('personal')||S.mgr))return [];try{const p=(await db.doc('profiles/'+sid).get()).data()||{};return [[p.fatherName,p.fatherPhone],[p.motherName,p.motherPhone]].filter(x=>waNum(x[1]))}catch{return []}}
+function renderPa(){const el=$('paList');if(!el)return;const L=(S.pa||[]).filter(x=>!x.used&&S.students.has(x.sid)&&!(x.status==='ok'&&isOut(x.sid)));
+  el.hidden=!L.length;if(!L.length){el.innerHTML='';return}
+  L.filter(x=>x.status==='pending'&&!S.paPhL.has(x.sid)).forEach(x=>{S.paPhL.add(x.sid);paPhones(x.sid).then(p=>{S.paPh[x.sid]=p;if(p.length)renderPa()})});
+  el.innerHTML=`<div class="panel" style="display:grid;gap:8px"><h2 style="margin:0">📲 בקשות אישור מההורים</h2><div class="list">${L.map(x=>{const s=S.students.get(x.sid),ph=S.paPh[x.sid]||[],st=x.status;
+    return `<div class="item" style="flex-wrap:wrap">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${esc(x.reason||'')}${x.backBy?' · חזרה '+when(x.backBy):''} · נשלח ${when(x.at)}</span></button>
+     <span class="chip ${st==='ok'?'ok':st==='no'?'bad':'warn'}">${st==='ok'?'✓ ההורים אישרו':st==='no'?'✗ ההורים לא אישרו':'⏳ ממתין לאישור'}${x.pName&&st!=='pending'?' ('+esc(x.pName)+')':''}</span>
+     <div class="row" style="gap:6px;flex-basis:100%">${st==='ok'&&!S.ro&&!isOut(x.sid)?`<button class="btn small primary" type="button" data-act="paGo" data-id="${x.id}">רשום יציאה</button>`:''}${st==='pending'?ph.map(([n,p])=>`<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/${waNum(p)}?text=${encodeURIComponent(paTxt(x,n))}">💬 שלח ל${esc(n||'הורה')}</a>`).join('')+`<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(paTxt(x,''))}">💬 וואטסאפ${ph.length?' – איש קשר אחר':''}</a><button class="btn small" type="button" data-act="paCopy" data-id="${x.id}">📋 העתק קישור</button>`:''}${S.ro?'':`<button class="btn small" type="button" data-act="paDel" data-id="${x.id}">${st==='pending'?'בטל בקשה':'הסר'}</button>`}</div></div>`}).join('')}</div></div>`}
+async function paReq(b){const sid=$('outStudent').value;if(!sid){toast('בחרו תלמיד');return}const s=S.students.get(sid);if(!s)return;
+  const reason=[$('outReason').value,$('outOther').value.trim()].filter(Boolean).join(' · '),bv=$('outBack').value,backBy=bv?new Date(bv).getTime():null;
+  const id=[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(36).padStart(2,'0')).join('').slice(0,26);
+  const d={sid,first:s.firstName||String(s.name||'').split(' ')[0],reason,backBy,status:'pending',at:Date.now(),exp:Date.now()+3*864e5,by:S.me,byName:S.myName||''};
+  if(b)b.disabled=true;try{await OW(db.doc('pappr/'+id).set(d))}catch(e){fail(e);if(b)b.disabled=false;return}if(b)b.disabled=false;
+  if(!S.pa.some(x=>x.id===id))S.pa.unshift({id,...d});S.paPhL.add(sid);S.paPh[sid]=await paPhones(sid);renderPa();$('paList').scrollIntoView({behavior:'smooth',block:'center'});toast('הבקשה נוצרה – שלחו את הקישור להורים')}
+async function paPage(tok){const v=document.createElement('main');v.id='paView';document.body.appendChild(v);const logo=document.querySelector('.lg-logo')?.src||'';
+  const box=h=>{v.innerHTML=`<div class="pa-card">${logo?`<img src="${logo}" alt="" class="pa-logo">`:''}<div class="muted" style="font-size:.9rem">ישיבה לצעירים דעת תבונות · פנימייה</div>${h}</div>`};
+  box('<p>טוען…</p>');let d=null;try{const s=await db.doc('pappr/'+tok).get();d=s.exists?s.data():null}catch{}
+  const show=()=>{if(!d){box('<h1>הקישור אינו פעיל</h1><p>ייתכן שהבקשה בוטלה. אפשר לפנות לצוות הפנימייה.</p>');return}
+    const info=`<div class="pa-info"><div><b>${esc(d.first||'')}</b> מבקש לצאת מהפנימייה</div>${d.reason?`<div>סיבה: ${esc(d.reason)}</div>`:''}${d.backBy?`<div>חזרה צפויה: ${esc(paWhen(d.backBy))}</div>`:''}<div class="muted" style="font-size:.85rem">נשלח על ידי ${esc(d.byName||'צוות הפנימייה')}</div></div>`;
+    if(d.status==='ok'||d.status==='no'){box(`<h1>${d.status==='ok'?'✓ היציאה אושרה':'✗ היציאה לא אושרה'}</h1>${info}<p>תודה! התשובה נשמרה והצוות קיבל אותה.${d.status==='no'?' לשינוי אפשר להתקשר לצוות הפנימייה.':''}</p>`);return}
+    if(d.exp&&Date.now()>d.exp){box(`<h1>תוקף הקישור פג</h1>${info}<p>אפשר לפנות לצוות הפנימייה.</p>`);return}
+    box(`<h1>בקשת אישור יציאה</h1>${info}<label class="muted" style="display:grid;gap:4px;text-align:right">השם שלך (לא חובה)<input id="paName" maxlength="40" placeholder="למשל: אבא של ${esc(d.first||'')}"></label><div class="pa-btns"><button class="btn primary" type="button" id="paYes">✓ אני מאשר/ת את היציאה</button><button class="btn" type="button" id="paNo">✗ לא מאשר/ת</button></div>`);
+    const go=async st=>{const n=($('paName').value||'').trim().slice(0,40);v.querySelectorAll('button').forEach(x=>x.disabled=true);try{await db.doc('pappr/'+tok).update({status:st,pName:n,pAt:Date.now()});d={...d,status:st,pName:n};show()}catch(e){box('<h1>לא הצלחנו לשמור</h1><p>בדקו את החיבור לאינטרנט ונסו שוב, או התקשרו לצוות הפנימייה.</p><button class="btn" type="button" onclick="location.reload()">נסו שוב</button>')}};
+    $('paYes').onclick=()=>go('ok');$('paNo').onclick=()=>go('no')};
+  show()}
+/* ---------- clubs: reminders and repeated absences ---------- */
+function clStreaks(){const out=[];for(const x of S.cl){if(x.active===false)continue;const L=[...S.clAtt.values()].filter(a=>a.cid===x.id).sort((a,b)=>b.date.localeCompare(a.date));
+  for(const sid of x.sids||[]){if(!S.students.has(sid))continue;let n=0;for(const a of L){if((a.came||[]).includes(sid))break;if((a.absent||[]).includes(sid))n++}if(n>=3)out.push({sid,cid:x.id,name:x.name,emo:x.emo||'',n})}}return out}
+function clRemind(){if(!canClA())return;subCl();const nw=new Date(),m=nw.getHours()*60+nw.getMinutes(),k=ymd(nw);
+  clOn(k).forEach(x=>{const reg=(x.sids||[]).filter(id=>S.students.has(id));if(!reg.length||!x.from||!x.to)return;const dd=toMin(x.from)-m,en=toMin(x.to);
+    if(dd>0&&dd<=30)notify(`בעוד ${dd} דקות: חוג ${x.name}`,`${x.from}${x.place?' · '+x.place:''} · ${reg.length} משובצים`,'clrem-'+x.id+'-'+k);
+    const A=clAttOf(x.id,k)||{},mk=reg.filter(id=>(A.came||[]).includes(id)||(A.absent||[]).includes(id)).length;
+    if(m>=en+10&&m<en+240&&mk<reg.length)notify(`לא סומנה נוכחות בחוג ${x.name}`,`החוג הסתיים ב-${x.to}. סומנו ${mk} מתוך ${reg.length}.`,'clend-'+x.id+'-'+k)});
+  if(S.mgr)clStreaks().forEach(z=>notify('היעדרות חוזרת מחוג',`${S.students.get(z.sid)?.name||''} לא הגיע ${z.n} פעמים ברצף לחוג ${z.name}`,'clstr-'+z.sid+'-'+z.cid+'-'+z.n))}
+/* ---------- return after the evening count = late arrival ---------- */
+async function autoLate(id){try{if(!(has('count')||S.owner)||S.night!==nightKey())return;const s=S.students.get(id);const r=roundStat('count');if(!r.act||!r.isToday||Date.now()<r.dlTs)return;
+  if(r.grades?.length&&s&&!r.grades.includes(s.grade))return;const cur=S.marks.get(id);if(cur&&cur.s==='p')return;const rs='חזר מהבית / מיציאה',t=Date.now();
+  await OW(db.collection('nightcount/'+S.night+'/marks').doc(id).set({s:'p',late:true,lt:t,at:t,r:rs,auto:true,by:S.me,byName:S.myName||''}));toast(`סומן גם בנוכחות ערב: הגיע באיחור (${rs})`)}catch{}}
+/* ---------- Excel library: load in the background, not on page open ---------- */
+function xlsxLoad(){if(window.XLSX)return Promise.resolve();if(S.xlsxL)return S.xlsxL;S.xlsxL=new Promise(r=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';sc.onload=()=>r();sc.onerror=()=>{S.xlsxL=null;r()};document.head.appendChild(sc)});return S.xlsxL}
+async function autoBackup(){if(PA||!S.owner||S.tv||!document.body.classList.contains('desk'))return;if(!S.settings){S.bkAutoT=0;return}const a=bkAge();if(a!=null&&a<7)return;
+  const k='pn-bk-auto-'+ymd(new Date());try{if(localStorage.getItem(k))return;localStorage.setItem(k,'1')}catch{}await xlsxLoad();if(!window.XLSX)return;toast('מוריד גיבוי שבועי אוטומטי למחשב…');await doBackup(null)}
 /* ---------- learning centre ---------- */
 S.ln=[];S.lnT='new';S.lnSel=new Set();
 function subLn(){if(!db||S.unLn)return;S.unLn=1;S.subs.push(db.collection('learn').orderBy('at','desc').limit(500).onSnapshot(q=>{if(S.lnLoaded&&has('count'))q.docChanges().forEach(ch=>{const x=ch.doc.data();if(ch.type==='added'&&x.absent?.length&&x.by!==S.me&&x.at>S.loadAt)notify('לא הגיעו לשיעור',`${x.subject||''}: ${x.absent.map(id=>S.students.get(id)?.name||'').join(', ')}`,'lnab-'+ch.doc.id)});S.lnLoaded=true;const all=q.docs.map(d=>({id:d.id,...d.data()}));S.lnSlots=all.filter(x=>x.slot);S.ln=all.filter(x=>!x.slot);renderLearn();renderSheet();if(S.tab==='home')renderHome()},onErr))}
@@ -2856,6 +2918,7 @@ function mtStudents(){const from=Date.now()-7*864e5,M=new Map(),add=(s,f)=>{if(!
   const by=new Map();(S.notes||[]).filter(n=>n.at>=from&&isBeh(n)).forEach(n=>{if(!by.has(n.sid))by.set(n.sid,{st:new Set(),imp:0});const o=by.get(n.sid);o.st.add(n.by);if(n.imp)o.imp++});
   by.forEach((o,sid)=>{const s=S.students.get(sid);if(o.imp)add(s,['⚠ '+o.imp+' הערות שסומנו כחשובות',6]);if(o.st.size>=2)add(s,[o.st.size+' אנשי צוות שונים כתבו עליו הערות',4])});
   {const c=new Map();(S.lateinc||[]).filter(x=>x.at>=Date.now()-30*864e5).forEach(x=>c.set(x.sid,(c.get(x.sid)||0)+1));c.forEach((n,sid)=>{if(n>=2)add(S.students.get(sid),[n+' חזרות באיחור מיציאה ב-30 יום',n*2])})}
+  clStreaks().forEach(z=>add(S.students.get(z.sid),[z.n+' פעמים ברצף לא הגיע לחוג '+z.name,z.n]));
   decs().filter(x=>x.sid&&x.st!=='done'&&x.m<S.mtDate).forEach(x=>add(S.students.get(x.sid),['מעקב: '+x.t+(x.st==='no'?' (לא בוצע)':''),3]));
   return [...M.values()].sort((a,b)=>b.sc-a.sc)}
 function mtText(){const D=S.mtDate,m=S.meet?.mt?.[D]||{},L=decs().filter(x=>x.m===D),P=decs().filter(x=>x.m<D&&(x.st==='open'||(x.stAt&&x.stAt>=new Date(D+'T00:00').getTime()-6*864e5)));
@@ -3275,6 +3338,7 @@ function renderDay(){const el=$('hmDay');if(!el)return;const n=new Date(),now=n.
   el.innerHTML=`${SI}${CB}<div class="tr"></div>${M.map(([t,l,d,o,ds],i)=>`<span class="mk ${i===2?'alt':''} ${d?'done':o?'over':''}" style="right:${tPct(t)}%">${d?'✓ ':DLI[l]||''}${l}<br><bdi dir="ltr">${ds||t}</bdi></span>`).join('')}${now>=360?`<span class="now" style="right:${p}%" data-t="עכשיו ${pad(n.getHours())}:${pad(n.getMinutes())}"></span>`:''}`}
 function renderRounds(){const el=$('hmRounds');if(!el)return;if(S.access)subRq();const n=new Date(),today=ymd(n),now=hm(n.getTime()),inn=allSorted().filter(s=>!isOut(s.id)),R=[];
   [['השכמה','morn','morning'],['נוכחות ערב','count','count'],['כיבוי אורות','lights','count']].forEach(([l,k,p])=>{if(!(has(p)||S.mgr))return;const r=roundStat(k);if(r.isToday&&r.act)R.push([l,k,r.done,r.tot,r.dl,r.req,r.over])});
+  if(canClA()){const m0=n.getHours()*60+n.getMinutes();clOn(today).forEach(x=>{const reg=(x.sids||[]).filter(id=>S.students.has(id));if(!reg.length||!x.from||toMin(x.from)>m0)return;const A=clAttOf(x.id,today)||{};R.push([`${x.emo||'🎯'} חוג ${x.name}`,'clubs',reg.filter(id=>(A.came||[]).includes(id)||(A.absent||[]).includes(id)).length,reg.length,x.to])})}
   if(S.unIns&&S.insWeek===weekOf(today)){const RS=roomsList().filter(r=>!STAFF_ROOMS.has(r));R.push(['בדיקת חדרים (השבוע)','rooms',RS.filter(r=>S.ins.has(r)).length,RS.length,''])}
   $('hmRoundsP').hidden=!R.length;if(!R.length)return;
   const full=R.filter(r=>r[3]&&r[2]>=r[3]).length,pc=Math.round(full/R.length*100);
@@ -3376,7 +3440,7 @@ function repStuChg(){const sid=$('repStu').value,s=S.students.get(sid);$('rk-stu
 $('repStu').addEventListener('change',repStuChg);
 function sheet(rows,widths){const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=widths.map(w=>({wch:w}));if(rows.length>1)ws['!autofilter']={ref:XLSX.utils.encode_range({s:{c:0,r:0},e:{c:rows[0].length-1,r:rows.length-1}})};return ws}
 async function buildReport(){
-  if(!window.XLSX){toast('רכיב האקסל לא נטען. בדקו חיבור ורעננו');return}
+  if(!window.XLSX){xlsxLoad();toast('רכיב האקסל נטען… נסו שוב בעוד כמה שניות');return}
   const from=$('repFrom').value,to=$('repTo').value;if(!from||!to||from>to){toast('בדקו את טווח התאריכים');return}
   if($('repStu').value)return buildStudentReport($('repStu').value,from,to);
   const days=datesBetween(from,to),st=sorted().sort((a,b)=>GRADES.indexOf(a.grade)-GRADES.indexOf(b.grade)||(a.name||'').localeCompare(b.name||'','he'));
@@ -3545,9 +3609,9 @@ $('newStaff').addEventListener('submit',async e=>{e.preventDefault();if(!S.owner
 });
 
 /* ---------- Firebase: data ---------- */
-function unsubAll(){S.subs.forEach(f=>{try{f()}catch{}});S.subs=[];S.unEm=S.unLog=S.unMt=S.unLn=S.unShab=S.unAc=S.unCl=0;S.clSub=null;S.unPu=null;S.unDish=0;S.mtLoaded=S.lnLoaded=false;if(unMarks){unMarks();unMarks=null}if(S.unWake){S.unWake();S.unWake=null}if(S.unPrev){S.unPrev();S.unPrev=null}}
+function unsubAll(){S.subs.forEach(f=>{try{f()}catch{}});S.subs=[];S.unEm=S.unLog=S.unMt=S.unLn=S.unShab=S.unAc=S.unCl=S.unPa=0;S.paLoaded=false;S.clSub=null;S.unPu=null;S.unDish=0;S.mtLoaded=S.lnLoaded=false;if(unMarks){unMarks();unMarks=null}if(S.unWake){S.unWake();S.unWake=null}if(S.unPrev){S.unPrev();S.unPrev=null}}
 function subscribeAll(){
-  unsubAll();S.unMt=S.unLn=S.unShab=null;if(!S.access)return;setTimeout(()=>{subMt();if(has('learn'))subLn();subCl()},0);
+  unsubAll();S.unMt=S.unLn=S.unShab=null;if(!S.access)return;setTimeout(()=>{subMt();if(has('learn'))subLn();subCl();subPa()},0);
   const timer=setTimeout(()=>{if(!S.ready){S.ready=true;sys('לא ניתן להתחבר לנתונים כרגע. ייתכן שמה שמוצג אינו מעודכן.');renderAll()}},10000);
   S.subs.push(db.collection('students').onSnapshot({includeMetadataChanges:true},snap=>{S.students=new Map(snap.docs.map(d=>[d.id,{id:d.id,...d.data()}]));if(!snap.metadata.fromCache){S.ready=true;clearTimeout(timer);sys('')}renderAll()},e=>{clearTimeout(timer);S.ready=true;onErr(e);renderAll()}));
   S.subs.push(db.collection('status').onSnapshot(snap=>{S.status=new Map(snap.docs.filter(d=>d.id[0]!=='_').map(d=>[d.id,d.data()]));resolveNames(snap.docs.map(d=>d.data()));renderAll()},onErr));
@@ -3602,7 +3666,7 @@ function addEyes(){document.querySelectorAll('input[type=password]').forEach(inp
   b.addEventListener('click',()=>{const show=inp.type==='password';inp.type=show?'text':'password';b.innerHTML=show?EYE_OFF:EYE;
     b.setAttribute('aria-label',show?'הסתר סיסמה':'הצג סיסמה');b.setAttribute('aria-pressed',String(show));inp.focus()});
   w.appendChild(b)})}
-async function checkUpdate(){try{const t=await (await fetch('./?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/APP_VERSION = "([^"]+)"/);
+async function checkUpdate(){if(PA)return;try{const t=await (await fetch('./?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/APP_VERSION = "([^"]+)"/);
   if(m&&m[1]!==APP_VERSION){const k='pn-upd-'+m[1];let tried=false;try{tried=sessionStorage.getItem(k)}catch{}if(!tried){try{sessionStorage.setItem(k,'1')}catch{}location.replace('./?v='+encodeURIComponent(m[1]))}}}catch{}}
 /* ---------- view options & bottom nav ---------- */
 function setTheme(v){S.theme=v;if(v==='dark'||v==='light')document.documentElement.dataset.theme=v;else delete document.documentElement.dataset.theme;
@@ -3613,7 +3677,9 @@ function renderBnav(){const n=$('bnav');const tabs=BN.filter(t=>{const b=$('t-'+
   n.hidden=!S.access||tabs.length<2;document.body.classList.toggle('has-bnav',!n.hidden);if(n.hidden)return;
   const ico=t=>$('t-'+t).querySelector('svg').outerHTML.replace('class="ni"','');const lbl={home:'בית',count:'ערב',morn:'השכמה',out:'יציאות'};
   n.innerHTML=tabs.map(t=>`<button type="button" data-act="go" data-to="${t}" ${S.tab===t?'aria-current="page"':''}>${ico(t)}<span>${lbl[t]}</span></button>`).join('')+`<button type="button" data-act="menuOpen">${'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'}<span>עוד</span></button>`}
+const PA=(()=>{try{return new URLSearchParams(location.search).get('pa')}catch{return null}})();
 function start(){
+  if(PA)document.body.classList.add('pa-mode');
   try{setTheme(localStorage.getItem('pn-theme')||'auto');setBig(!!localStorage.getItem('pn-big'))}catch{}
   {const inApp=matchMedia('(display-mode: standalone)').matches||document.referrer.startsWith('android-app://');
    if(/Android/i.test(navigator.userAgent)&&!inApp)document.querySelectorAll('.apk-dl').forEach(a=>a.hidden=false)}
@@ -3626,6 +3692,8 @@ function start(){
   if(!window.firebase||!FIREBASE_CONFIG.apiKey||/PASTE/.test(FIREBASE_CONFIG.apiKey)){S.permReady=true;S.na='config';applyPerms();return}
   firebase.initializeApp(FIREBASE_CONFIG);
   auth=firebase.auth();db=firebase.firestore();
+  if(PA){paPage(PA);return}
+  window.addEventListener('load',()=>setTimeout(xlsxLoad,4000));
   db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
   setupAudit();setInterval(()=>{if(S.access)checkLateReturns()},60000);
   // keep the owner/self listeners separate from data listeners
