@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-36";
+const APP_VERSION = "2026-11-03-37";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -350,6 +350,7 @@ body.desk .sheet{max-width:640px;max-height:none;height:100%;border-radius:0;box
 #hmFuP{--tone:#E08A2E}#hmLogP{--tone:#3E8EDE}#hmDishP{--tone:#2EAA6E}#hmCleanP{--tone:#1F9E8F}#hmLbP{--tone:#C9A227}#hmBdP{--tone:#D45A9A}#hmNextP{--tone:#7A5AD0}#hmPerP{--tone:#3E8EDE}#hmRoundsP{--tone:#0E5DB4}
 .home-hero{padding:18px 20px;border-radius:20px;box-shadow:var(--shadow);background:var(--hero,var(--surface));overflow:hidden}
 .home-hero [data-act=tvOn]{left:16px!important;top:14px!important}.home-hero .em-btn{left:16px!important;top:52px!important}
+@media (max-width:760px){.home-hero [data-act=tvOn]{display:none!important}.home-hero .em-btn{position:static!important;order:9;justify-self:start;margin-top:8px}}
 .hero-m{--hero:linear-gradient(120deg,#FFF3D1 0%,#FDF8EC 45%,#E3EEFF 100%)}.hero-d{--hero:linear-gradient(120deg,#DDEBFF 0%,#F3F8FF 55%,#FFF6DF 100%)}
 .hero-e{--hero:linear-gradient(120deg,#FFE1CC 0%,#F7E9F1 50%,#DCDDFB 100%)}.hero-n{--hero:linear-gradient(120deg,#16224A 0%,#24346B 60%,#3A3F7E 100%)}
 .hero-n .hi,.hero-n .dt,.hero-n .duty,.hero-n .muted{color:#EAF0FF!important}
