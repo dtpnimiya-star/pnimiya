@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-45";
+const APP_VERSION = "2026-11-03-46";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -330,6 +330,7 @@ body.desk .sheet-bg{align-items:stretch;justify-content:flex-end}
 body.desk .sheet{max-width:640px;max-height:none;height:100%;border-radius:0;box-shadow:12px 0 40px rgba(0,0,0,.25)}
 @media (min-width:1500px){body.desk #countList,body.desk #mornList{grid-template-columns:repeat(3,minmax(0,1fr))}body.desk .bed-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}}
 /* ---- visual refresh ---- */
+section[id^="tab-"]>*{min-width:0}.panel{min-width:0}.panel>*,#sm>*,#trends>*{min-width:0;max-width:100%}.sm-tbl .name{border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-align:right}@media (max-width:760px){.sm-tbl{font-size:.78rem}.sm-tbl th{white-space:normal;font-size:.72rem;line-height:1.15;vertical-align:bottom}.sm-tbl td,.sm-tbl th{padding:4px 3px}#tab-rep .seg,#tab-home .seg,#tab-pw .seg{flex-wrap:wrap;flex:1 1 auto}#tab-rep .row,#tab-home .row{flex-wrap:wrap}}
 body.pa-mode>*:not(#paView){display:none!important}#paView{min-height:100vh;display:grid;place-items:center;padding:16px}.pa-card{max-width:440px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:grid;gap:12px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.08)}.pa-card h1{font-size:1.35rem;margin:0}.pa-logo{max-width:170px;margin:0 auto}.pa-info{background:var(--soft);border-radius:12px;padding:12px;display:grid;gap:4px;font-size:1.05rem}.pa-btns{display:grid;gap:8px}.pa-btns .btn{padding:14px;font-size:1.05rem}
 .dayline .cb{position:absolute;top:32px;height:17px;border-radius:5px;font-size:.62rem;line-height:15px;padding:0 3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:center;background:color-mix(in srgb,var(--accent) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);color:var(--ink)}.dayline .cb.done{background:var(--ok-bg);border-color:var(--ok)}.dayline .cb.cur{outline:2px solid var(--accent);z-index:1}
 .chipS .av{width:30px;height:30px;font-size:.66rem}.chipS:has(.av){padding-inline-start:3px!important}.chipS img{pointer-events:none}.bed{min-height:40px}.bed-grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
