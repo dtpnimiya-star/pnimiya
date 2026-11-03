@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-46";
+const APP_VERSION = "2026-11-03-47";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -422,11 +422,11 @@ html.big .seg button,html.big .btn{font-size:1.02rem}
 .tools{display:flex;gap:8px;align-items:center}
 .tools input[type=search]{flex:1;min-width:0}
 .tgl[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-#countList .item,#mornList .item{flex-wrap:wrap;row-gap:8px}
+#countList .item,#mornList .item,#lList .item{flex-wrap:wrap;row-gap:8px}#lList .item .name{flex:1 1 140px;min-width:0}#lList .item .ab-r,#lList .item label{flex-basis:100%}
 @media (max-width:620px){
-  #countList .item .name,#mornList .item .name{flex:1 1 calc(100% - 60px)}
-  #countList .item .seg,#mornList .item .seg{flex:1 1 auto}
-  #countList .item .seg button,#mornList .item .seg button{flex:1;min-height:44px;padding:8px 6px}
+  #countList .item .name,#mornList .item .name,#lList .item .name{flex:1 1 calc(100% - 60px)}
+  #countList .item .seg,#mornList .item .seg,#lList .item .seg{flex:1 1 auto}
+  #countList .item .seg button,#mornList .item .seg button,#lList .item .seg button{flex:1;min-height:44px;padding:8px 6px}
   .nn-btn{min-height:44px;min-width:44px}
   .tbl-full{display:none}
 }
