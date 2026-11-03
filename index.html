@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-07";
+const APP_VERSION = "2026-11-03-08";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1207,11 +1207,11 @@ function morningReport(){
     if(n&&n.late)o.lateIn.push(s.name+(n.lt?' – '+hm(n.lt):''));
     if(m){if(m.s==='no')o.noWake.push(s.name);else if(m.s==='sick')o.sick.push(s.name);else if(isLate(m))o.late.push(s.name+' – '+hm(m.t))}}
   return {night,out}}
-const wakeLine=o=>o.woke===o.slept?`✓ כל התלמידים שישנו בפנימייה קמו (${o.woke} מתוך ${o.slept}).`:`קמו בבוקר: ${o.woke} מתוך ${o.slept} התלמידים שישנו בפנימייה.`;
+const allUp=o=>o.slept>0&&o.woke===o.slept&&!o.late.length;
 function reportText(g,o,dateK){
   const L=[],sec=(t,a)=>{if(a.length){L.push(t+' ('+a.length+'):');a.forEach(x=>L.push('• '+x));L.push('')}};
   L.push(`דוח נוכחות בוקר – ${g==='-'?'ללא כיתה':'כיתה '+g} – ${nf.format(new Date(dateK+'T12:00'))}`,'');
-  if(o.slept)L.push(wakeLine(o),'');
+  if(allUp(o))L.push('✓ כולם קמו בזמן הבוקר.','');
   sec('לא נכחו בנוכחות הערב',o.absent);sec('הגיעו באיחור לפנימייה בערב',o.lateIn);sec('לא קמו בבוקר',o.noWake);sec('חולים / נשארו בחדר',o.sick);sec(`איחרו להשכמה (השכמה ב-${S.wakeTarget||'07:00'})`,o.late);sec('בבית / מחוץ לפנימייה',o.home);
   if(!o.absent.length&&!o.noWake.length&&!o.sick.length&&!o.late.length&&!o.nightN.length&&!o.lateIn.length)L.push('כל התלמידים נכחו וקמו בזמן.','');
   L.push('נשלח ממערכת הנוכחות של הפנימייה');return L.join('\n')}
@@ -1227,7 +1227,7 @@ function renderReport(){
     const txt=reportText(g,o,d);all.push(txt);const subj=`דוח נוכחות בוקר – ${g==='-'?'ללא כיתה':'כיתה '+g} – ${fmtShort(d)}`;
     const li=(t,a,c)=>a.length?`<div><b class="${c||''}">${t}:</b> ${a.map(esc).join(', ')}</div>`:'';
     return `<div class="mr-grade"><div class="row"><b>${g==='-'?'ללא כיתה':'כיתה '+g}</b><span class="row" style="gap:6px">${g!=='-'?(E[g]?`<a class="btn small primary" href="${mailHref(E[g],subj,txt)}" title="${esc(E[g])}">שלח למחנך</a>`:(canSet?'<span class="muted" style="font-size:.85rem">אין מייל למחנך</span>':'')):''}<button class="btn small" type="button" data-act="mrCopy" data-g="${g}">העתק</button></span></div>
-      ${o.slept?`<div style="font-weight:600;margin:2px 0;${o.woke===o.slept?'color:var(--ok)':''}">${esc(wakeLine(o))}</div>`:''}
+      ${allUp(o)?'<div style="font-weight:600;margin:2px 0;color:var(--ok)">✓ כולם קמו בזמן הבוקר.</div>':''}
       ${cnt?li('לא נכחו בערב',o.absent)+li('הגיעו באיחור בערב',o.lateIn)+li('לא קמו',o.noWake)+li('חולים',o.sick)+li('איחרו',o.late)+li('בבית',o.home):`<span class="muted">כל התלמידים נכחו וקמו בזמן${o.home.length?' · '+o.home.length+' בבית':''}.</span>`}</div>`}).join('')
     +(gs.length>1?`<div class="row" style="padding-top:10px;border-top:1px solid var(--line)"><a class="btn small" href="${mailHref(GRADES.map(g=>E[g]).filter(Boolean).join(/Windows/i.test(navigator.userAgent)?';':','),'דוח נוכחות בוקר – '+fmtShort(d),all.join('\n\n────────\n\n'))}">שלח דוח מלא לכל המחנכים</a><button class="btn small" type="button" data-act="mrCopy" data-g="*">העתק דוח מלא</button></div>`:'');
   S.mrTexts=Object.fromEntries(gs.map((g,i)=>[g,all[i]]));S.mrTexts['*']=all.join('\n\n────────\n\n');
