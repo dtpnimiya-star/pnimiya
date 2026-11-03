@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-43";
+const APP_VERSION = "2026-11-03-44";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1627,7 +1627,7 @@ function reportText(g,o,dateK){
   L.push(`דוח נוכחות בוקר – ${g==='-'?'ללא כיתה':'כיתה '+g} – ${nf.format(new Date(dateK+'T12:00'))}`,'');
   {const dn=dutyTxt(prevNightOf(dateK));if(dn)L.push('מדריך תורן בלילה: '+dn,'')}
   if(allUp(o))L.push('✓ כולם קמו בזמן הבוקר.','');
-  sec('🔴 לא נכחו בפנימייה הלילה – לא באישור',o.absent);sec('לא נכחו בפנימייה הלילה – באישור',o.apAbs);sec('הגיעו באיחור לפנימייה בערב',o.lateIn);sec('לא היו בחדר בכיבוי אורות',o.noRoom);sec('לא קמו בבוקר',o.noWake);sec('חולים / נשארו בחדר',o.sick);sec(`איחרו להשכמה (השכמה ב-${S.wakeTarget||'07:00'})`,o.late);sec('בבית / מחוץ לפנימייה',o.home);
+  sec('🔴 לא נכחו בפנימייה הלילה – לא באישור',o.absent);sec('לא נכחו בפנימייה הלילה – באישור',o.apAbs);sec('הגיעו באיחור לפנימייה בערב',o.lateIn);sec('לא היו בחדר בכיבוי אורות',o.noRoom);sec('לא קמו בבוקר',o.noWake);sec('חולים / נשארו בחדר',o.sick);sec(`קמו מאוחר (השכמה ב-${S.wakeTarget||'07:00'})`,o.late);sec('בבית / מחוץ לפנימייה',o.home);
   if(!o.unm.length&&!o.absent.length&&!o.noWake.length&&!o.sick.length&&!o.late.length&&!o.nightN.length&&!o.lateIn.length)L.push('כל התלמידים נכחו וקמו בזמן.','');
   L.push('נשלח ממערכת הנוכחות של הפנימייה');return L.join('\n')}
 function mailHref(to,subj,body){const cc=(S.settings?.educators?.cc)||'';return 'mailto:'+encodeURIComponent(to||'')+'?'+(cc?'cc='+encodeURIComponent(cc)+'&':'')+'subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body)}
@@ -1648,7 +1648,7 @@ function renderReport(){
     const li=(t,a,c)=>a.length?`<div style="${c==='bad'?'color:var(--bad);font-weight:600':''}"><b>${t}:</b> ${a.map(esc).join(', ')}</div>`:'';
     return `<div class="mr-grade"><div class="row"><b>${g==='-'?'ללא כיתה':'כיתה '+g}</b><span class="row" style="gap:6px">${g!=='-'?(E[g]?`<a class="btn small primary" data-mrsend="${g}" href="${mailHref(E[g],subj,(upd?updNote:'')+txt)}" title="${esc(E[g])}">${upd?'שלח עדכון למחנך':'שלח למחנך'}</a>`:(canSet?'<span class="muted" style="font-size:.85rem">אין מייל למחנך</span>':'')):''}<button class="btn small" type="button" data-act="mrCopy" data-g="${g}">העתק</button></span></div>
       ${allUp(o)?'<div style="font-weight:600;margin:2px 0;color:var(--ok)">✓ כולם קמו בזמן הבוקר.</div>':''}
-      ${cnt?li('🔴 לא נכחו בפנימייה הלילה (לא באישור)',o.absent,'bad')+li('לא נכחו בפנימייה הלילה (באישור)',o.apAbs)+li('הגיעו באיחור בערב',o.lateIn)+li('לא בחדר בכיבוי אורות',o.noRoom)+li('לא קמו',o.noWake)+li('חולים',o.sick)+li('איחרו',o.late)+li('בבית',o.home):`<span class="muted">כל התלמידים נכחו וקמו בזמן${o.home.length?' · '+o.home.length+' בבית':''}.</span>`}</div>`}).join('')
+      ${cnt?li('🔴 לא נכחו בפנימייה הלילה (לא באישור)',o.absent,'bad')+li('לא נכחו בפנימייה הלילה (באישור)',o.apAbs)+li('הגיעו באיחור בערב',o.lateIn)+li('לא בחדר בכיבוי אורות',o.noRoom)+li('לא קמו',o.noWake)+li('חולים',o.sick)+li('קמו מאוחר',o.late)+li('בבית',o.home):`<span class="muted">כל התלמידים נכחו וקמו בזמן${o.home.length?' · '+o.home.length+' בבית':''}.</span>`}</div>`}).join('')
     +(gs.length>1?`<div class="row" style="padding-top:10px;border-top:1px solid var(--line)"><a class="btn small" data-mrsend="*" href="${mailHref(GRADES.map(g=>E[g]).filter(Boolean).join(/Windows/i.test(navigator.userAgent)?';':','),(Object.keys(sent).length?UPD:'')+'דוח נוכחות בוקר – '+fmtShort(d),(Object.keys(sent).length?updNote:'')+all.join('\n\n────────\n\n'))}">${Object.keys(sent).length?'שלח עדכון לכל המחנכים':'שלח דוח מלא לכל המחנכים'}</a><button class="btn small" type="button" data-act="mrCopy" data-g="*">העתק דוח מלא</button></div>`:'');
   S.mrTexts=Object.fromEntries(gs.map((g,i)=>[g,all[i]]));S.mrTexts['*']=all.join('\n\n────────\n\n');
   GRADES.forEach(g=>{const el=$('edu-'+g);if(el&&document.activeElement!==el)el.value=E[g]||''});{const c=$('edu-cc');if(document.activeElement!==c)c.value=E.cc||''}
