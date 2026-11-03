@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-24";
+const APP_VERSION = "2026-11-03-25";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -272,6 +272,22 @@ header{border-top:4px solid var(--brand);box-shadow:inset 0 -3px 0 0 color-mix(i
 .ro-p{display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--soft);border-radius:9px;padding:5px 8px;font-size:.9rem}
 .ro-p.me{background:var(--ok-bg);font-weight:700}.ro-p small{color:var(--muted)}.ro-p button{border:0;background:none;cursor:pointer;color:var(--muted);font-size:.9rem}
 .duty{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.92rem}
+.em-bg{position:fixed;inset:0;z-index:120;background:rgba(80,0,0,.55);overflow:auto;padding:12px}
+.em{max-width:760px;margin:0 auto;background:var(--surface);border-radius:16px;border:3px solid var(--bad);padding:14px;display:grid;gap:10px}
+.em h2{margin:0;color:var(--bad);font-size:1.3rem}.em .cnt{display:flex;gap:8px;flex-wrap:wrap}
+.em .item{flex-wrap:wrap}.em .seg button{min-width:0;padding:8px 9px;font-size:.85rem}
+.em .seg button[aria-pressed="true"].m{background:var(--ap);color:#fff}
+.em-btn{background:var(--bad)!important;color:#fff!important;border-color:var(--bad)!important;font-weight:700}
+.bed-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.bed-room{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;display:grid;gap:6px;align-content:start;cursor:pointer}
+.bed-room.full{border-color:var(--warn)}.bed-room.over{border:2px solid var(--bad)}.bed-room.tgt{outline:3px dashed var(--accent)}
+.bed-room h3{margin:0;font-size:1rem;display:flex;justify-content:space-between;align-items:center}
+.bed{display:flex;gap:6px;align-items:center;border:1px dashed var(--line);border-radius:9px;padding:4px 6px;font-size:.88rem;min-height:30px}
+.bed .no{color:var(--muted);font-size:.75rem;min-width:22px}
+.chipS{background:var(--soft);border-radius:99px;padding:3px 10px;cursor:grab;border:0;font:inherit;color:var(--ink)}.chipS[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.lb{display:grid;gap:6px}.lb .r{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;padding:6px 8px;border-radius:10px;background:var(--soft)}
+.lb .r.top{background:linear-gradient(90deg,#FFE7A3,#FFF6D9);color:#3a2a00}.lb .r b.n{font:400 1.2rem var(--f-display)}
+.slog{display:grid;gap:6px}.slog .e{background:var(--soft);border-radius:10px;padding:8px 10px;font-size:.92rem}.slog .e .w{font-size:.78rem;color:var(--muted)}
 .pat{border:1px solid var(--warn);background:var(--warn-bg);border-radius:12px;padding:10px 12px;display:grid;gap:4px}
 .kpi .v{font:400 1.45rem var(--f-display);line-height:1.1}.kpi .l{font-size:.85rem;color:var(--muted)}.kpi .d{font-size:.78rem;font-weight:700}.kpi .d.up{color:var(--ok)}.kpi .d.dn{color:var(--bad)}
 .late-p .item{background:var(--surface);border-radius:10px;padding:8px 10px}
@@ -535,6 +551,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <button type="button" id="t-mgr" data-tab="mgr" data-perm="mgr" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="lbl">לוח מנהל</span><span class="badge" id="mgrBadge" hidden></span></button>
     <button type="button" id="t-sched" data-tab="sched" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="lbl">מערכת שבועית</span></button>
     <button type="button" id="t-roster" data-tab="roster" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="9" cy="15" r="1.6"/><path d="M13 14.5h4M13 17h3"/></svg><span class="lbl">שיבוץ מדריכים</span></button>
+    <button type="button" id="t-beds" data-tab="beds" data-perm="stu" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7M3 14h18M3 18v2M21 18v2"/><rect x="6" y="6" width="5" height="3" rx="1"/></svg><span class="lbl">חדרים ומיטות</span></button>
     <button type="button" id="t-cal" data-tab="cal" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg><span class="lbl">לוח שנה</span></button>
     <button type="button" id="t-rooms" data-tab="rooms" data-perm="rooms" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17"/><path d="M2 21h20M12 12h.01M16 7h3a1 1 0 0 1 1 1v13"/></svg><span class="lbl">בדיקת חדרים</span></button>
     <button type="button" id="t-maint" data-tab="maint" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg><span class="lbl">תחזוקה</span><span class="badge" id="mtBadge" hidden></span></button>
@@ -569,6 +586,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
   <!-- מסך הבית -->
   <section id="tab-home" hidden style="display:grid;gap:16px">
     <div class="tv" id="tv" hidden></div>
+    <div class="em-bg" id="emBg" hidden><div class="em" id="em"></div></div>
     <div class="home-hero" id="hmHero"></div>
     <div id="hmNow"></div>
     <div class="panel" id="hmDayP" style="padding-block:10px 4px"><div class="dayline" id="hmDay"></div></div>
@@ -577,6 +595,9 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <div id="hmNotif"></div>
     <div class="home-tiles" id="hmTiles"></div>
     <div id="hmLate"></div>
+    <div class="panel" id="hmLogP" hidden><h2>📝 יומן משמרת</h2><div id="hmLog"></div></div>
+    <div class="panel" id="hmLbP" hidden><h2>🏆 תחרות השבוע</h2><div id="hmLb"></div></div>
+    <div id="hmGaps"></div>
     <div id="hmLn"></div>
     <div class="panel" id="hmRoundsP"><h2>דיווחים להיום</h2><div id="hmRounds"></div></div>
     <div class="panel" id="hmPerP" hidden><div class="row" style="justify-content:space-between"><h2 style="margin:0">סיכום תקופה</h2><div class="seg" id="hmPerSeg"><button type="button" data-act="per" data-p="1">היום</button><button type="button" data-act="per" data-p="7">שבוע</button><button type="button" data-act="per" data-p="30">חודש</button></div></div><div id="hmPer" style="margin-top:10px"></div></div>
@@ -742,6 +763,11 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <details data-mt="alerts"><summary>טופלו לאחרונה</summary><div id="handled" style="margin-top:8px"></div></details>
   </section>
   <!-- מערכת שבועית -->
+  <section id="tab-beds" hidden style="display:grid;gap:14px">
+    <div class="calnote" id="bedHelp"></div>
+    <div id="bedFree"></div>
+    <div class="bed-grid" id="bedGrid"></div>
+  </section>
   <section id="tab-roster" hidden style="display:grid;gap:14px">
     <div class="row" style="justify-content:space-between"><button class="btn small" type="button" data-act="roPrev">→ שבוע קודם</button><b id="roWk"></b><button class="btn small" type="button" data-act="roNext">שבוע הבא ←</button></div>
     <div id="roMine"></div>
@@ -935,7 +961,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shName">
     <div class="sheet-top">
       <h2 id="shName" style="font-size:1.3rem"></h2>
-      <span class="row" style="gap:6px"><button class="btn small" data-act="stuRep" data-perm="reports">📊 דוח תלמיד</button><button class="btn small" data-act="close">סגור</button></span>
+      <span class="row" style="gap:6px"><button class="btn small" data-act="stuMonth" data-perm="stu">📄 דוח חודשי</button><button class="btn small" data-act="stuRep" data-perm="reports">📊 דוח תלמיד</button><button class="btn small" data-act="close">סגור</button></span>
     </div>
     <div id="shStatus"></div>
     <div class="ssum" id="shSum"></div>
@@ -1481,7 +1507,7 @@ function applyPerms(){
   $('topSum').hidden=!ok;
   const na=$('noAccess');na.hidden=ok;
   if(!ok){
-    ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','shab','act','lights','roster','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
+    ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','shab','act','lights','roster','beds','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
     const m={removed:['אין לך גישה','החשבון הזה לא רשום כאיש צוות. פנו למנהל הפנימייה.'],
       disabled:['הגישה שלך הושבתה','מנהל הפנימייה השבית את הגישה שלך. לפרטים, פנו אליו.'],
       none:['אין לך עדיין הרשאות','מנהל הפנימייה עוד לא הגדיר מה מותר לך לעשות. פנו אליו.'],
@@ -1520,7 +1546,7 @@ document.addEventListener('change',async e=>{
     else if(el.dataset.sact==='perm'){const s=S.staff.find(x=>x.id===id);const perms={...(s?.perms||{}),[el.dataset.k]:el.checked};await db.doc('staff/'+id).update({perms});toast('ההרשאות עודכנו')}
   }catch(err){fail(err)}
 });
-function renderAll(){netState();renderRoster();renderAc();renderLights();renderIns();renderMt();renderLearn();renderShab();renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes();renderSched();renderHome()}
+function renderAll(){netState();renderBeds();renderEm();renderRoster();renderAc();renderLights();renderIns();renderMt();renderLearn();renderShab();renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes();renderSched();renderHome()}
 
 /* ---------- sheet ---------- */
 function setRoomSel(sel,v){if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o)}sel.value=v}
@@ -1654,7 +1680,7 @@ document.addEventListener('click',async e=>{
   if(e.target===$('nnBg')){closeNN();return}
   if(!b)return;
   if(b.dataset.tab){S.tab=b.dataset.tab;document.body.dataset.page=S.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
-    ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','shab','act','lights','roster','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='roster')renderRoster();if(S.tab==='lights')renderLights();if(S.tab==='act'){subAc();renderAc()}if(S.tab==='home')renderHome();if(S.tab==='rooms')subIns();if(S.tab==='maint'){subMt();renderMt()}if(S.tab==='learn'){subLn();renderLearn()}if(S.tab==='shab'){subShab();renderShab()}if(S.tab==='staff')loadAudit();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
+    ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','shab','act','lights','roster','beds','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='beds')renderBeds();if(S.tab==='roster')renderRoster();if(S.tab==='lights')renderLights();if(S.tab==='act'){subAc();renderAc()}if(S.tab==='home')renderHome();if(S.tab==='rooms')subIns();if(S.tab==='maint'){subMt();renderMt()}if(S.tab==='learn'){subLn();renderLearn()}if(S.tab==='shab'){subShab();renderShab()}if(S.tab==='staff')loadAudit();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
     try{localStorage.setItem('pn-tab',S.tab)}catch{}renderBnav();window.scrollTo(0,0);return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
   if(!db&&!['close','open','nnClose','nnCat','absLen','onlyOpen','onlyOpenM','mtab','insSel','theme','bigText','go','menuOpen','bRead','bShowAll','mtF','mtImg','lnT','lnGrade','lnClr','shNew','shCancel'].includes(b.dataset.act))return;
@@ -1776,6 +1802,14 @@ document.addEventListener('click',async e=>{
     case'roDel':{const k=b.dataset.k;await roSave(k,dutyOn(k).filter((x,i)=>i!==+b.dataset.i));break}
     case'roClear':if(armed(b,'בטוח? לנקות')){const u={};for(let i=0;i<7;i++)u[rk(addD(S.roWk,i))]=[];try{await db.doc('settings/roster').set({d:u},{merge:true});toast('השבוע נוקה')}catch(e){fail(e)}}break;
     case'roCopy':{const n=+b.dataset.n,u={};for(let w=1;w<=n;w++)for(let i=0;i<7;i++){const src=addD(S.roWk,i);u[rk(addD(S.roWk,i+7*w))]=dutyOn(src)}try{await db.doc('settings/roster').set({d:u},{merge:true});toast(n===1?'הועתק לשבוע הבא':`הועתק ל-${n} השבועות הבאים`)}catch(e){fail(e)}break}
+    case'emStart':{if(S.em){renderEm();break}if(!armed(b,'לחץ שוב להפעלה'))break;const reason=prompt('סיבה (לא חובה): אזעקה / תרגיל / פינוי / אחר','')||'';try{await OW(db.collection('emergency').add({active:true,reason,marks:{},at:Date.now(),by:S.me,byName:S.myName}));buzz()}catch(e){fail(e)}break}
+    case'emMark':{const E=S.em;if(!E)break;const id=b.dataset.id,v=E.marks?.[id]?.s===b.dataset.v?firebase.firestore.FieldValue.delete():{s:b.dataset.v,at:Date.now(),by:S.me,n:S.myName||''};buzz();try{await OW(db.doc('emergency/'+E.id).update({['marks.'+id]:v}))}catch(e){fail(e)}break}
+    case'emF':S.emF=b.dataset.f||'';renderEm();break;
+    case'emEnd':{const E=S.em;if(!E||!armed(b,'בטוח? לסיים'))break;const st=allSorted().filter(s=>!isOut(s.id)),M=E.marks||{};try{await OW(db.doc('emergency/'+E.id).update({active:false,endAt:Date.now(),endBy:S.myName||'',sum:{total:st.length,safe:st.filter(s=>M[s.id]?.s==='safe').length,ok:st.filter(s=>M[s.id]?.s==='ok').length,miss:st.filter(s=>M[s.id]?.s==='miss').map(s=>s.name),un:st.filter(s=>!M[s.id]).map(s=>s.name)}}));toast('ספירת החירום הסתיימה ונשמרה')}catch(e){fail(e)}break}
+    case'logAdd':{const t=$('logT').value.trim();if(!t){toast('כתבו משהו');break}try{await OW(db.collection('shiftlog').add({k:b.dataset.k,text:t,at:Date.now(),by:S.me,byName:S.myName}));$('logT').value='';toast('נוסף ליומן המשמרת')}catch(e){fail(e)}break}
+    case'logDel':if(armed(b,'בטוח?')){try{await OW(db.doc('shiftlog/'+b.dataset.id).delete())}catch(e){fail(e)}}break;
+    case'mvCancel':S.mvSel=null;renderBeds();break;
+    case'stuMonth':stuMonthly(S.sel);break;
     case'tvOn':tvOpen(true);break;
     case'tvOff':tvOpen(false);break;
     case'per':S.per=+b.dataset.p;renderPeriod();break;
@@ -1958,8 +1992,8 @@ window.addEventListener('online',()=>{netState();toast('החיבור חזר. ה�
 window.addEventListener('offline',netState);
 
 /* ---------- activity log ---------- */
-const AUD_COL={students:'תלמיד',status:'יציאה / חזרה',profiles:'פרטים אישיים',photos:'תמונת תלמיד',notes:'הערה',staff:'עובד והרשאות',staffProfiles:'כרטיס עובד',settings:'הגדרות',schedule:'מערכת שבועית',config:'מנהל ראשי',inspections:'בדיקת חדר',nightcount:'נוכחות ערב',morning:'השכמה',moves:'יומן יציאות',maint:'תחזוקה',learn:'מרכז למידה',shabbat:'שבת',activities:'פעילות / טיול',lights:'כיבוי אורות'};
-const AUD_TOP=/^(students|status|profiles|photos|notes|staff|staffProfiles|settings|schedule|config|inspections|moves|maint|learn|shabbat|activities)\/[^/]+$/,AUD_SUB=/^(nightcount|morning|lights)\/([^/]+)\/marks\/([^/]+)$/;
+const AUD_COL={students:'תלמיד',status:'יציאה / חזרה',profiles:'פרטים אישיים',photos:'תמונת תלמיד',notes:'הערה',staff:'עובד והרשאות',staffProfiles:'כרטיס עובד',settings:'הגדרות',schedule:'מערכת שבועית',config:'מנהל ראשי',inspections:'בדיקת חדר',nightcount:'נוכחות ערב',morning:'השכמה',moves:'יומן יציאות',maint:'תחזוקה',learn:'מרכז למידה',shabbat:'שבת',activities:'פעילות / טיול',lights:'כיבוי אורות',emergency:'ספירת חירום',shiftlog:'יומן משמרת'};
+const AUD_TOP=/^(students|status|profiles|photos|notes|staff|staffProfiles|settings|schedule|config|inspections|moves|maint|learn|shabbat|activities|emergency|shiftlog)\/[^/]+$/,AUD_SUB=/^(nightcount|morning|lights)\/([^/]+)\/marks\/([^/]+)$/;
 function audParse(path){let m=path.match(AUD_SUB);if(m)return {col:m[1],id:m[3],date:m[2]};if(AUD_TOP.test(path)){const [col,id]=path.split('/');return {col,id}}return null}
 const stuName=id=>S.students.get(id)?.name||'';
 function audLabel(col,id,data){
@@ -2383,6 +2417,90 @@ $('lnForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return
   if(toMin(d.to)<=toMin(d.from)){toast('שעת הסיום צריכה להיות אחרי שעת ההתחלה');return}
   $('lnBtn').disabled=true;try{await OW(db.collection('learn').add(d));S.lnSel=new Set();$('lnNote').value='';toast('המפגש נשמר');renderLearn()}catch(err){fail(err)}$('lnBtn').disabled=false});
 
+/* ---------- emergency headcount ---------- */
+S.em=null;
+function subEm(){if(!db||S.unEm)return;S.unEm=1;S.subs.push(db.collection('emergency').where('active','==',true).onSnapshot(q=>{const d=q.docs[0];const prev=S.em;S.em=d?{id:d.id,...d.data()}:null;
+  if(S.em&&(!prev||prev.id!==S.em.id)&&S.em.by!==S.me)notify('🚨 ספירת חירום',`${S.em.byName||''} הפעיל ספירת חירום${S.em.reason?' – '+S.em.reason:''}`,'em-'+S.em.id);renderEm()},()=>{}))}
+const EM_S=[['safe','✓ במרחב מוגן','p'],['ok','✓ נמצא – אחר','m'],['miss','✗ לא נמצא','a']];
+function renderEm(){const bg=$('emBg');if(!bg)return;const E=S.em;bg.hidden=!E;document.body.style.overflow=E||S.tv?'hidden':'';if(!E)return;
+  const st=allSorted().filter(s=>!isOut(s.id)),M=E.marks||{},c=k=>st.filter(s=>M[s.id]?.s===k).length,un=st.filter(s=>!M[s.id]),miss=st.filter(s=>M[s.id]?.s==='miss');
+  const f=S.emF||'',L=st.filter(s=>!f||(f==='un'?!M[s.id]:M[s.id]?.s===f)).filter(qMatch(S.emQ||''));
+  $('em').innerHTML=`<div class="row" style="justify-content:space-between"><h2>🚨 ספירת חירום פעילה</h2><span class="muted">${when(E.at)} · ${esc(E.byName||'')}${E.reason?' · '+esc(E.reason):''}</span></div>
+   <div class="cnt"><button class="pill ok" data-act="emF" data-f="safe" style="border:0;cursor:pointer">${c('safe')} במרחב מוגן</button><button class="pill ap" data-act="emF" data-f="ok" style="border:0;cursor:pointer">${c('ok')} נמצאו במקום אחר</button><button class="pill bad" data-act="emF" data-f="miss" style="border:0;cursor:pointer">${miss.length} לא נמצאו</button><button class="pill" data-act="emF" data-f="un" style="border:0;cursor:pointer">${un.length} עוד לא נבדקו</button>${f?'<button class="pill" data-act="emF" data-f="" style="border:0;cursor:pointer">✕ הכל</button>':''}<span class="pill">${st.length} בפנימייה</span></div>
+   <div class="bar" role="img" aria-label="התקדמות"><i style="width:${st.length?(st.length-un.length)/st.length*100:0}%;background:var(--ok)"></i></div>
+   ${miss.length?`<div class="late-p"><h2>✗ לא נמצאו (${miss.length})</h2><span>${esc(miss.map(s=>s.name+(s.room?' ('+s.room+')':'')).join(', '))}</span></div>`:''}
+   <input id="emQ" type="search" placeholder="🔍 חיפוש תלמיד או חדר" value="${esc(S.emQ||'')}">
+   <div class="list">${L.map(s=>{const m=M[s.id];return `<div class="item">${av(s)}<span class="name" style="flex:1">${esc(s.name)}<span class="meta">${esc([s.grade?'כיתה '+s.grade:'',s.room?'חדר '+s.room:'',m?'סומן ע"י '+m.n+' '+tf.format(new Date(m.at)):''].filter(Boolean).join(' · '))}</span></span><div class="seg">${EM_S.map(([k,l,c2])=>`<button class="${c2}" aria-pressed="${m?.s===k}" data-act="emMark" data-id="${s.id}" data-v="${k}">${l}</button>`).join('')}</div></div>`}).join('')}</div>
+   <div class="row" style="justify-content:space-between"><span class="muted" style="font-size:.88rem">כל הצוות רואה את אותה רשימה בזמן אמת.</span>${S.owner||has('mgr')||E.by===S.me?`<button class="btn primary" type="button" data-act="emEnd">${un.length||miss.length?'סיום ספירה (יש חסרים!)':'✓ סיום ספירה – כולם נמצאו'}</button>`:''}</div>`;
+  const q=$('emQ');q.oninput=()=>{S.emQ=q.value;const p=q.selectionStart;renderEm();const q2=$('emQ');q2.focus();q2.setSelectionRange(p,p)}}
+/* ---------- shift log ---------- */
+S.slog=[];
+function subLog(){if(!db||S.unLog)return;S.unLog=1;S.subs.push(db.collection('shiftlog').orderBy('at','desc').limit(80).onSnapshot(q=>{S.slog=q.docs.map(d=>({id:d.id,...d.data()}));renderLog()},()=>{}))}
+function renderLog(){const P=$('hmLogP');if(!P)return;P.hidden=!S.access;if(!S.access)return;const D=dutyNow(),cur=D.k,prev=addD(cur,-1);
+  const L=k=>S.slog.filter(x=>x.k===k).sort((a,b)=>a.at-b.at),e=x=>`<div class="e"><span class="w">${tf.format(new Date(x.at))} · ${esc(x.byName||'')}</span><div style="white-space:pre-wrap">${esc(x.text)}</div>${x.by===S.me||S.owner?`<button class="btn small" type="button" data-act="logDel" data-id="${x.id}" style="margin-top:4px">מחק</button>`:''}</div>`;
+  const A=L(cur),B=L(prev);
+  $('hmLog').innerHTML=`<div class="slog">${B.length&&cur!==prev?`<b style="font-size:.9rem">מהמשמרת הקודמת (${fmtShort(prev)})</b>${B.map(e).join('')}`:''}<b style="font-size:.9rem">${D.on?'המשמרת הנוכחית':'למשמרת הערב'} (${fmtShort(cur)} ${shF()}–${shT()})</b>${A.map(e).join('')||'<span class="muted">עוד אין רישומים.</span>'}
+   ${S.ro?'':`<textarea id="logT" rows="2" placeholder="מה המשמרת הבאה צריכה לדעת? למשל: יוסי לא הרגיש טוב, לבדוק בבוקר"></textarea><div><button class="btn small primary" type="button" data-act="logAdd" data-k="${cur}">הוסף ליומן</button></div>`}</div>`}
+/* ---------- rooms & beds ---------- */
+const capOf=r=>+(S.settings?.roomCap?.[r])||4;
+function renderBeds(){if(S.tab!=='beds')return;const can=has('students')&&!S.ro,st=allSorted(),R0=roomsList().filter(r=>!STAFF_ROOMS.has(r)),sel=S.mvSel;
+  $('bedHelp').innerHTML=can?`${sel?`<b>נבחר: ${esc(S.students.get(sel)?.name||'')}</b> – לחצו על החדר או המיטה שאליהם להעביר אותו. <button class="btn small" type="button" data-act="mvCancel">ביטול</button>`:'להעברת תלמיד: לחצו על השם שלו ואז על החדר או המיטה החדשים. במחשב אפשר גם לגרור.'}`:'מפת החדרים והמיטות.';
+  const free=st.filter(s=>!s.room||!R0.includes(String(s.room)));
+  $('bedFree').innerHTML=free.length?`<div class="panel"><b>בלי חדר (${free.length})</b><div class="row" style="gap:6px;margin-top:6px">${free.map(s=>`<button type="button" class="chipS" draggable="${can}" data-mv="${s.id}" aria-pressed="${sel===s.id}">${esc(s.name)}</button>`).join('')}</div></div>`:'';
+  $('bedGrid').innerHTML=R0.map(r=>{const L=st.filter(s=>String(s.room)===r),cap=capOf(r),beds=[];for(let i=1;i<=Math.max(cap,L.length);i++)beds.push(i);
+    const byBed=new Map(),loose=[];L.forEach(s=>{const b=+s.bed;if(b&&!byBed.has(b))byBed.set(b,s);else loose.push(s)});beds.forEach(b=>{if(!byBed.has(b)&&loose.length)byBed.set(b,loose.shift())});
+    return `<div class="bed-room ${L.length>cap?'over':L.length===cap?'full':''} ${sel?'tgt':''}" data-room="${r}"><h3><span>חדר ${r}</span><span class="muted" style="font-size:.85rem;font-weight:400">${L.length}/${can?`<input type="number" min="1" max="12" value="${cap}" data-cap="${r}" style="width:3.2em;padding:1px 3px" aria-label="מספר מיטות">`:cap}</span></h3>
+     ${beds.map(b=>{const s=byBed.get(b);return `<div class="bed" data-room="${r}" data-bed="${b}"><span class="no">🛏 ${b}</span>${s?`<button type="button" class="chipS" draggable="${can}" data-mv="${s.id}" aria-pressed="${sel===s.id}">${esc(s.name)} <small class="muted">${esc(s.grade||'')}</small></button>`:'<span class="muted" style="font-size:.8rem">פנוי</span>'}</div>`}).join('')}
+     ${L.length>cap?`<span class="bad" style="font-size:.85rem;font-weight:700">⚠ ${L.length-cap} מעל מספר המיטות</span>`:''}</div>`}).join('')}
+async function moveStu(sid,room,bed){const s=S.students.get(sid);if(!s)return;const L=allSorted().filter(x=>String(x.room)===room&&x.id!==sid);
+  if(!bed){const used=new Set(L.map(x=>+x.bed).filter(Boolean));bed=1;while(used.has(bed))bed++}
+  const occ=L.find(x=>+x.bed===+bed);
+  try{if(occ&&String(s.room)!==room){const used=new Set(L.map(x=>+x.bed).filter(Boolean));let nb=1;while(used.has(nb)||nb===+bed)nb++;await OW(db.doc('students/'+occ.id).update({bed:nb}))}
+    else if(occ){await OW(db.doc('students/'+occ.id).update({bed:+s.bed||null}))}
+    await OW(db.doc('students/'+sid).update({room,bed:+bed}));toast(`${s.name} → חדר ${room}, מיטה ${bed}`);if(L.length+1>capOf(room))toast(`⚠ חדר ${room} מלא – ${L.length+1} תלמידים ל-${capOf(room)} מיטות`)}catch(e){fail(e)}
+  S.mvSel=null;renderBeds()}
+document.addEventListener('click',e=>{if(S.tab!=='beds'||!has('students')||S.ro)return;const chip=e.target.closest('[data-mv]');if(chip){e.stopPropagation();S.mvSel=S.mvSel===chip.dataset.mv?null:chip.dataset.mv;renderBeds();return}
+  const t=e.target.closest('[data-bed],[data-room]');if(t&&S.mvSel&&!e.target.closest('input')){moveStu(S.mvSel,t.dataset.room,t.dataset.bed?+t.dataset.bed:null)}},true);
+document.addEventListener('dragstart',e=>{const c=e.target.closest?.('[data-mv]');if(c){e.dataTransfer.setData('text/plain',c.dataset.mv)}});
+document.addEventListener('dragover',e=>{if(e.target.closest?.('#bedGrid [data-room]'))e.preventDefault()});
+document.addEventListener('drop',e=>{const t=e.target.closest?.('#bedGrid [data-bed],#bedGrid [data-room]');const id=e.dataTransfer?.getData('text/plain');if(t&&id){e.preventDefault();moveStu(id,t.dataset.room,t.dataset.bed?+t.dataset.bed:null)}});
+document.addEventListener('change',async e=>{const r=e.target.dataset?.cap;if(!r)return;try{await db.doc('settings/app').set({roomCap:{[r]:Math.max(1,Math.min(12,+e.target.value||4))}},{merge:true});toast(`חדר ${r}: ${e.target.value} מיטות`)}catch(err){fail(err)}});
+/* ---------- weekly competition ---------- */
+function compData(){const wk=weekOf(ymd(new Date())),from=new Date(wk+'T00:00').getTime(),st=allSorted(),R0=roomsList().filter(r=>!STAFF_ROOMS.has(r));
+  const pr=new Map();(S.notes||[]).filter(n=>isPraise(n)&&n.at>=from).forEach(n=>pr.set(n.sid,(pr.get(n.sid)||0)+ptsOf(n)));
+  const insOk=S.unIns&&S.insWeek===wk;
+  const rooms=R0.map(r=>{const L=st.filter(s=>String(s.room)===r);if(!L.length)return null;const ip=insOk&&S.ins.has(r)?S.ins.get(r).score*2:0,pp=L.reduce((a,s)=>a+(pr.get(s.id)||0),0);return {r,ip,pp,t:ip+pp}}).filter(Boolean).sort((a,b)=>b.t-a.t);
+  const grades=GRADES.map(g=>{const L=st.filter(s=>s.grade===g);if(!L.length)return null;const pp=L.reduce((a,s)=>a+(pr.get(s.id)||0),0);return {g,pp,avg:+(pp/L.length).toFixed(1)}}).filter(Boolean).sort((a,b)=>b.avg-a.avg);
+  return {rooms,grades,insOk}}
+function lbHtml(D,n){return `<div class="lb">${D.rooms.slice(0,n).map((x,i)=>`<div class="r ${i===0&&x.t>0?'top':''}"><b class="n">${i===0&&x.t>0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</b><span>חדר ${x.r} <small class="muted">· ${D.insOk?'בדיקת חדר '+x.ip+' · ':''}שבחים ${x.pp}</small></span><b>${x.t}</b></div>`).join('')}</div>
+  <div class="row" style="gap:6px;margin-top:8px">${D.grades.map((x,i)=>`<span class="pill ${i===0&&x.pp?'ok':''}">${i===0&&x.pp?'🏆 ':''}כיתה ${x.g}: ${x.avg} לתלמיד</span>`).join('')}</div>`}
+function renderComp(){const P=$('hmLbP');if(!P)return;const D=compData();P.hidden=!S.access||!D.rooms.length;if(P.hidden)return;$('hmLb').innerHTML=lbHtml(D,5)+`<span class="muted" style="font-size:.82rem">ניקוד: בדיקת חדר (עד 10) + נקודות שבח של דיירי החדר מתחילת השבוע.</span>`}
+/* ---------- data gaps ---------- */
+function gapsList(){const st=allSorted(),P=has('personal'),R0=new Set(roomsList());const G=[];
+  st.forEach(s=>{const w=[];if(!s.grade)w.push('כיתה');if(!s.room||!R0.has(String(s.room)))w.push('חדר');if(!s.photoAt)w.push('תמונה');
+    if(P&&S.profiles){const p=S.profiles.get(s.id)||{};if(!p.fatherPhone&&!p.motherPhone)w.push('טלפון הורה');if(!p.birthDate&&!s.birthDate)w.push('תאריך לידה')}
+    if(w.length)G.push([s,w])});return G}
+function renderGaps(){const el=$('hmGaps');if(!el)return;if(!(S.owner||has('mgr')||has('students'))){el.innerHTML='';return}const G=gapsList();
+  el.innerHTML=G.length?`<details class="panel"><summary style="cursor:pointer;font-weight:600">🧩 חוסרים בנתונים – ${G.length} תלמידים</summary><div class="list" style="margin-top:8px">${G.slice(0,60).map(([s,w])=>`<div class="item"><button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">חסר: ${w.join(', ')}</span></button></div>`).join('')}</div></details>`:''}
+/* ---------- monthly student report (print / PDF) ---------- */
+function stuMonthly(sid){const s=S.students.get(sid),c=S.sumC.get(sid+'|'+ymd(new Date()));if(!s||!c){toast('רגע, הנתונים נטענים…');return}
+  const ms=ymd(new Date(monthStart())),idx=c.D.map((k,i)=>[k,i]).filter(([k])=>k>=ms);
+  const ev=idx.map(([,i])=>c.ev2[i]).filter(Boolean),mo=idx.map(([,i])=>c.mo2[i]).filter(Boolean),p=ev.filter(x=>x.s==='p').length,a=ev.filter(x=>x.s==='a'),lin=ev.filter(x=>x.late).length,wl=mo.filter(isLate).length,wn=mo.filter(x=>x.s==='no').length;
+  const N=(S.notes||[]).filter(n=>n.sid===sid&&n.at>=monthStart()).sort((x,y)=>x.at-y.at),pr=N.filter(isPraise),bh=N.filter(isBeh),GL=goalsOf(s),TK=tasksOf(s);
+  const cell=([k,i])=>{const e=c.ev2[i],m=c.mo2[i];const col=!e&&!m?'#eee':e?.s==='a'?(e.ap?'#7DA8EE':'#E0705F'):(e?.late||isLate(m)||m?.s==='no')?'#F2C14E':'#5DBB7E';return `<td style="background:${col};width:26px;height:26px;text-align:center;font-size:11px;border-radius:4px">${+k.slice(8)}</td>`};
+  const rows=[];for(let i=0;i<idx.length;i+=7)rows.push('<tr>'+idx.slice(i,i+7).map(cell).join('')+'</tr>');
+  const mName=new Intl.DateTimeFormat('he',{month:'long',year:'numeric'}).format(new Date());
+  const html=`<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>דוח חודשי – ${esc(s.name)}</title><style>body{font-family:Arial,sans-serif;color:#16222A;padding:24px;max-width:760px;margin:auto}h1{margin:0;color:#0E5DB4}h2{font-size:16px;border-bottom:2px solid #0E5DB4;padding-bottom:3px;margin-top:22px}.k{display:inline-block;border:1px solid #ccd;border-radius:10px;padding:8px 12px;margin:4px;text-align:center;min-width:90px}.k b{display:block;font-size:22px}table{border-collapse:separate;border-spacing:3px}li{margin:3px 0}.mut{color:#667}</style></head><body>
+   <div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="mut">ישיבה לצעירים דעת תבונות · פנימייה</div><h1>דוח חודשי – ${esc(s.name)}</h1><div>${esc(s.grade?'כיתה '+s.grade:'')}${s.room?' · חדר '+esc(s.room):''} · ${mName}</div></div><div class="mut">הופק ${nf.format(new Date())}</div></div>
+   <h2>נוכחות</h2><div><span class="k"><b>${ev.length?Math.round(p/ev.length*100)+'%':'—'}</b>נוכחות בערב</span><span class="k"><b>${a.length}</b>ערבים חסר</span><span class="k"><b>${lin}</b>הגעות באיחור</span><span class="k"><b>${wl}</b>איחורים בהשכמה</span><span class="k"><b>${wn}</b>לא קם</span>${S.ln.length?`<span class="k"><b>${hrs(lnMonthMins(sid))}</b>שעות במרכז הלמידה</span>`:''}<span class="k"><b>${pr.reduce((x,n)=>x+ptsOf(n),0)}</b>נקודות שבח</span></div>
+   <table style="margin-top:8px">${rows.join('')}</table><div class="mut" style="font-size:12px">ירוק תקין · צהוב איחור · אדום חסר · כחול חסר באישור · אפור אין נתון</div>
+   ${a.length?`<h2>היעדרויות</h2><ul>${idx.filter(([,i])=>c.ev2[i]?.s==='a').map(([k,i])=>`<li>${fmtShort(k)}${c.ev2[i].r?' – '+esc(c.ev2[i].r):''}</li>`).join('')}</ul>`:''}
+   ${pr.length?`<h2>שבחים</h2><ul>${pr.map(n=>`<li>${fmtShort(ymd(new Date(n.at)))} – ${esc(n.text)}</li>`).join('')}</ul>`:''}
+   ${bh.length?`<h2>הערות התנהגות</h2><ul>${bh.map(n=>`<li>${fmtShort(ymd(new Date(n.at)))} – ${esc(n.text)}</li>`).join('')}</ul>`:''}
+   ${GL.length||TK.length?`<h2>תוכנית אישית</h2><ul>${GL.map(G=>`<li>🎯 ${esc(G.type==='free'?G.txt:GOALS[G.type]?.[0]||'')}${G.who?' (אחראי: '+esc(G.who)+')':''}</li>`).join('')}${TK.map(t=>`<li>${t.done?'✓':'☐'} ${esc(t.t)}${t.due?' – עד '+fmtShort(t.due):''}</li>`).join('')}</ul>`:''}
+   <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+  let f=$('prFrame');if(!f){f=document.createElement('iframe');f.id='prFrame';f.style.cssText='position:fixed;width:0;height:0;border:0;left:-9999px';document.body.appendChild(f)}
+  f.srcdoc=html}
 /* ---------- staff duty roster ---------- */
 S.roster={};S.roWk=weekOf(ymd(new Date()));
 const SHIFTS=['כל המשמרת','ערב','לילה','בוקר'];
@@ -2556,6 +2674,7 @@ function renderTV(){if(!S.tv)return;const el=$('tv'),n=new Date(),today=ymd(n),h
    ${acT.length?lst('🚌 פעילויות היום',acT.map(a=>{const N=(a.sids||[]).length,p=(a.sids||[]).filter(id=>a.marks?.[id]==='p').length;return `<li><b>${esc(a.name)}</b><span>${a.time||''} · ${p}/${N}${(a.staff||[]).length?' · '+esc(a.staff.map(x=>x.n).join(', ')):''}</span></li>`}),''):''}
    ${mtO.length?lst('🔧 תקלות פתוחות',mtO.slice(0,6).map(m=>`<li><b>${esc(mtPlace(m))}</b><span>${esc(m.cat||'')}${m.urg===3?' ⚠':''}</span></li>`),''):''}
    ${bd.length?lst('🎂 ימי הולדת',bd.slice(0,5).map(x=>`<li><b>${esc(x.s.name)}</b><span>${x.i===0?'היום':x.i===1?'מחר':fmtShort(x.k)}</span></li>`),''):''}
+   ${(()=>{const D=compData();return D.rooms.length?`<div class="c"><h3>🏆 תחרות השבוע</h3><ul>${D.rooms.slice(0,5).map((x,i)=>`<li><b>${i===0&&x.t>0?'🥇 ':''}חדר ${x.r}</b><span>${x.t} נק׳</span></li>`).join('')}</ul></div>`:''})()}
    ${(S.board||[]).length?lst('📢 הודעות לצוות',(S.board||[]).slice().sort((a,b)=>b.at-a.at).slice(0,3).map(m=>`<li><span>${esc(String(m.text||'').slice(0,90))}</span></li>`),''):''}</div>`;
   const dd=$('hmDay');renderDay();if(dd)$('tvDay').innerHTML=dd.innerHTML}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.tv)tvOpen(false)});
@@ -2567,7 +2686,7 @@ function renderHome(){
   const first=(S.myName||'').split(' ')[0];
   const wkTxt=(()=>{const d=now.getDay(),h=now.getHours();if(isYesh(today)&&[5,6].includes(d))return '🕍 שבת ישיבה – כולם בפנימייה';if((d===5&&h>=9)||d===6)return '🏠 סוף שבוע – התלמידים בבית, חוזרים ביום ראשון';return ''})();
   const calTxt=offK.has(ti.k)?(ti.k==='c'?'חג':'חופשה')+(ti.l?' · '+ti.l:''):ti.k==='t'?(ti.l||'טיול'):ti.k==='l'?'תחילת לימודים 12:00':ti.l||(ti.k==='s'?'שבת':'יום לימודים');
-  $('hmHero').innerHTML=`${S.mgr||has('count')?'<button type="button" class="btn small" data-act="tvOn" style="position:absolute;left:0;top:0;width:auto">🖥 מסך גדול</button>':''}<h2 class="hi">${greet}${first?', '+esc(first):''}</h2>${(()=>{const D=dutyNow();if(!D.L.length)return '';const me=D.L.some(y=>y.u===S.me);return `<span class="duty">🧑‍🏫 <b>${D.on?'במשמרת עכשיו':'במשמרת הערב'}:</b> ${esc(dutyTxt(D.k))} <span class="muted">(${D.on?'עד '+shT():shF()+'–'+shT()})</span>${me?` <span class="pill ok">${D.on?'את/ה במשמרת עכשיו':'את/ה במשמרת הערב'}</span>`:dutyOn(addD(D.k,1)).some(y=>y.u===S.me)?' <span class="pill">את/ה במשמרת מחר</span>':''}</span>`})()}<span class="dt">${hb?hNum(hb.day)+' '+hb.m+' · ':''}${nf.format(now)}</span><span><span class="pill" style="background:${dotC(ti.k==='w'?'x':ti.k)};color:var(--ink)">${esc(calTxt)}</span>${wkTxt?` <span class="pill" style="background:${isYesh(today)?'var(--cal-y)':'var(--home-bg)'};color:var(--ink)">${wkTxt}</span>`:''}</span>`;
+  $('hmHero').innerHTML=`${S.mgr||has('count')?'<button type="button" class="btn small" data-act="tvOn" style="position:absolute;left:0;top:0;width:auto">🖥 מסך גדול</button>':''}${S.access&&!S.ro?'<button type="button" class="btn small em-btn" data-act="emStart" style="position:absolute;left:0;top:38px;width:auto">🚨 ספירת חירום</button>':''}<h2 class="hi">${greet}${first?', '+esc(first):''}</h2>${(()=>{const D=dutyNow();if(!D.L.length)return '';const me=D.L.some(y=>y.u===S.me);return `<span class="duty">🧑‍🏫 <b>${D.on?'במשמרת עכשיו':'במשמרת הערב'}:</b> ${esc(dutyTxt(D.k))} <span class="muted">(${D.on?'עד '+shT():shF()+'–'+shT()})</span>${me?` <span class="pill ok">${D.on?'את/ה במשמרת עכשיו':'את/ה במשמרת הערב'}</span>`:dutyOn(addD(D.k,1)).some(y=>y.u===S.me)?' <span class="pill">את/ה במשמרת מחר</span>':''}</span>`})()}<span class="dt">${hb?hNum(hb.day)+' '+hb.m+' · ':''}${nf.format(now)}</span><span><span class="pill" style="background:${dotC(ti.k==='w'?'x':ti.k)};color:var(--ink)">${esc(calTxt)}</span>${wkTxt?` <span class="pill" style="background:${isYesh(today)?'var(--cal-y)':'var(--home-bg)'};color:var(--ink)">${wkTxt}</span>`:''}</span>`;
   const ni=S.sched?schNowInfo():null;
   $('hmNow').innerHTML=ni&&(ni.cur||ni.next)?`<button type="button" class="calnote" data-act="go" data-to="sched" style="width:100%;text-align:right;cursor:pointer;font:inherit;color:var(--ink);background:${ni.cur?SK[ni.cur.k]?.[1]:'var(--soft)'}"><span style="display:grid;gap:2px"><span>עכשיו: ${ni.cur?esc(ni.cur.title)+' · <bdi dir="ltr">'+esc(ni.cur.from)+(ni.cur.to?'–'+esc(ni.cur.to):'')+'</bdi>':'אין פעילות מתוכננת'}</span>${ni.next?`<span class="muted" style="font-weight:400">הבא: ${esc(ni.next.title)} · ${esc(ni.next.from)}</span>`:''}</span></button>`:'';
   const ico=t=>$('t-'+t)?.querySelector('svg')?.outerHTML.replace('class="ni"','')||'';
@@ -2586,7 +2705,7 @@ function renderHome(){
   if(db&&(has('learn')||has('count')))subLn();
   {const up=(has('learn')||has('count'))?lnUpcoming().slice(0,2):[];$('hmLn').innerHTML=up.length?`<button type="button" class="calnote" data-act="go" data-to="learn" style="width:100%;text-align:right;font:inherit;color:var(--ink);cursor:pointer">📚 היום במרכז הלמידה: ${up.map(x=>`<b>${esc(x.subject)}</b> ${x.from} (${(x.sids||[]).length} רשומים)`).join(' · ')}</button>`:''}
   {const late=has('out')||S.mgr?lateOuts(st):[];$('hmLate').innerHTML=late.length?`<div class="late-p"><h2>⏰ היו אמורים לחזור ולא חזרו (${late.length})</h2><div class="list">${lateList(late)}</div></div>`:''}
-  renderBirthdays();renderBackupNote();renderNotifBtn();renderBoard();renderDay();renderRounds();renderPeriod();if(S.tv)renderTV();
+  renderBirthdays();renderBackupNote();renderNotifBtn();renderBoard();renderDay();renderRounds();renderPeriod();if(S.tv)renderTV();if(db&&S.access){subLog();subEm()}renderLog();renderComp();renderGaps();
   const nx=events().filter(e=>e.to>=today).slice(0,3);
   $('hmNextP').hidden=!nx.length;
   $('hmNext').innerHTML=nx.map(e=>`<div class="ev"><i style="background:${dotC(e.k)}"></i><span class="when">${rangeTxt(e.from,e.to)}</span><b>${esc(e.name)}</b></div>`).join('');
@@ -2783,7 +2902,7 @@ $('newStaff').addEventListener('submit',async e=>{e.preventDefault();if(!S.owner
 });
 
 /* ---------- Firebase: data ---------- */
-function unsubAll(){S.subs.forEach(f=>{try{f()}catch{}});S.subs=[];if(unMarks){unMarks();unMarks=null}if(S.unWake){S.unWake();S.unWake=null}if(S.unPrev){S.unPrev();S.unPrev=null}}
+function unsubAll(){S.subs.forEach(f=>{try{f()}catch{}});S.subs=[];S.unEm=S.unLog=S.unMt=S.unLn=S.unShab=S.unAc=0;S.mtLoaded=S.lnLoaded=false;if(unMarks){unMarks();unMarks=null}if(S.unWake){S.unWake();S.unWake=null}if(S.unPrev){S.unPrev();S.unPrev=null}}
 function subscribeAll(){
   unsubAll();S.unMt=S.unLn=S.unShab=null;if(!S.access)return;setTimeout(()=>{subMt();if(has('learn'))subLn()},0);
   const timer=setTimeout(()=>{if(!S.ready){S.ready=true;sys('לא ניתן להתחבר לנתונים כרגע. ייתכן שמה שמוצג אינו מעודכן.');renderAll()}},10000);
