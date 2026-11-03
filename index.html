@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-16";
+const APP_VERSION = "2026-11-03-17";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -2428,14 +2428,14 @@ $('pf-hbD').innerHTML='<option value="">יום</option>'+HL.slice(1).map((x,i)=>
 $('pf-hbM').innerHTML='<option value="">חודש</option>'+HBM.map(m=>`<option>${m}</option>`).join('');
 
 /* ---------- home ---------- */
-const tPct=v=>((toMin(v)-360)/(23*60-360))*100;
+const tPct=v=>Math.max(0,Math.min(100,((toMin(v)-360)/(1440-360))*100));
 function renderDay(){const el=$('hmDay');if(!el)return;const n=new Date(),now=n.getHours()*60+n.getMinutes(),today=ymd(n);
   const wb=S.settings?.wakeBy||'07:10',cb=S.settings?.countBy||'20:00',inn=allSorted().filter(s=>!isOut(s.id));
   const wDone=S.mornDate===today&&inn.length&&inn.every(s=>S.wake.get(s.id)),cDone=S.night===nightKey()&&inn.length&&inn.every(s=>S.marks.get(s.id));
-  const M=[[wb,'השכמה',wDone,!wDone&&toMin(wb)<now],[cb,'נוכחות ערב',cDone,!cDone&&toMin(cb)<now]];
-  const p=Math.max(0,Math.min(100,((now-360)/(1020))*100)),cl=v=>Math.max(0,Math.min(100,v));
-  const SI=(S.sched?schDayItems(n.getDay()):[]).filter(x=>x.from&&toMin(x.from)<1380).map(x=>{const a=Math.max(360,toMin(x.from)),b=Math.min(1380,x.to?toMin(x.to):a+30),r=cl((a-360)/10.2),w=Math.max(1.2,cl((b-360)/10.2)-r);return `<span class="blk ${now>=a&&now<b?'cur':''}" style="right:${r}%;width:${w}%;background:${SK[x.k]?.[1]||'var(--soft)'}" title="${esc(x.from+(x.to?'–'+x.to:'')+' '+x.title)}">${w>4?esc(x.title):''}</span>`}).join('');
-  el.innerHTML=`${SI}<div class="tr"></div>${M.map(([t,l,d,o])=>`<span class="mk ${d?'done':o?'over':''}" style="right:${tPct(t)}%">${d?'✓ ':''}${l}<br>${t}</span>`).join('')}${now>=360&&now<=1380?`<span class="now" style="right:${p}%" data-t="עכשיו ${pad(n.getHours())}:${pad(n.getMinutes())}"></span>`:''}`}
+  const M=[['morn','השכמה'],['count','נוכחות ערב'],['lights','כיבוי אורות']].map(([k,l])=>{const r=roundStat(k);const dl=k==='morn'&&S.mornDate!==today?wb:k!=='morn'&&S.night!==nightKey()?(tplOf(k).times[n.getDay()]||S.settings?.[RK[k][1]]||RK[k][2]):r.dl;const d=r.isToday&&r.tot>0&&r.done>=r.tot;return [dl,l,d,!d&&toMin(dl)<now&&(k!=='morn'||n.getHours()>=6)]});
+  const p=Math.max(0,Math.min(100,((now-360)/(1080))*100)),cl=v=>Math.max(0,Math.min(100,v));
+  const SI=(S.sched?schDayItems(n.getDay()):[]).filter(x=>x.from&&toMin(x.from)<1440).map(x=>{const a=Math.max(360,toMin(x.from)),b=Math.min(1440,x.to?toMin(x.to):a+30),r=cl((a-360)/10.8),w=Math.max(1.2,cl((b-360)/10.8)-r);return `<span class="blk ${now>=a&&now<b?'cur':''}" style="right:${r}%;width:${w}%;background:${SK[x.k]?.[1]||'var(--soft)'}" title="${esc(x.from+(x.to?'–'+x.to:'')+' '+x.title)}">${w>4?esc(x.title):''}</span>`}).join('');
+  el.innerHTML=`${SI}<div class="tr"></div>${M.map(([t,l,d,o])=>`<span class="mk ${d?'done':o?'over':''}" style="right:${tPct(t)}%">${d?'✓ ':''}${l}<br>${t}</span>`).join('')}${now>=360?`<span class="now" style="right:${p}%" data-t="עכשיו ${pad(n.getHours())}:${pad(n.getMinutes())}"></span>`:''}`}
 function renderRounds(){const el=$('hmRounds');if(!el)return;if(S.access)subRq();const n=new Date(),today=ymd(n),now=hm(n.getTime()),inn=allSorted().filter(s=>!isOut(s.id)),R=[];
   [['השכמה','morn','morning'],['נוכחות ערב','count','count'],['כיבוי אורות','lights','count']].forEach(([l,k,p])=>{if(!(has(p)||S.mgr))return;const r=roundStat(k);if(r.isToday&&r.act)R.push([l,k,r.done,r.tot,r.dl,r.req])});
   if(S.unIns&&S.insWeek===weekOf(today)){const RS=roomsList().filter(r=>!STAFF_ROOMS.has(r));R.push(['בדיקת חדרים (השבוע)','rooms',RS.filter(r=>S.ins.has(r)).length,RS.length,''])}
