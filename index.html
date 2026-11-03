@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-38";
+const APP_VERSION = "2026-11-03-39";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1914,6 +1914,7 @@ document.addEventListener('click',async e=>{
     case'bkSnooze':try{localStorage.setItem('pn-bk-sn',String(Date.now()+3*864e5))}catch{}renderBackupNote();toast('נזכיר שוב בעוד 3 ימים');break;
     case'hmCust':{const P=$('hmCustP');P.hidden=!P.hidden;if(!P.hidden){renderCust();P.scrollIntoView({block:'nearest',behavior:'smooth'})}break}
     case'dishDraw':dishDraw(false,b);break;
+    case'dishUsed':{const D=S.dish||{},used={...(D.used||{})},id=b.dataset.id;if(used[id])delete used[id];else used[id]='manual';const up={...D,used};if(!D.groups)up.groups=dishGroups().map(g=>g.join('+'));if(up.gi==null)up.gi=0;try{await db.doc('duty/dish').set(up)}catch(e){fail(e)}break}
     case'dishRe':if(armed(b,'בטוח? להגריל מחדש'))dishDraw(true,b);break;
     case'dishDone':{const k=thuOf(ymd(new Date())),h=S.dish?.hist?.[k];if(!h)break;try{await db.doc('duty/dish').set({hist:{[k]:{done:!h.done,doneAt:Date.now(),doneBy:S.myName||''}}},{merge:true})}catch(e){fail(e)}break}
     case'dishGroups':{const cur=dishGroups().map(g=>g.join('+')).join(', '),v=prompt('סדר הקבוצות להגרלה, מופרד בפסיקים. כיתות שמוגרלות יחד מחברים ב-+\nלמשל: ט+י, יא, יב',cur);if(!v)break;const G=v.split(',').map(x=>x.split('+').map(y=>y.trim()).filter(y=>GRADES.includes(y))).filter(x=>x.length);if(!G.length){toast('לא זוהו כיתות');break}try{await db.doc('duty/dish').set({groups:G.map(g=>g.join('+')),gi:0},{merge:true});toast('סדר הקבוצות נשמר')}catch(e){fail(e)}break}
@@ -2827,10 +2828,14 @@ async function dishDraw(re,btn){const k=thuOf(ymd(new Date())),D=S.dish||{},G=di
 function renderDish(){const P=$('hmDishP');if(!P)return;const show=S.access&&(has('count')||has('rooms')||S.mgr);P.hidden=!show;if(!show)return;subDish();
   const today=ymd(new Date()),k=thuOf(today),D=S.dish||{},h=D.hist?.[k],G=dishGroups(),gi=h?h.gi:((+D.gi||0)%Math.max(1,G.length)),grades=G[gi]||[],ed=!S.ro&&(has('count')||has('rooms')||S.mgr);
   const pool=allSorted().filter(s=>grades.includes(s.grade)),left=pool.filter(s=>!(D.used||{})[s.id]).length;
-  $('hmDishH').textContent=`תורן שטיפת סירים וכלים · יום חמישי ${fmtShort(k)}`;
+  $('hmDishH').textContent=`תורן שטיפת סירים וכלים · ליל שישי ${fmtShort(k)}`;
   const past=Object.entries(D.hist||{}).filter(([d])=>d<k).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,6);
   $('hmDish').innerHTML=(h?`<div class="item" style="flex-wrap:wrap;background:${h.done?'var(--ok-bg)':'var(--soft)'};border-radius:10px;border:0">${S.students.get(h.sid)?av(S.students.get(h.sid)):''}<span style="flex:1"><b>${esc(h.name)}</b> <small class="muted">כיתה ${esc(h.grade)}</small><span class="meta">הוגרל מקבוצת ${esc(h.g)} ע"י ${esc(h.byName||'')}${h.done?' · ✓ שטף'+(h.doneBy?' (סימן '+esc(h.doneBy)+')':''):''}</span></span>${ed?`<button class="btn small ${h.done?'':'primary'}" type="button" data-act="dishDone">${h.done?'ביטול':'✓ שטף'}</button>${h.done?'':'<button class="btn small" type="button" data-act="dishRe" title="למשל אם התלמיד לא בפנימייה">🎲 הגרל מחדש</button>'}`:''}</div>`
     :`<div class="row" style="justify-content:space-between;gap:8px"><span>השבוע מגרילים מ<b>${grades.length>1?'כיתות ':'כיתה '}${esc(grades.join(' + '))}</b> <small class="muted">· נשארו ${left} מתוך ${pool.length} שעוד לא שטפו בסבב הזה</small></span>${ed?'<button class="btn primary" type="button" data-act="dishDraw">🎲 הגרלה</button>':''}</div>`)
+   +(ed?`<details style="margin-top:6px" ${S.dishMk?'open':''} ontoggle="S.dishMk=this.open"><summary class="muted" style="cursor:pointer;font-size:.88rem">✓ סימון מי כבר שטף בסבב הנוכחי</summary><div style="display:grid;gap:10px;margin-top:8px">
+     <span class="muted" style="font-size:.85rem">מי שמסומן לא ייכנס להגרלה עד שכל הקבוצה שלו תשטוף. לחיצה מסמנת או מבטלת.</span>
+     ${G.map(g=>{const P2=allSorted().filter(s=>g.includes(s.grade));return P2.length?`<div><b style="font-size:.9rem">${esc(g.join(' + '))}</b> <small class="muted">(${P2.filter(s=>(D.used||{})[s.id]).length}/${P2.length})</small><div class="row" style="gap:6px;margin-top:4px">${P2.map(s=>`<button type="button" class="chipS" style="cursor:pointer" aria-pressed="${!!(D.used||{})[s.id]}" data-act="dishUsed" data-id="${s.id}">${(D.used||{})[s.id]?'✓ ':''}${esc(s.name)}</button>`).join('')}</div></div>`:''}).join('')}
+   </div></details>`:'')
    +`<details style="margin-top:6px"><summary class="muted" style="cursor:pointer;font-size:.88rem">סדר הקבוצות והיסטוריה</summary><div style="display:grid;gap:6px;margin-top:6px;font-size:.9rem">
      <span>סדר הקבוצות: ${G.map((g,i)=>`<b style="${i===((+D.gi||0)%G.length)&&!h?'color:var(--accent)':''}">${esc(g.join('+'))}</b>`).join(' ← ')}${S.mgr&&!S.ro?' <button class="btn small" type="button" data-act="dishGroups">שינוי</button>':''}</span>
      ${G.map(g=>{const P2=allSorted().filter(s=>g.includes(s.grade)),u=P2.filter(s=>(D.used||{})[s.id]);return `<span class="muted">${esc(g.join('+'))}: ${u.length} מתוך ${P2.length} כבר שטפו בסבב הנוכחי</span>`}).join('')}
@@ -2839,7 +2844,7 @@ function renderDish(){const P=$('hmDishP');if(!P)return;const show=S.access&&(ha
 function confetti(){const c=document.createElement('div');c.className='confetti';const col=['#0E5DB4','#C9A227','#2EAA6E','#E08A2E','#D45A9A','#5AA7FF'];
   c.innerHTML=Array.from({length:46},(_,i)=>`<i style="left:${Math.random()*100}%;background:${col[i%col.length]};animation-delay:${Math.random()*.35}s;transform:rotate(${Math.random()*180}deg)"></i>`).join('');document.body.appendChild(c);setTimeout(()=>c.remove(),2600)}
 function tvSpot(){const S2=[];
-  const k=thuOf(ymd(new Date())),h=S.dish?.hist?.[k];if(h)S2.push(['🍲 תורן שטיפת סירים – יום חמישי',`<div class="big">${esc(h.name)}</div><div>כיתה ${esc(h.grade)}${h.done?' · ✓ בוצע':''}</div>`]);
+  const k=thuOf(ymd(new Date())),h=S.dish?.hist?.[k];if(h)S2.push(['🍲 תורן שטיפת סירים – ליל שישי',`<div class="big">${esc(h.name)}</div><div>כיתה ${esc(h.grade)}${h.done?' · ✓ בוצע':''}</div>`]);
   const ev=events().filter(e=>e.to>=ymd(new Date())).slice(0,4);if(ev.length)S2.push(['📅 בקרוב',`<ul>${ev.map(e=>`<li><b>${esc(e.name)}</b><span>${rangeTxt(e.from,e.to)}</span></li>`).join('')}</ul>`]);
   const bd=typeof birthdays==='function'?birthdays(7):[];if(bd.length)S2.push(['🎂 ימי הולדת השבוע',`<ul>${bd.slice(0,5).map(x=>`<li><b>${esc(x.s.name)}</b><span>${x.i===0?'היום! 🎉':x.i===1?'מחר':fmtShort(x.k)}</span></li>`).join('')}</ul>`]);
   if(!S2.length)return '';const i=Math.floor(Date.now()/15000)%S2.length;return `<div class="spot"><h3>${S2[i][0]}</h3>${S2[i][1]}${S2.length>1?`<div class="dots">${S2.map((_,j)=>`<i class="${j===i?'on':''}"></i>`).join('')}</div>`:''}</div>`}
