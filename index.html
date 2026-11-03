@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-40";
+const APP_VERSION = "2026-11-03-41";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1293,6 +1293,7 @@ function av(s){if(s.photoAt&&S.photoVer.get(s.id)!==s.photoAt){S.photoVer.set(s.
 function progBar(el,parts,total,label){const done=parts.reduce((a,x)=>a+x[0],0);
   $(el).innerHTML=total?`<div class="row"><b>${label(done,total)}</b><span class="muted" style="font-size:.88rem">${parts.filter(x=>x[0]).map(x=>`${x[0]} ${x[2]}`).join(' · ')}</span></div><div class="bar" role="img" aria-label="${done} מתוך ${total}">${parts.map(([n,c])=>n?`<i style="width:${n/total*100}%;background:${c}"></i>`:'').join('')}</div>`:'';$(el).hidden=!total}
 const ABR=[['לא הודיע',0],['לא ידוע',0],['חולה בבית',1],['באישור הורים',1],['אירוע משפחתי',1],['באישור המנהל',1]];
+const LTR=['לא הודיע','חזר מהבית / מיציאה','תחבורה ציבורית','באישור הורים','באישור המנהל','תור לרופא / טיפול','שיעור או פעילות בישיבה','אחר'];
 const apOf=r=>!!(ABR.find(x=>x[0]===r)||[])[1];
 const DAYN=['א','ב','ג','ד','ה','ו','ש'];
 const DEF_Q={lights:[{q:'האם כל התלמידים בחדרים?',req:true},{q:'האם היו הפרעות או רעש אחרי כיבוי אורות?',req:true},{q:'משהו שהמשמרת של הבוקר צריכה לדעת?'}],count:[{q:'האם היו אירועים חריגים בפנימייה הערב?',req:true},{q:'איך הייתה האווירה בפנימייה?',scale:true,req:true},{q:'האם יש תלמיד שצריך תשומת לב מיוחדת? מי ולמה?'}],
@@ -1340,13 +1341,14 @@ function renderCount(){subRq();renderRq();
       const stt=S.status.get(s.id),m=S.marks.get(s.id);
       const parts=[s.grade?'כיתה '+s.grade:''];
       if(isOut(s.id))parts.push((stt.reason||'')+(stt.backBy?' · חזרה '+when(stt.backBy):''));
-      else if(m)parts.push((m.s==='p'?(m.late?'הגיע באיחור ':'סומן נוכח '):'סומן חסר '+(m.r?'('+m.r+') ':''))+(m.late&&m.lt?hm(m.lt):m.at?tf.format(new Date(m.at)):'')+' · '+byName(m.by));
+      else if(m)parts.push((m.s==='p'?(m.late?'הגיע באיחור '+(m.r?'('+m.r+') ':''):'סומן נוכח '):'סומן חסר '+(m.r?'('+m.r+') ':''))+(m.late&&m.lt?hm(m.lt):m.at?tf.format(new Date(m.at)):'')+' · '+byName(m.by));
       const meta=parts.filter(Boolean).join(' · ');
       h+=`<div class="item">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}${meta?`<span class="meta">${esc(meta)}</span>`:''}</button>`;
       if(isOut(s.id))h+=`<span class="chip ${stt.backBy&&stt.backBy<Date.now()?'bad':'warn'}">${stt.backBy&&stt.backBy<Date.now()?'באיחור':stt.long?'בבית':'בחוץ'}</span>`;
       else{const nn=nightNotes(s.id).length;if(canNN())h+=`<button class="nn-btn ${nn?'has':''}" type="button" data-act="nn" data-id="${s.id}" title="הערת לילה" aria-label="הערת לילה ל${esc(s.name)}">🌙${nn?' '+nn:''}</button>`;h+=''}
       if(!isOut(s.id)&&m?.late&&!S.ro)h+=`<input type="time" class="lt-in" data-id="${s.id}" value="${m.lt?hm(m.lt):''}" aria-label="שעת הגעה" title="שעת הגעה">`;
       if(!isOut(s.id))h+=`<div class="seg"><button class="p" aria-pressed="${m?.s==='p'&&!m.late}" data-act="mark" data-id="${s.id}" data-v="p" ${S.ro?'disabled':''}>✓ נוכח</button><button class="l" aria-pressed="${!!m?.late}" data-act="mark" data-id="${s.id}" data-v="l" ${S.ro?'disabled':''}>⏱ באיחור</button><button class="a ${m?.ap?'ap':''}" aria-pressed="${m?.s==='a'}" data-act="mark" data-id="${s.id}" data-v="a" ${S.ro?'disabled':''}>✗ חסר</button></div>`;
+      if(!isOut(s.id)&&m?.late&&!S.ro)h+=`<select class="ab-r" data-k="l" data-id="${s.id}" aria-label="סיבת האיחור"><option value="">סיבת האיחור…</option>${LTR.map(r=>`<option ${m.r===r?'selected':''}>${r}</option>`).join('')}</select>`;
       if(!isOut(s.id)&&m?.s==='a'&&!S.ro)h+=`<select class="ab-r" data-id="${s.id}" aria-label="סיבת היעדרות"><option value="">בחר סיבה…</option>${ABR.map(([r])=>`<option ${m.r===r?'selected':''}>${r}</option>`).join('')}</select>`;
       h+=`</div>`;
     }
@@ -1601,7 +1603,7 @@ function morningReport(){
     if(st&&st.state==='out'){o.home.push(s.name+(st.long?' (היעדרות ממושכת'+(st.reason?': '+st.reason:'')+', עד '+fmtShort(st.to)+')':st.reason?' ('+st.reason+')':''));continue}
     if(!n||n.s==='a'){if(n?.ap)o.apAbs.push(s.name+' ('+n.r+')');else o.absent.push(s.name+(n?.r&&n.r!=='לא ידוע'?' ('+n.r+')':''))}else{o.slept++;if(m&&m.s==='up')o.woke++}
     {const lt=S.prevLights?.get(s.id);if(lt?.s==='a')o.noRoom.push(s.name+(lt.r?' ('+lt.r+')':''))}
-    if(n&&n.late)o.lateIn.push(s.name+(n.lt?' – '+hm(n.lt):''));
+    if(n&&n.late)o.lateIn.push(s.name+(n.lt?' – '+hm(n.lt):'')+(n.r?' ('+n.r+')':''));
     if(m){if(m.s==='no')o.noWake.push(s.name);else if(m.s==='sick')o.sick.push(s.name);else if(isLate(m))o.late.push(s.name+' – '+hm(m.t))}}
   return {night,out}}
 const allUp=o=>o.slept>0&&o.woke===o.slept&&!o.late.length;
@@ -2289,7 +2291,7 @@ function renderAudit(){const el=$('auditList'),A=S.audL||[];const OP={set:'שמ�
    +(L.length?`<div class="list log">`+L.slice(0,200).map(e=>`<div class="item"><span class="time">${when(e.at)}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(e.byName||'')}</b> · ${esc(AUD_COL[e.col]||e.col)}${e.label?' · <b>'+esc(e.label)+'</b>':''}${e.detail?`<span class="meta">${esc(e.detail)}</span>`:''}</span><span class="chip ${e.op==='delete'?'bad':''}">${OP[e.op]||e.op}</span></div>`).join('')+`</div>`
     :`<div class="empty">${A.length?'אין פעולות שמתאימות לסינון.':'עדיין אין רישומים. מעכשיו כל פעולה של כל איש צוות תירשם כאן.'}</div>`)}
 document.addEventListener('change',async e=>{const t=e.target;if(!db)return;
-  if(t.classList?.contains('ab-r')){const id=t.dataset.id,r=t.value;try{await OW(db.collection('nightcount/'+S.night+'/marks').doc(id).update({r,ap:apOf(r)}));toast('הסיבה נשמרה')}catch(err){fail(err)}}
+  if(t.classList?.contains('ab-r')){const id=t.dataset.id,r=t.value;try{await OW(db.collection('nightcount/'+S.night+'/marks').doc(id).update(t.dataset.k==='l'?{r}:{r,ap:apOf(r)}));toast('הסיבה נשמרה')}catch(err){fail(err)}}
   if(t.dataset?.dl&&/^\d{2}:\d{2}$/.test(t.value)){try{await db.doc('settings/app').update({[t.dataset.dl]:t.value});toast('שעת הסגירה נשמרה')}catch(err){fail(err)}}});
 document.addEventListener('change',e=>{if(e.target.id==='audBy'){S.audF.by=e.target.value;renderAudit()}if(e.target.id==='audCol'){S.audF.col=e.target.value;renderAudit()}});
 
@@ -2420,7 +2422,7 @@ async function doBackup(b){if(!window.XLSX){toast('רכיב האקסל לא נט
     const days=[];for(let i=89;i>=0;i--)days.push(addD(ymd(new Date()),-i));
     const g=(c,k)=>db.collection(c+'/'+k+'/marks').get().then(q=>q.docs.filter(d=>d.id[0]!=='_').map(d=>[k,d.id,d.data()])).catch(()=>[]);
     const NC=(await Promise.all(days.map(k=>g('nightcount',k)))).flat(),MO=(await Promise.all(days.map(k=>g('morning',k)))).flat();
-    add('נוכחות ערב',[['ערב','תלמיד','מצב','נבדק ע"י'],...NC.map(([k,id,x])=>[k,nm(id),x.s==='p'?(x.late?'הגיע באיחור'+(x.lt?' '+hm(x.lt):''):'נוכח'):'חסר',x.byName||''])]);
+    add('נוכחות ערב',[['ערב','תלמיד','מצב','נבדק ע"י'],...NC.map(([k,id,x])=>[k,nm(id),x.s==='p'?(x.late?'הגיע באיחור'+(x.lt?' '+hm(x.lt):'')+(x.r?' – '+x.r:''):'נוכח'):'חסר',x.byName||''])]);
     add('השכמה',[['תאריך','תלמיד','מצב','שעה','נרשם ע"י'],...MO.map(([k,id,x])=>[k,nm(id),x.s==='up'?'קם':x.s==='no'?'לא קם':'חולה',x.t?hm(x.t):'',x.byName||''])]);
     try{const I=await db.collection('inspections').get();add('בדיקות חדרים',[['שבוע','חדר','ציון',...INS.map(x=>x[1]),'הערה','נבדק ע"י'],...I.docs.filter(d=>!d.id.startsWith('clean_')).map(d=>{const x=d.data();return [x.week,x.room,x.score,...INS.map(([k])=>x.checks?.[k]?'✓':'✗'),x.note||'',x.byName||'']})])}catch{}
     add('צוות',[['שם','שם משתמש','תפקיד','פעיל','הרשאות'],...S.staff.map(s=>[s.name||'',s.username||'',s.role||'',s.active===false?'לא':'כן',PERMS.filter(([k])=>s.perms?.[k]).map(x=>x[1]).join(', ')])]);
@@ -2505,7 +2507,7 @@ function renderStuExtra(sid,c){const el=$('shExtra');if(!el)return;const s=S.stu
   // heatmap: 6 weeks aligned to Sunday
   const first=weekOf(c.D[0]);const cells=[];for(let k=first;k<=today||new Date(k+'T12:00').getDay()!==0;k=addD(k,1)){if(k>today&&new Date(k+'T12:00').getDay()===0)break;cells.push(k)}
   const cls=k=>{const i=c.D.indexOf(k);if(i<0)return 'f';const e=c.ev2[i],m=c.mo2[i];if(!e&&!m)return 'h';if(e?.s==='a')return e.ap?'ap':'a';if(e?.late||isLate(m)||m?.s==='no')return 'l';return e||m?'p':'h'};
-  const tip=k=>{const i=c.D.indexOf(k);if(i<0)return '';const e=c.ev2[i],m=c.mo2[i];return fmtShort(k)+': '+[e?(e.s==='a'?'חסר'+(e.r?' ('+e.r+')':''):e.late?'הגיע באיחור':'נוכח'):'',m?(m.s==='up'?(isLate(m)?'קם באיחור':'קם בזמן'):m.s==='no'?'לא קם':'חולה'):''].filter(Boolean).join(' · ')};
+  const tip=k=>{const i=c.D.indexOf(k);if(i<0)return '';const e=c.ev2[i],m=c.mo2[i];return fmtShort(k)+': '+[e?(e.s==='a'?'חסר'+(e.r?' ('+e.r+')':''):e.late?'הגיע באיחור'+(e.r?' ('+e.r+')':''):'נוכח'):'',m?(m.s==='up'?(isLate(m)?'קם באיחור':'קם בזמן'):m.s==='no'?'לא קם':'חולה'):''].filter(Boolean).join(' · ')};
   const heat=`<div class="heat">${['א','ב','ג','ד','ה','ו','ש'].map(d=>`<span class="hd">${d}</span>`).join('')}${cells.map(k=>`<i class="${k>today?'f':cls(k)} ${k===today?'t':''}" title="${esc(tip(k))}">${+k.slice(8)}</i>`).join('')}</div>
    <div class="legend" style="margin-top:6px"><span><i style="background:#5DBB7E"></i>תקין</span><span><i style="background:#F2C14E"></i>איחור</span><span><i style="background:#E0705F"></i>חסר</span><span><i style="background:#7DA8EE"></i>חסר באישור</span><span><i style="background:var(--home-bg)"></i>אין נתון / בבית</span></div>`;
   // change index
@@ -2530,7 +2532,7 @@ function renderStuExtra(sid,c){const el=$('shExtra');if(!el)return;const s=S.stu
   // timeline
   const T=[];(S.notes||[]).filter(n=>n.sid===sid&&(has('notes')||has('mgr'))).forEach(n=>T.push([n.at,n.kind==='שבח'?'var(--ok)':n.imp||sevOf(n)>=3?'var(--bad)':'var(--warn)',(n.imp?'⚠ ':'')+String(n.text||''),n.byName||byName(n.by)]));
   (S.moves||[]).filter(m=>m.sid===sid).forEach(m=>T.push([m.at,m.type==='out'?'var(--ap)':'var(--ok)',(m.type==='out'?'יצא':'חזר')+(m.reason?' · '+m.reason:''),byName(m.by)]));
-  c.D.forEach((k,i)=>{const e=c.ev2[i],m=c.mo2[i];if(e?.s==='a')T.push([e.at||new Date(k+'T20:00').getTime(),e.ap?'var(--ap)':'var(--bad)','חסר בנוכחות ערב'+(e.r?' ('+e.r+')':''),e.byName||byName(e.by)]);else if(e?.late)T.push([e.lt||e.at,'var(--warn)','הגיע באיחור לפנימייה'+(e.lt?' ב-'+hm(e.lt):''),e.byName||byName(e.by)]);
+  c.D.forEach((k,i)=>{const e=c.ev2[i],m=c.mo2[i];if(e?.s==='a')T.push([e.at||new Date(k+'T20:00').getTime(),e.ap?'var(--ap)':'var(--bad)','חסר בנוכחות ערב'+(e.r?' ('+e.r+')':''),e.byName||byName(e.by)]);else if(e?.late)T.push([e.lt||e.at,'var(--warn)','הגיע באיחור לפנימייה'+(e.lt?' ב-'+hm(e.lt):'')+(e.r?' ('+e.r+')':''),e.byName||byName(e.by)]);
     if(m?.s==='no')T.push([m.at||new Date(k+'T08:00').getTime(),'var(--bad)','לא קם בבוקר',byName(m.by)]);else if(isLate(m))T.push([m.t,'var(--warn)','קם באיחור ('+hm(m.t)+')',byName(m.by)])});
   T.sort((x,y)=>y[0]-x[0]);
   const tl=T.length?`<details ${T.length<=6?'open':''}><summary style="cursor:pointer;font-weight:600">🕒 ציר זמן (${T.length})</summary><div class="tl" style="margin-top:8px">${T.slice(0,30).map(([t,col,tx,by])=>`<div class="e" style="--c:${col}"><span class="w">${when(t)}${by?' · '+esc(by):''}</span><div>${esc(tx)}</div></div>`).join('')}</div></details>`:'';
@@ -3303,7 +3305,7 @@ async function buildStudentReport(sid,from,to){
   let np=0,na=0,nu=0,nl=0,up=0,late=0,no=0,sick=0;const mins=[];
   const log=[['תאריך','יום','תאריך עברי','לוח השנה',...(wNight?['נוכחות ערב','נבדק על ידי']:[]),...(wMorn?['השכמה','שעת קימה','נרשם על ידי']:[])]];
   days.forEach((k,i)=>{const hd=hDate(k),ci=dayInfo(k);const ab=absOn(k);if(ab)nabs++;const cal=[ci.k==='w'?'':(ci.l||KIND[ci.k]||''),ab?'היעדרות ממושכת: '+String(ab[2]).replace(/^היעדרות ממושכת · /,''):''].filter(Boolean).join(' · ');const r=[fmtD(new Date(k+'T12:00')),wdf.format(new Date(k+'T12:00')),hd?hbTxt(hd):'',cal];
-    if(wNight){const x=nights[i];if(!x){nu++;r.push('','')}else{if(x.s==='p')np++;else na++;if(x.late)nl++;r.push(x.s==='p'?(x.late?'הגיע באיחור'+(x.lt?' '+hm(x.lt):''):'נוכח'):'חסר',by(x))}}
+    if(wNight){const x=nights[i];if(!x){nu++;r.push('','')}else{if(x.s==='p')np++;else na++;if(x.late)nl++;r.push(x.s==='p'?(x.late?'הגיע באיחור'+(x.lt?' '+hm(x.lt):'')+(x.r?' – '+x.r:''):'נוכח'):'חסר',by(x))}}
     if(wMorn){const x=morns[i];if(!x)r.push('','','');else{let st;const tm=x.t?hm(x.t):'';if(x.s==='up'){up++;if(tm)mins.push(toMin(tm));if(isLate(x)){late++;st='קם באיחור'}else st='קם'}else if(x.s==='no'){no++;st='לא קם'}else{sick++;st='חולה'}r.push(st,x.s==='up'?tm:'',by(x))}}
     log.push(r)});
   const avg=mins.length?Math.round(mins.reduce((a,b)=>a+b,0)/mins.length):null;
