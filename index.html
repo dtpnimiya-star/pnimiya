@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-19";
+const APP_VERSION = "2026-11-03-20";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1113,7 +1113,7 @@ function roundStat(k){const date=k==='morn'?S.mornDate:S.night,key=RK[k][1],T=tp
   return {dlTs,date,key,dl,act,done,tot,req,isToday,over,complete:done>=tot&&!req,grades:T.grades}}
 function roundHead(el,title,k){const r=roundStat(k),canSet=S.owner||has('mgr');
   $(el).innerHTML=r.act?`<div class="r1"><b>${title}</b><span class="dl ${r.over?'over':''}">${r.over?'⏰ הזמן עבר · ':'● פתוח עד '}${canSet?`<input type="time" data-dl="${r.key}" value="${r.dl}" aria-label="שעת סגירה">`:r.dl}</span></div>
-   <div class="r1" style="font-size:.9rem"><span>${nf.format(new Date(r.date+'T12:00'))}${r.grades.length?' · כיתות '+r.grades.join(', '):''}${dutyOn(r.date).length?' · תורן: '+esc(dutyTxt(r.date)):''}</span><span>סומנו ${r.done} מתוך ${r.tot}${r.req?` · <b>חסרות ${r.req} תשובות חובה</b>`:''}</span></div><div class="bar2"><i style="width:${r.tot?r.done/r.tot*100:0}%"></i></div>`
+   <div class="r1" style="font-size:.9rem"><span>${nf.format(new Date(r.date+'T12:00'))}${r.grades.length?' · כיתות '+r.grades.join(', '):''}${roundDuty(k,r.date).length?' · תורן: '+esc(dutyNames(roundDuty(k,r.date))):''}</span><span>סומנו ${r.done} מתוך ${r.tot}${r.req?` · <b>חסרות ${r.req} תשובות חובה</b>`:''}</span></div><div class="bar2"><i style="width:${r.tot?r.done/r.tot*100:0}%"></i></div>`
    :`<div class="r1"><b>${title}</b><span class="dl">אין סבב מתוכנן ביום ${DAYN[new Date(r.date+'T12:00').getDay()]}</span></div><div style="font-size:.9rem">${nf.format(new Date(r.date+'T12:00'))} · אפשר לסמן בכל זאת</div>`;
   if(r.over&&S.mgr)notify(title+' לא הושלמה',`עברה שעת הסגירה (${r.dl}): סומנו ${r.done} מתוך ${r.tot}${r.req?', חסרות תשובות לשאלות הפתיחה':''}`,'round-'+k+'-'+r.date);return r.over}
 function renderCount(){subRq();renderRq();
@@ -2020,7 +2020,7 @@ async function notify(title,body,tag){if(!canNotify()||Notification.permission!=
   try{new Notification(title,opt)}catch{}}
 function notifyNote(n){if(!S.mgr||!isBeh(n)||(sevOf(n)<3&&!n.imp))return;const s=S.students.get(n.sid);notify(n.imp?'⚠ הערה חשובה':'הערת התנהגות חמורה',`${s?.name||''}: ${String(n.text||'').slice(0,120)}`,'note-'+(n.id||n.at))}
 function checkLateReturns(){try{lnRemind()}catch{}try{['count','lights','morn'].forEach(k=>{if(!has(RK[k][3])&&!S.mgr)return;const r=roundStat(k);if(!r.act||!r.isToday||r.complete)return;const left=Math.round((r.dlTs-Date.now())/6e4),nm=({count:'נוכחות ערב',lights:'כיבוי אורות',morn:'השכמה'})[k];
-  const D0=dutyOn(r.date);if(left>0&&left<=10&&has(RK[k][3])&&(!D0.length||D0.some(x=>x.u===S.me)))notify(`עוד ${left} דקות נסגר: ${nm}`,`סומנו ${r.done} מתוך ${r.tot}${r.req?' · חסרות תשובות לשאלות הפתיחה':''}`,'pre-'+k+'-'+r.date);
+  const D0=roundDuty(k,r.date);if(left>0&&left<=10&&has(RK[k][3])&&(!D0.length||D0.some(x=>x.u===S.me)))notify(`עוד ${left} דקות נסגר: ${nm}`,`סומנו ${r.done} מתוך ${r.tot}${r.req?' · חסרות תשובות לשאלות הפתיחה':''}`,'pre-'+k+'-'+r.date);
   if(r.over&&S.mgr)notify(nm+' לא הושלמה',`עברה שעת הסגירה (${r.dl}): סומנו ${r.done} מתוך ${r.tot}`,'round-'+k+'-'+r.date)})}catch{}if(S.mgr)patterns().forEach(p=>notify('שינוי בהתנהגות?',`${p.n} הערות על ${S.students.get(p.sid).name} ב-24 שעות, מ-${p.who.length} אנשי צוות`,'pat-'+p.sid+'-'+ymd(new Date())));if(!(S.mgr||has('out')))return;const now=Date.now();
   for(const s of S.students.values()){const t=S.status.get(s.id);if(t&&t.state==='out'&&t.backBy&&t.backBy<now&&now-t.backBy<12*36e5)
     notify('תלמיד לא חזר בזמן',`${s.name} היה אמור לחזור ב-${hm(t.backBy)}${t.reason?' ('+t.reason+')':''}`,'late-'+s.id+'-'+t.backBy)}}
@@ -2370,6 +2370,9 @@ $('lnForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return
 /* ---------- staff duty roster ---------- */
 S.roster={};S.roWk=weekOf(ymd(new Date()));
 const SHIFTS=['כל המשמרת','ערב','לילה','בוקר'];
+const SHK={count:['כל המשמרת','ערב'],lights:['כל המשמרת','לילה'],morn:['כל המשמרת','בוקר']};
+function roundDuty(k,date){const A=dutyOn(k==='morn'?prevNightOf(date):date),f=A.filter(x=>SHK[k].includes(x.sh||'כל המשמרת'));return f.length?f:A}
+const dutyNames=L=>L.map(x=>x.n).join(', ');
 const rk=k=>'d'+k.replace(/-/g,'');
 const dutyOn=k=>(S.roster?.d||{})[rk(k)]||[];
 const dutyTxt=k=>dutyOn(k).map(x=>x.n+(x.sh&&x.sh!=='כל המשמרת'?' ('+x.sh+')':'')).join(', ');
@@ -2377,12 +2380,12 @@ function roStaffList(){const m=new Map();(S.staff||[]).filter(x=>x.active!==fals
 async function roSave(k,arr){try{await db.doc('settings/roster').set({d:{[rk(k)]:arr}},{merge:true})}catch(e){fail(e)}}
 function renderRoster(){if(S.tab!=='roster')return;const today=ymd(new Date()),wk=S.roWk,canE=(S.owner||has('mgr'))&&!S.ro,days=[0,1,2,3,4,5,6].map(i=>addD(wk,i)),L=roStaffList();
   $('roWk').textContent=fmtShort(days[0])+' – '+fmtShort(days[6]);
-  const mine=[];for(let i=0;i<21;i++){const k=addD(today,i),x=dutyOn(k).find(y=>y.u===S.me);if(x)mine.push(`<span class="pill ok">${i===0?'היום':i===1?'מחר':'יום '+DAYN[new Date(k+'T12:00').getDay()]+' '+fmtShort(k)}${x.sh&&x.sh!=='כל המשמרת'?' · '+x.sh:''}</span>`)}
+  const mine=[];for(let i=0;i<21;i++){const k=addD(today,i),x=dutyOn(k).find(y=>y.u===S.me);if(x)mine.push(`<span class="pill ok">${i===0?'הערב':i===1?'מחר בערב':'יום '+DAYN[new Date(k+'T12:00').getDay()]+' '+fmtShort(k)}${x.sh==='בוקר'?' · השכמה למחרת':x.sh&&x.sh!=='כל המשמרת'?' · '+x.sh:' · עד ההשכמה למחרת'}</span>`)}
   $('roMine').innerHTML=mine.length?`<div class="calnote" style="display:grid;gap:6px"><b>🗓 המשמרות שלי בשלושת השבועות הקרובים</b><div class="row" style="gap:6px">${mine.join('')}</div></div>`:'';
   $('roGrid').innerHTML=days.map(k=>{const A=dutyOn(k),dw=new Date(k+'T12:00').getDay(),ti=dayInfo(k);return `<div class="ro-day ${k===today?'today':''}"><h3><span>יום ${DAYN[dw]} ${fmtShort(k)}</span>${ti.l?`<small class="muted" style="font-weight:400">${esc(ti.l)}</small>`:''}</h3>
-    ${A.length?A.map((x,i)=>`<div class="ro-p ${x.u===S.me?'me':''}"><span>🧑‍🏫 ${esc(x.n)}${x.sh&&x.sh!=='כל המשמרת'?` <small>${esc(x.sh)}</small>`:''}</span>${canE?`<button type="button" data-act="roDel" data-k="${k}" data-i="${i}" aria-label="הסר">✕</button>`:''}</div>`).join(''):'<span class="muted" style="font-size:.88rem">אין שיבוץ</span>'}
-    ${canE?`<div style="display:grid;gap:4px"><select class="ro-u" data-k="${k}" style="font-size:.85rem;padding:5px"><option value="">+ הוסף מדריך…</option>${L.filter(([u])=>!A.some(x=>x.u===u)).map(([u,n])=>`<option value="${u}">${esc(n)}</option>`).join('')}</select><select class="ro-sh" data-k="${k}" style="font-size:.8rem;padding:4px" aria-label="משמרת">${SHIFTS.map(x=>`<option>${x}</option>`).join('')}</select></div>`:''}</div>`}).join('');
-  $('roTools').innerHTML=canE?`<div class="panel" style="display:grid;gap:8px"><b>רוטציה</b><span class="muted" style="font-size:.9rem">משבצים שבוע אחד, ואז מעתיקים אותו קדימה. אפשר לערוך כל יום בנפרד אחר כך.</span><div class="row" style="gap:6px"><button class="btn small" type="button" data-act="roCopy" data-n="1">העתק לשבוע הבא</button><button class="btn small" type="button" data-act="roCopy" data-n="4">העתק ל-4 השבועות הבאים</button><button class="btn small" type="button" data-act="roClear">נקה את השבוע</button></div>${!(S.staff||[]).length&&!S.owner?'<span class="muted" style="font-size:.85rem">רשימת המדריכים נטענת מהמנהל הראשי.</span>':''}</div>`:''}
+    ${A.length?A.map((x,i)=>`<div class="ro-p ${x.u===S.me?'me':''}"><span>🧑‍🏫 ${esc(x.n)}${x.sh&&x.sh!=='כל המשמרת'?` <small>${esc(x.sh==='בוקר'?'השכמה למחרת':x.sh)}</small>`:''}</span>${canE?`<button type="button" data-act="roDel" data-k="${k}" data-i="${i}" aria-label="הסר">✕</button>`:''}</div>`).join(''):'<span class="muted" style="font-size:.88rem">אין שיבוץ</span>'}
+    ${canE?`<div style="display:grid;gap:4px"><select class="ro-u" data-k="${k}" style="font-size:.85rem;padding:5px"><option value="">+ הוסף מדריך…</option>${L.filter(([u])=>!A.some(x=>x.u===u)).map(([u,n])=>`<option value="${u}">${esc(n)}</option>`).join('')}</select><select class="ro-sh" data-k="${k}" style="font-size:.8rem;padding:4px" aria-label="משמרת">${SHIFTS.map(x=>`<option value="${x}">${x==='בוקר'?'בוקר (השכמה למחרת)':x==='כל המשמרת'?'כל המשמרת (ערב עד בוקר)':x}</option>`).join('')}</select></div>`:''}</div>`}).join('');
+  $('roTools').innerHTML=canE?`<div class="panel" style="display:grid;gap:8px"><b>רוטציה</b><span class="muted" style="font-size:.9rem">המדריך ששובץ לערב אחראי גם על כיבוי אורות ועל ההשכמה בבוקר שאחריו. אם מישהו אחר עושה את ההשכמה, משבצים אותו באותו ערב במשמרת "בוקר". משבצים שבוע אחד ומעתיקים אותו קדימה.</span><div class="row" style="gap:6px"><button class="btn small" type="button" data-act="roCopy" data-n="1">העתק לשבוע הבא</button><button class="btn small" type="button" data-act="roCopy" data-n="4">העתק ל-4 השבועות הבאים</button><button class="btn small" type="button" data-act="roClear">נקה את השבוע</button></div>${!(S.staff||[]).length&&!S.owner?'<span class="muted" style="font-size:.85rem">רשימת המדריכים נטענת מהמנהל הראשי.</span>':''}</div>`:''}
 document.addEventListener('change',async e=>{const t=e.target;if(!t.classList?.contains('ro-u')||!t.value)return;const k=t.dataset.k,u=t.value,n=roStaffList().find(x=>x[0]===u)?.[1]||'',sh=document.querySelector(`.ro-sh[data-k="${k}"]`)?.value||'כל המשמרת';
   await roSave(k,[...dutyOn(k),{u,n,sh}]);toast(`${n} שובץ ליום ${DAYN[new Date(k+'T12:00').getDay()]} ${fmtShort(k)}`)});
 /* ---------- lights-out check ---------- */
@@ -2533,7 +2536,7 @@ function renderHome(){
   const greet=h<5?'לילה טוב':h<12?'בוקר טוב':h<17?'צהריים טובים':h<21?'ערב טוב':'לילה טוב';
   const first=(S.myName||'').split(' ')[0];
   const calTxt=offK.has(ti.k)?(ti.k==='c'?'חג':'חופשה')+(ti.l?' · '+ti.l:''):ti.k==='t'?(ti.l||'טיול'):ti.k==='l'?'תחילת לימודים 12:00':ti.l||(ti.k==='s'?'שבת':'יום לימודים');
-  $('hmHero').innerHTML=`${S.mgr||has('count')?'<button type="button" class="btn small" data-act="tvOn" style="position:absolute;left:0;top:0;width:auto">🖥 מסך גדול</button>':''}<h2 class="hi">${greet}${first?', '+esc(first):''}</h2>${dutyOn(today).length?`<span class="duty">🧑‍🏫 <b>תורנים היום:</b> ${esc(dutyTxt(today))}${dutyOn(today).some(x=>x.u===S.me)?' <span class="pill ok">את/ה בתורנות היום</span>':dutyOn(addD(today,1)).some(x=>x.u===S.me)?' <span class="pill">את/ה בתורנות מחר</span>':''}</span>`:''}<span class="dt">${hb?hNum(hb.day)+' '+hb.m+' · ':''}${nf.format(now)}</span><span><span class="pill" style="background:${dotC(ti.k==='w'?'x':ti.k)};color:var(--ink)">${esc(calTxt)}</span></span>`;
+  $('hmHero').innerHTML=`${S.mgr||has('count')?'<button type="button" class="btn small" data-act="tvOn" style="position:absolute;left:0;top:0;width:auto">🖥 מסך גדול</button>':''}<h2 class="hi">${greet}${first?', '+esc(first):''}</h2>${(()=>{const M=roundDuty('morn',today),E=dutyOn(today),me=x=>x.some(y=>y.u===S.me),h=now.getHours();if(!M.length&&!E.length)return '';return `<span class="duty">${h<12&&M.length?`🌅 <b>השכמה הבוקר:</b> ${esc(dutyNames(M))} · `:''}🧑‍🏫 <b>תורנים הערב:</b> ${E.length?esc(dutyTxt(today)):'—'}${h<12&&me(M)?' <span class="pill ok">את/ה בהשכמה הבוקר</span>':me(E)?' <span class="pill ok">את/ה בתורנות הערב</span>':me(dutyOn(addD(today,1)))?' <span class="pill">את/ה בתורנות מחר</span>':''}</span>`})()}<span class="dt">${hb?hNum(hb.day)+' '+hb.m+' · ':''}${nf.format(now)}</span><span><span class="pill" style="background:${dotC(ti.k==='w'?'x':ti.k)};color:var(--ink)">${esc(calTxt)}</span></span>`;
   const ni=S.sched?schNowInfo():null;
   $('hmNow').innerHTML=ni&&(ni.cur||ni.next)?`<button type="button" class="calnote" data-act="go" data-to="sched" style="width:100%;text-align:right;cursor:pointer;font:inherit;color:var(--ink);background:${ni.cur?SK[ni.cur.k]?.[1]:'var(--soft)'}"><span style="display:grid;gap:2px"><span>עכשיו: ${ni.cur?esc(ni.cur.title)+' · <bdi dir="ltr">'+esc(ni.cur.from)+(ni.cur.to?'–'+esc(ni.cur.to):'')+'</bdi>':'אין פעילות מתוכננת'}</span>${ni.next?`<span class="muted" style="font-weight:400">הבא: ${esc(ni.next.title)} · ${esc(ni.next.from)}</span>`:''}</span></button>`:'';
   const ico=t=>$('t-'+t)?.querySelector('svg')?.outerHTML.replace('class="ni"','')||'';
