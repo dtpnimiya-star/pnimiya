@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-30";
+const APP_VERSION = "2026-11-03-31";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -329,6 +329,19 @@ body.desk #stuList .item,body.desk #outList .item,body.desk #homeList .item{bord
 body.desk .sheet-bg{align-items:stretch;justify-content:flex-end}
 body.desk .sheet{max-width:640px;max-height:none;height:100%;border-radius:0;box-shadow:12px 0 40px rgba(0,0,0,.25)}
 @media (min-width:1500px){body.desk #countList,body.desk #mornList{grid-template-columns:repeat(3,minmax(0,1fr))}body.desk .bed-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}}
+/* ---- calmer home + grouped menu ---- */
+.uhide{display:none!important}
+.hm-more{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.hm-more>summary{cursor:pointer;padding:4px 0;list-style-position:inside}
+.hm-more-in{display:grid;gap:14px;margin-top:12px}
+body.desk .hm-more-in{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+body.desk .hm-more-in>#hmPerP,body.desk .hm-more-in>#hmLinksW,body.desk .hm-more-in>#hmGaps{grid-column:1/-1}
+body.desk #tab-home>#hmMore,body.desk #tab-home>#hmCustW,body.desk #tab-home>#hmRoundsP{grid-column:1/-1}
+.cust-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}
+.dgrp{margin-top:6px}.dgrp-h{display:flex;align-items:center;justify-content:space-between;width:100%;padding:8px 12px 4px;font-size:.78rem;font-weight:700;letter-spacing:.02em;color:var(--muted);cursor:pointer;user-select:none;border-radius:8px}
+.dgrp-h:hover{background:var(--soft)}.dgrp-h .ch{transition:transform .15s}.dgrp.closed .dgrp-h .ch{transform:rotate(90deg)}.dgrp.closed .dgrp-b{display:none}
+.dgrp-b{display:grid;gap:2px}
+.view-opts{display:flex;gap:6px;flex-wrap:wrap}
 /* ---- quick search (Ctrl+K) ---- */
 .cp-bg{position:fixed;inset:0;z-index:150;background:rgba(10,18,22,.45);display:flex;justify-content:center;align-items:flex-start;padding-top:12vh}
 .cp{width:min(560px,calc(100vw - 32px));background:var(--surface);border-radius:14px;padding:10px;display:grid;gap:8px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
@@ -648,18 +661,21 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <div id="hmNotif"></div>
     <div class="home-tiles" id="hmTiles"></div>
     <div id="hmLate"></div>
+    <div class="panel" id="hmRoundsP"><h2>דיווחים להיום</h2><div id="hmRounds"></div></div>
     <div class="panel" id="hmFuP" hidden><h2>📌 מעקבים להיום</h2><div id="hmFu" class="fu"></div></div>
-    <div class="panel" id="hmLogP" hidden><h2>📝 יומן משמרת</h2><div id="hmLog"></div></div>
     <div class="panel" id="hmDishP" hidden><h2 id="hmDishH">🍲 תורנות שטיפת סירים</h2><div id="hmDish"></div></div>
     <div class="panel" id="hmCleanP" hidden><h2 id="hmCleanH"></h2><div id="hmClean"></div></div>
-    <div class="panel" id="hmLbP" hidden><h2>🏆 תחרות השבוע</h2><div id="hmLb"></div></div>
-    <div id="hmGaps"></div>
+    <div class="panel" id="hmLogP" hidden><h2>📝 יומן משמרת</h2><div id="hmLog"></div></div>
     <div id="hmLn"></div>
-    <div class="panel" id="hmRoundsP"><h2>דיווחים להיום</h2><div id="hmRounds"></div></div>
+    <details class="hm-more" id="hmMore"><summary><b>📊 נתונים ומידע נוסף</b> <small class="muted">סיכום תקופה, תחרות השבוע, ימי הולדת, לוח שנה, חוסרים בנתונים</small></summary><div class="hm-more-in">
     <div class="panel" id="hmPerP" hidden><div class="row" style="justify-content:space-between"><h2 style="margin:0">סיכום תקופה</h2><div class="seg" id="hmPerSeg"><button type="button" data-act="per" data-p="1">היום</button><button type="button" data-act="per" data-p="7">שבוע</button><button type="button" data-act="per" data-p="30">חודש</button></div></div><div id="hmPer" style="margin-top:10px"></div></div>
+    <div class="panel" id="hmLbP" hidden><h2>🏆 תחרות השבוע</h2><div id="hmLb"></div></div>
     <div class="panel" id="hmBdP" hidden><h2>🎂 ימי הולדת</h2><div id="hmBd"></div></div>
     <div class="panel" id="hmNextP"><h2>בקרוב בלוח השנה</h2><div id="hmNext"></div></div>
-    <div><h2 style="margin-bottom:8px">מעבר מהיר</h2><div class="home-links" id="hmLinks"></div></div>
+    <div id="hmGaps"></div>
+    <div id="hmLinksW"><h2 style="margin-bottom:8px">מעבר מהיר</h2><div class="home-links" id="hmLinks"></div></div>
+    </div></details>
+    <div id="hmCustW" style="display:grid;gap:10px;justify-items:center"><button class="btn small" type="button" data-act="hmCust">⚙ התאמת מסך הבית</button><div class="panel" id="hmCustP" hidden style="width:100%"></div></div>
   </section>
 
   <!-- נוכחות ערב -->
@@ -1602,7 +1618,7 @@ function menu(open){if(open&&document.body.classList.contains('desk'))return;S.m
   if(open){($('drawer').querySelector('[aria-selected="true"]:not([hidden])')||$('drawer').querySelector('.drawer-list button:not([hidden])'))?.focus()}else $('menuBtn').focus({preventScroll:true})}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.menuOpen)menu(false)});
 function applyPerms(){
-  const ok=S.permReady&&(S.owner||PERMS.some(([k])=>has(k)));S.access=ok;$('menuBtn').hidden=!ok;$('cpBtn').hidden=!ok;deskNav();if(!ok&&S.menuOpen)menu(false);$('drawerUser').textContent=S.myName||'';if(!$('drawerLogo').src)$('drawerLogo').src=document.querySelector('.lg-logo').src;
+  const ok=S.permReady&&(S.owner||PERMS.some(([k])=>has(k)));S.access=ok;$('menuBtn').hidden=!ok;$('cpBtn').hidden=!ok;deskNav();setTimeout(dgrpSync,0);if(!ok&&S.menuOpen)menu(false);$('drawerUser').textContent=S.myName||'';if(!$('drawerLogo').src)$('drawerLogo').src=document.querySelector('.lg-logo').src;
   document.querySelectorAll('[data-perm]').forEach(el=>el.hidden=!ok||!has(el.dataset.perm));
   S.mgr=ok&&has('mgr');setTimeout(renderBnav,0);
   $('topSum').hidden=!ok;
@@ -1782,7 +1798,7 @@ document.addEventListener('click',async e=>{
   if(!b)return;
   if(b.dataset.tab){S.tab=b.dataset.tab;document.body.dataset.page=S.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
     ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','shab','act','lights','roster','beds','meet','pw','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='beds')renderBeds();if(S.tab==='meet')renderMeet();if(S.tab==='pw')renderPW();if(S.tab==='roster')renderRoster();if(S.tab==='lights')renderLights();if(S.tab==='act'){subAc();renderAc()}if(S.tab==='home')renderHome();if(S.tab==='rooms')subIns();if(S.tab==='maint'){subMt();renderMt()}if(S.tab==='learn'){subLn();renderLearn()}if(S.tab==='shab'){subShab();renderShab()}if(S.tab==='staff')loadAudit();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
-    try{localStorage.setItem('pn-tab',S.tab)}catch{}renderBnav();window.scrollTo(0,0);return}
+    try{localStorage.setItem('pn-tab',S.tab)}catch{}renderBnav();dgrpSync();window.scrollTo(0,0);return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
   if(!db&&!['close','open','nnClose','nnCat','absLen','onlyOpen','onlyOpenM','mtab','insSel','theme','bigText','go','menuOpen','bRead','bShowAll','mtF','mtImg','lnT','lnGrade','lnClr','shNew','shCancel'].includes(b.dataset.act))return;
   const id=b.dataset.id;
@@ -1846,6 +1862,8 @@ document.addEventListener('click',async e=>{
     case'reopen':try{await db.doc('notes/'+id).update({handled:null});toast('ההתראה נפתחה מחדש')}catch(e){fail(e)}break;
     case'menu':menu(!S.menuOpen);break;
     case'cp':cpOpen();break;
+    case'bkSnooze':try{localStorage.setItem('pn-bk-sn',String(Date.now()+3*864e5))}catch{}renderBackupNote();toast('נזכיר שוב בעוד 3 ימים');break;
+    case'hmCust':{const P=$('hmCustP');P.hidden=!P.hidden;if(!P.hidden){renderCust();P.scrollIntoView({block:'nearest',behavior:'smooth'})}break}
     case'dishDraw':dishDraw(false,b);break;
     case'dishRe':if(armed(b,'בטוח? להגריל מחדש'))dishDraw(true,b);break;
     case'dishDone':{const k=thuOf(ymd(new Date())),h=S.dish?.hist?.[k];if(!h)break;try{await db.doc('duty/dish').set({hist:{[k]:{done:!h.done,doneAt:Date.now(),doneBy:S.myName||''}}},{merge:true})}catch(e){fail(e)}break}
@@ -2337,8 +2355,8 @@ document.addEventListener('change',e=>{if(e.target.classList?.contains('insNote'
 
 /* ---------- backup ---------- */
 function bkAge(){const t=S.settings?.backupAt;return t?Math.floor((Date.now()-t)/864e5):null}
-function renderBackupNote(){const el=$('hmBackup');if(!el)return;if(!S.owner){el.innerHTML='';return}const a=bkAge();
-  el.innerHTML=a==null||a>=7?`<div class="calnote" style="display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--hl-bg)"><span>💾 ${a==null?'עדיין לא נעשה גיבוי של הנתונים':'עברו '+a+' ימים מהגיבוי האחרון'}. מומלץ להוריד גיבוי פעם בשבוע.</span><button class="btn small primary" type="button" data-act="backup">הורד גיבוי</button></div>`:''}
+function renderBackupNote(){const el=$('hmBackup');if(!el)return;let sn=0;try{sn=+localStorage.getItem('pn-bk-sn')||0}catch{}if(!S.owner||sn>Date.now()){el.innerHTML='';return}const a=bkAge();
+  el.innerHTML=a==null||a>=7?`<div class="calnote" style="display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--hl-bg)"><span>💾 ${a==null?'עדיין לא נעשה גיבוי של הנתונים':'עברו '+a+' ימים מהגיבוי האחרון'}. מומלץ להוריד גיבוי פעם בשבוע.</span><span class="row" style="gap:6px"><button class="btn small" type="button" data-act="bkSnooze">אחר כך</button><button class="btn small primary" type="button" data-act="backup">הורד גיבוי</button></span></div>`:''}
 async function doBackup(b){if(!window.XLSX){toast('רכיב האקסל לא נטען');return}if(b){b.disabled=true;b.dataset.t=b.textContent;b.textContent='מכין גיבוי…'}
   try{const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};const fd=t=>t?new Date(t).toLocaleString('he-IL'):'';const nm=id=>S.students.get(id)?.name||id;
     const add=(name,rows)=>{if(rows.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),name)};
@@ -2769,6 +2787,25 @@ function renderDish(){const P=$('hmDishP');if(!P)return;const show=S.access&&(ha
      ${G.map(g=>{const P2=allSorted().filter(s=>g.includes(s.grade)),u=P2.filter(s=>(D.used||{})[s.id]);return `<span class="muted">${esc(g.join('+'))}: ${u.length} מתוך ${P2.length} כבר שטפו בסבב הנוכחי</span>`}).join('')}
      ${past.length?past.map(([d,x])=>`<span>${fmtShort(d)} · ${esc(x.name)} <small class="muted">(${esc(x.g)})</small>${x.done?' ✓':''}</span>`).join(''):'<span class="muted">עוד אין היסטוריה.</span>'}
    </div></details>`}
+/* ---------- home customisation ---------- */
+const HM_SECT=[['hmDayP','ציר הזמן'],['hmBoard','הודעות לצוות'],['hmTiles','מספרים מהירים'],['hmLate','מי לא חזר בזמן'],['hmRoundsP','דיווחים להיום'],['hmFuP','מעקבים להיום'],['hmDishP','תורנות שטיפת סירים'],['hmCleanP','ניקיון חדרים'],['hmLogP','יומן משמרת'],['hmLn','מרכז למידה'],['hmMore','נתונים ומידע נוסף']];
+S.hmHide=new Set();try{S.hmHide=new Set(JSON.parse(localStorage.getItem('pn-hm-hide')||'[]'))}catch{}
+function applyHm(){HM_SECT.forEach(([id])=>$(id)?.classList.toggle('uhide',S.hmHide.has(id)))}
+function renderCust(){$('hmCustP').innerHTML=`<b>מה להציג במסך הבית?</b><span class="muted" style="font-size:.85rem">ההגדרה נשמרת במכשיר הזה. חלוניות שאין בהן כרגע תוכן מוסתרות ממילא.</span><div class="cust-grid" style="margin-top:8px">${HM_SECT.map(([id,l])=>`<label class="perm" style="padding:6px 10px"><input type="checkbox" data-hmc="${id}" ${S.hmHide.has(id)?'':'checked'}> ${l}</label>`).join('')}</div><div style="margin-top:8px"><button class="btn small" type="button" data-act="hmCust">סגור</button></div>`}
+document.addEventListener('change',e=>{const id=e.target.dataset?.hmc;if(!id)return;if(e.target.checked)S.hmHide.delete(id);else S.hmHide.add(id);try{localStorage.setItem('pn-hm-hide',JSON.stringify([...S.hmHide]))}catch{}applyHm()});
+{const m=$('hmMore');try{if(localStorage.getItem('pn-more')==='1')m.open=true}catch{}m.addEventListener('toggle',()=>{try{localStorage.setItem('pn-more',m.open?'1':'0')}catch{}})}
+applyHm();
+/* ---------- grouped side menu ---------- */
+const DGRP=[['main','',['home','count','lights','morn','out','stu']],['kids','תלמידים והורים',['pw','beds','rooms','learn','act','shab']],['plan','תכנון',['cal','sched','roster','maint']],['admin','ניהול',['mgr','meet','rep','staff']]];
+(function(){const list=document.querySelector('.drawer-list');if(!list)return;let closed=new Set(['plan']);try{const v=localStorage.getItem('pn-dgrp');if(v)closed=new Set(JSON.parse(v))}catch{}
+  DGRP.forEach(([k,l,tabs])=>{const g=document.createElement('div');g.className='dgrp'+(closed.has(k)?' closed':'');g.dataset.g=k;
+    g.innerHTML=(l?`<div class="dgrp-h" role="button" tabindex="0" aria-expanded="${!closed.has(k)}"><span>${l}</span><span class="ch" aria-hidden="true">▾</span></div>`:'')+'<div class="dgrp-b"></div>';
+    const b=g.querySelector('.dgrp-b');tabs.forEach(t=>{const x=$('t-'+t);if(x)b.appendChild(x)});list.appendChild(g)});
+  [...list.children].forEach(x=>{if(x.tagName==='BUTTON'){list.querySelector('.dgrp[data-g=main] .dgrp-b').appendChild(x)}});
+  const tg=h=>{const g=h.closest('.dgrp');g.classList.toggle('closed');h.setAttribute('aria-expanded',String(!g.classList.contains('closed')));const c=[...list.querySelectorAll('.dgrp.closed')].map(x=>x.dataset.g);try{localStorage.setItem('pn-dgrp',JSON.stringify(c))}catch{}};
+  list.addEventListener('click',e=>{const h=e.target.closest('.dgrp-h');if(h)tg(h)});
+  list.addEventListener('keydown',e=>{const h=e.target.closest('.dgrp-h');if(h&&(e.key==='Enter'||e.key===' ')){e.preventDefault();tg(h)}})})();
+function dgrpSync(){document.querySelectorAll('.dgrp').forEach(g=>{const any=[...g.querySelectorAll('[data-tab]')].some(b=>!b.hidden);g.hidden=!any;if(g.querySelector('[aria-selected="true"]'))g.classList.remove('closed')})}
 /* ---------- desktop layout ---------- */
 const DESK=matchMedia('(min-width:1100px)');
 function deskNav(){const d=DESK.matches&&!!S.access;document.body.classList.toggle('desk',d);if(d){if(S.menuOpen){S.menuOpen=false;$('drawerBg').hidden=true;document.body.style.overflow=''}$('drawer').setAttribute('aria-hidden','false')}else if(!S.menuOpen)$('drawer').setAttribute('aria-hidden','true');document.querySelectorAll('.desk-only').forEach(e=>e.hidden=!DESK.matches)}
