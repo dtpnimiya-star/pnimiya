@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-22";
+const APP_VERSION = "2026-11-03-23";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1107,14 +1107,18 @@ const DEF_Q={lights:[{q:'האם כל התלמידים בחדרים?',req:true},{
 const tplOf=k=>{const t=S.settings?.tpl?.[k]||{};return {days:t.days||(k==='morn'?[1,2,3,4,5]:[0,1,2,3,4]),grades:t.grades||[],q:t.q||S.settings?.rq?.[k]||[],times:t.times||{}}};
 const RK={count:['nightcount','countBy','20:00','count'],morn:['morning','wakeBy','07:10','morning'],lights:['lights','lightsBy','23:00','count']};
 const qsOf=k=>tplOf(k).q;
-function roundStat(k){const date=k==='morn'?S.mornDate:S.night,key=RK[k][1],T=tplOf(k),dow=new Date(date+'T12:00').getDay(),dl=T.times[dow]||S.settings?.[key]||RK[k][2];
+const lgT=g=>S.settings?.lightsG?.[g]||'';
+const dmin=v=>{const m=toMin(v);return m<360?m+1440:m};
+function lightsTimes(){const gs=[...new Set(allSorted().map(s=>s.grade).filter(Boolean))];const T=gs.map(g=>[g,lgT(g)]).filter(x=>x[1]);return T.sort((a,b)=>dmin(a[1])-dmin(b[1]))}
+const gDlTs=(date,t)=>new Date(date+'T'+t).getTime()+(toMin(t)<360?864e5:0);
+function roundStat(k){const date=k==='morn'?S.mornDate:S.night,key=RK[k][1],T=tplOf(k),dow=new Date(date+'T12:00').getDay(),LT=k==='lights'?lightsTimes():[],dl=LT.length?LT[LT.length-1][1]:(T.times[dow]||S.settings?.[key]||RK[k][2]);
   const act=T.days.includes(new Date(date+'T12:00').getDay()),L=allSorted().filter(s=>!isOut(s.id)&&(!T.grades.length||T.grades.includes(s.grade))),M=k==='count'?S.marks:k==='lights'?(S.lmarks||new Map()):S.wake;
   const done=L.filter(s=>M.get(s.id)).length,tot=L.length,A=S.rq.get(rqKey(k))||{},req=T.q.filter((q,i)=>q.req&&(A['a'+i]==null||A['a'+i]==='')).length;
   const dlTs=new Date(date+'T'+dl).getTime()+(k!=='morn'&&toMin(dl)<360?864e5:0);
   const isToday=date===(k==='morn'?ymd(new Date()):nightKey()),over=act&&isToday&&(done<tot||req>0)&&Date.now()>dlTs;
   return {dlTs,date,key,dl,act,done,tot,req,isToday,over,complete:done>=tot&&!req,grades:T.grades}}
 function roundHead(el,title,k){const r=roundStat(k),canSet=S.owner||has('mgr');
-  $(el).innerHTML=r.act?`<div class="r1"><b>${title}</b><span class="dl ${r.over?'over':''}">${r.over?'⏰ הזמן עבר · ':'● פתוח עד '}${canSet?`<input type="time" data-dl="${r.key}" value="${r.dl}" aria-label="שעת סגירה">`:r.dl}</span></div>
+  $(el).innerHTML=r.act?`<div class="r1"><b>${title}</b><span class="dl ${r.over?'over':''}">${r.over?'⏰ הזמן עבר · ':'● פתוח עד '}${k==='lights'&&lightsTimes().length?r.dl+' (לפי כיתה)':canSet?`<input type="time" data-dl="${r.key}" value="${r.dl}" aria-label="שעת סגירה">`:r.dl}</span></div>
    <div class="r1" style="font-size:.9rem"><span>${nf.format(new Date(r.date+'T12:00'))}${r.grades.length?' · כיתות '+r.grades.join(', '):''}${roundDuty(k,r.date).length?' · תורן: '+esc(dutyNames(roundDuty(k,r.date))):''}</span><span>סומנו ${r.done} מתוך ${r.tot}${r.req?` · <b>חסרות ${r.req} תשובות חובה</b>`:''}</span></div><div class="bar2"><i style="width:${r.tot?r.done/r.tot*100:0}%"></i></div>`
    :`<div class="r1"><b>${title}</b><span class="dl">אין סבב מתוכנן ביום ${DAYN[new Date(r.date+'T12:00').getDay()]}</span></div><div style="font-size:.9rem">${nf.format(new Date(r.date+'T12:00'))} · אפשר לסמן בכל זאת</div>`;
   if(r.over&&S.mgr)notify(title+' לא הושלמה',`עברה שעת הסגירה (${r.dl}): סומנו ${r.done} מתוך ${r.tot}${r.req?', חסרות תשובות לשאלות הפתיחה':''}`,'round-'+k+'-'+r.date);return r.over}
@@ -1761,7 +1765,8 @@ document.addEventListener('click',async e=>{
     case'lOpen':S.lOnly=!S.lOnly;renderLights();break;
     case'lMark':{const id=b.dataset.id,cur=S.lmarks.get(id),ref=db.doc('lights/'+S.night+'/marks/'+id),same=cur?.s===b.dataset.v;buzz();flashRow(id);
       try{if(same)await OW(ref.delete());else await OW(ref.set({s:b.dataset.v,at:Date.now(),by:S.me,byName:S.myName}));toast((S.students.get(id)?.name||'')+': '+(same?'הסימון בוטל':b.dataset.v==='p'?'בחדר':'לא בחדר'),undoRef(ref,cur?{...cur}:null))}catch(err){fail(err)}break}
-    case'lRoom':{const list=sorted().filter(s=>!isOut(s.id)&&(s.room||'ללא חדר')===b.dataset.room&&!S.lmarks.get(s.id));for(const s of list){try{await OW(db.doc('lights/'+S.night+'/marks/'+s.id).set({s:'p',at:Date.now(),by:S.me,byName:S.myName}))}catch(err){fail(err);break}}toast(`חדר ${b.dataset.room}: כולם בחדר`);break}
+    case'lGrade':{const list=sorted().filter(s=>!isOut(s.id)&&(s.grade||'-')===b.dataset.g&&!S.lmarks.get(s.id));for(const s of list){try{await OW(db.doc('lights/'+S.night+'/marks/'+s.id).set({s:'p',at:Date.now(),by:S.me,byName:S.myName}))}catch(err){fail(err);break}}toast(`כיתה ${b.dataset.g}: כולם בחדרים`);break}
+    case'lRoom':{const list=sorted().filter(s=>!isOut(s.id)&&(s.room||'ללא חדר')===b.dataset.room&&(!b.dataset.g||(s.grade||'-')===b.dataset.g)&&!S.lmarks.get(s.id));for(const s of list){try{await OW(db.doc('lights/'+S.night+'/marks/'+s.id).set({s:'p',at:Date.now(),by:S.me,byName:S.myName}))}catch(err){fail(err);break}}toast(`חדר ${b.dataset.room}: כולם בחדר`);break}
     case'roPrev':S.roWk=addD(S.roWk,-7);renderRoster();break;
     case'roNext':S.roWk=addD(S.roWk,7);renderRoster();break;
     case'roDel':{const k=b.dataset.k;await roSave(k,dutyOn(k).filter((x,i)=>i!==+b.dataset.i));break}
@@ -2023,7 +2028,9 @@ async function notify(title,body,tag){if(!canNotify()||Notification.permission!=
   try{const reg=await navigator.serviceWorker?.getRegistration();if(reg){await reg.showNotification(title,opt);return}}catch{}
   try{new Notification(title,opt)}catch{}}
 function notifyNote(n){if(!S.mgr||!isBeh(n)||(sevOf(n)<3&&!n.imp))return;const s=S.students.get(n.sid);notify(n.imp?'⚠ הערה חשובה':'הערת התנהגות חמורה',`${s?.name||''}: ${String(n.text||'').slice(0,120)}`,'note-'+(n.id||n.at))}
-function checkLateReturns(){try{lnRemind()}catch{}try{['count','lights','morn'].forEach(k=>{if(!has(RK[k][3])&&!S.mgr)return;const r=roundStat(k);if(!r.act||!r.isToday||r.complete)return;const left=Math.round((r.dlTs-Date.now())/6e4),nm=({count:'נוכחות ערב',lights:'כיבוי אורות',morn:'השכמה'})[k];
+function checkLateReturns(){try{lnRemind()}catch{}try{const r=roundStat('lights');if(r.act&&r.isToday&&lightsTimes().length){const D0=roundDuty('lights',r.date),mine=!D0.length||D0.some(x=>x.u===S.me);lightsTimes().forEach(([g,t])=>{const L=allSorted().filter(s=>!isOut(s.id)&&s.grade===g),un=L.filter(s=>!S.lmarks.get(s.id)).length;if(!un)return;const left=Math.round((gDlTs(r.date,t)-Date.now())/6e4);
+  if(left>0&&left<=10&&has('count')&&mine)notify(`כיבוי אורות כיתה ${g} בעוד ${left} דקות`,`${t} · עדיין ${un} תלמידים לא נבדקו`,'lg-pre-'+g+'-'+r.date);
+  if(left<0&&left>-120&&S.mgr)notify(`כיבוי אורות כיתה ${g} לא הושלם`,`עברה השעה ${t}: ${un} תלמידים לא נבדקו`,'lg-over-'+g+'-'+r.date)})}}catch{}try{['count','lights','morn'].forEach(k=>{if(!has(RK[k][3])&&!S.mgr)return;const r=roundStat(k);if(!r.act||!r.isToday||r.complete)return;const left=Math.round((r.dlTs-Date.now())/6e4),nm=({count:'נוכחות ערב',lights:'כיבוי אורות',morn:'השכמה'})[k];
   const D0=roundDuty(k,r.date);if(left>0&&left<=10&&has(RK[k][3])&&(!D0.length||D0.some(x=>x.u===S.me)))notify(`עוד ${left} דקות נסגר: ${nm}`,`סומנו ${r.done} מתוך ${r.tot}${r.req?' · חסרות תשובות לשאלות הפתיחה':''}`,'pre-'+k+'-'+r.date);
   if(r.over&&S.mgr)notify(nm+' לא הושלמה',`עברה שעת הסגירה (${r.dl}): סומנו ${r.done} מתוך ${r.tot}`,'round-'+k+'-'+r.date)})}catch{}if(S.mgr)patterns().forEach(p=>notify('שינוי בהתנהגות?',`${p.n} הערות על ${S.students.get(p.sid).name} ב-24 שעות, מ-${p.who.length} אנשי צוות`,'pat-'+p.sid+'-'+ymd(new Date())));if(!(S.mgr||has('out')))return;const now=Date.now();
   for(const s of S.students.values()){const t=S.status.get(s.id);if(t&&t.state==='out'&&t.backBy&&t.backBy<now&&now-t.backBy<12*36e5)
@@ -2406,15 +2413,20 @@ function renderLights(){if(S.tab!=='lights')return;subRq();renderRq();roundHead(
   $('lOpenB').setAttribute('aria-pressed',!!S.lOnly);
   const st=all.filter(qMatch($('lq').value)).filter(s=>!S.lOnly||!M.get(s.id));
   if(!st.length){$('lList').innerHTML=`<div class="empty">${S.lOnly?'כולם נבדקו 👏':all.length?'אין תלמידים שמתאימים לחיפוש.':'אין תלמידים בפנימייה.'}</div>`;return}
-  let h='';for(const [room,list] of groupRooms(st)){const open=list.filter(s=>!M.get(s.id));
-    h+=`<div class="room"><div class="room-h"><span>חדר ${esc(room)}</span>${open.length&&!ro?`<button class="btn small" data-act="lRoom" data-room="${esc(room)}">✓ כולם בחדר</button>`:''}</div><div class="list">`;
+  const canSetG=S.owner||has('mgr'),now=Date.now();let h='';
+  const gList=[...new Set(st.map(s=>s.grade||'-'))].sort((x,y)=>dmin(lgT(x)||'23:59')-dmin(lgT(y)||'23:59'));
+  for(const g of gList){const gst=st.filter(s=>(s.grade||'-')===g),t=lgT(g)||S.settings?.lightsBy||'23:00',gAll=all.filter(s=>(s.grade||'-')===g),gDone=gAll.filter(s=>M.get(s.id)).length,isT=S.night===nightKey(),over=isT&&gDone<gAll.length&&now>gDlTs(S.night,t);
+    h+=`<div class="round-h" style="margin-top:6px;${over?'background:linear-gradient(135deg,var(--bad),#8e2a20)':''}"><div class="r1"><b>${g==='-'?'ללא כיתה':'כיתה '+g}</b><span class="dl ${over?'over':''}">${over?'⏰ הזמן עבר · ':'🌙 כיבוי אורות '}${canSetG&&g!=='-'?`<input type="time" data-lg="${g}" value="${lgT(g)}" aria-label="שעת כיבוי אורות לכיתה ${g}">`:t}</span></div><div class="r1" style="font-size:.9rem"><span>סומנו ${gDone} מתוך ${gAll.length}</span>${gDone<gAll.length&&!ro?`<button class="btn small" type="button" data-act="lGrade" data-g="${g}" style="background:#fff;color:#16222A">✓ כל הכיתה בחדרים</button>`:''}</div></div>`;
+  for(const [room,list] of groupRooms(gst)){const open=list.filter(s=>!M.get(s.id));
+    h+=`<div class="room"><div class="room-h"><span>חדר ${esc(room)}</span>${open.length&&!ro?`<button class="btn small" data-act="lRoom" data-room="${esc(room)}" data-g="${g}">✓ כולם בחדר</button>`:''}</div><div class="list">`;
     for(const s of list){const m=M.get(s.id),ev=S.marks.get(s.id);
       const meta=[s.grade?'כיתה '+s.grade:'',ev?.s==='a'?'⚠ חסר בנוכחות הערב':ev?.late?'הגיע באיחור בערב':'',m?(m.s==='p'?'בחדר':'לא בחדר'+(m.r?' ('+m.r+')':''))+' · '+tf.format(new Date(m.at))+' · '+byName(m.by):''].filter(Boolean).join(' · ');
       h+=`<div class="item">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${esc(meta)}</span></button>${canNN()?`<button class="nn-btn ${nightNotes(s.id).length?'has':''}" type="button" data-act="nn" data-id="${s.id}" title="הערת לילה">🌙${nightNotes(s.id).length?' '+nightNotes(s.id).length:''}</button>`:''}<div class="seg"><button class="p" aria-pressed="${m?.s==='p'}" data-act="lMark" data-id="${s.id}" data-v="p" ${ro?'disabled':''}>✓ בחדר</button><button class="a" aria-pressed="${m?.s==='a'}" data-act="lMark" data-id="${s.id}" data-v="a" ${ro?'disabled':''}>✗ לא בחדר</button></div>
         ${m?.s==='a'&&!ro?`<select class="ab-r lt-r" data-id="${s.id}" aria-label="איפה הוא"><option value="">איפה הוא? בחר…</option>${['בחדר של חבר','במקלחת / שירותים','אצל המדריך','חולה – במרפאה','לא ידוע – בבירור'].map(r=>`<option ${m.r===r?'selected':''}>${r}</option>`).join('')}</select>`:''}</div>`}
-    h+='</div></div>'}
+    h+='</div></div>'}}
   $('lList').innerHTML=h}
 $('lq').addEventListener('input',()=>renderLights());
+document.addEventListener('change',async e=>{const g=e.target.dataset?.lg;if(!g||!e.target.value)return;try{await db.doc('settings/app').set({lightsG:{[g]:e.target.value}},{merge:true});toast(`כיבוי אורות כיתה ${g}: ${e.target.value}`)}catch(err){fail(err)}});
 document.addEventListener('change',async e=>{if(!e.target.classList?.contains('lt-r'))return;try{await OW(db.doc('lights/'+S.night+'/marks/'+e.target.dataset.id).update({r:e.target.value}));toast('נשמר')}catch(err){fail(err)}});
 /* ---------- activity attendance (trips, buses, meals) ---------- */
 S.ac=[];S.acPick=new Set();
@@ -2495,10 +2507,10 @@ const tPct=v=>Math.max(0,Math.min(100,((dayMin(v)-360)/(1440-360))*100));
 function renderDay(){const el=$('hmDay');if(!el)return;const n=new Date(),now=n.getHours()*60+n.getMinutes(),today=ymd(n);
   const wb=S.settings?.wakeBy||'07:10',cb=S.settings?.countBy||'20:00',inn=allSorted().filter(s=>!isOut(s.id));
   const wDone=S.mornDate===today&&inn.length&&inn.every(s=>S.wake.get(s.id)),cDone=S.night===nightKey()&&inn.length&&inn.every(s=>S.marks.get(s.id));
-  const M=[['morn','השכמה'],['count','נוכחות ערב'],['lights','כיבוי אורות']].map(([k,l])=>{const r=roundStat(k);const dl=k==='morn'&&S.mornDate!==today?wb:k!=='morn'&&S.night!==nightKey()?(tplOf(k).times[n.getDay()]||S.settings?.[RK[k][1]]||RK[k][2]):r.dl;const d=r.isToday&&r.tot>0&&r.done>=r.tot;return [dl,l,d,!d&&r.isToday&&r.over]});
+  const M=[['morn','השכמה'],['count','נוכחות ערב'],['lights','כיבוי אורות']].map(([k,l])=>{const r=roundStat(k);const dl=k==='morn'&&S.mornDate!==today?wb:k!=='morn'&&S.night!==nightKey()?(tplOf(k).times[n.getDay()]||S.settings?.[RK[k][1]]||RK[k][2]):r.dl;const d=r.isToday&&r.tot>0&&r.done>=r.tot,LT=k==='lights'?lightsTimes():[];return LT.length>1?[LT[0][1],l,d,!d&&r.isToday&&r.over,LT[0][1]+'–'+LT[LT.length-1][1]]:[dl,l,d,!d&&r.isToday&&r.over]});
   const p=Math.max(0,Math.min(100,((now-360)/(1080))*100)),cl=v=>Math.max(0,Math.min(100,v));
   const SI=(S.sched?schDayItems(n.getDay()):[]).filter(x=>x.from&&toMin(x.from)<1440).map(x=>{const a=Math.max(360,toMin(x.from)),b=Math.min(1440,x.to?toMin(x.to):a+30),r=cl((a-360)/10.8),w=Math.max(1.2,cl((b-360)/10.8)-r);return `<span class="blk ${now>=a&&now<b?'cur':''}" style="right:${r}%;width:${w}%;background:${SK[x.k]?.[1]||'var(--soft)'}" title="${esc(x.from+(x.to?'–'+x.to:'')+' '+x.title)}">${w>4?esc(x.title):''}</span>`}).join('');
-  el.innerHTML=`${SI}<div class="tr"></div>${M.map(([t,l,d,o])=>`<span class="mk ${d?'done':o?'over':''}" style="right:${tPct(t)}%">${d?'✓ ':''}${l}<br>${t}</span>`).join('')}${now>=360?`<span class="now" style="right:${p}%" data-t="עכשיו ${pad(n.getHours())}:${pad(n.getMinutes())}"></span>`:''}`}
+  el.innerHTML=`${SI}<div class="tr"></div>${M.map(([t,l,d,o,ds])=>`<span class="mk ${d?'done':o?'over':''}" style="right:${tPct(t)}%">${d?'✓ ':''}${l}<br>${ds||t}</span>`).join('')}${now>=360?`<span class="now" style="right:${p}%" data-t="עכשיו ${pad(n.getHours())}:${pad(n.getMinutes())}"></span>`:''}`}
 function renderRounds(){const el=$('hmRounds');if(!el)return;if(S.access)subRq();const n=new Date(),today=ymd(n),now=hm(n.getTime()),inn=allSorted().filter(s=>!isOut(s.id)),R=[];
   [['השכמה','morn','morning'],['נוכחות ערב','count','count'],['כיבוי אורות','lights','count']].forEach(([l,k,p])=>{if(!(has(p)||S.mgr))return;const r=roundStat(k);if(r.isToday&&r.act)R.push([l,k,r.done,r.tot,r.dl,r.req,r.over])});
   if(S.unIns&&S.insWeek===weekOf(today)){const RS=roomsList().filter(r=>!STAFF_ROOMS.has(r));R.push(['בדיקת חדרים (השבוע)','rooms',RS.filter(r=>S.ins.has(r)).length,RS.length,''])}
