@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-09";
+const APP_VERSION = "2026-11-03-10";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -171,7 +171,34 @@ header{border-top:4px solid var(--brand);box-shadow:inset 0 -3px 0 0 color-mix(i
 .cheer{position:fixed;left:50%;top:40%;transform:translateX(-50%);z-index:60;background:var(--ok);color:#fff;font:700 1.1rem var(--f-body);padding:14px 22px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.2);animation:cheer 1.8s ease forwards;pointer-events:none}
 @media (prefers-reduced-motion:reduce){.prog.done,.item.flash,.cheer{animation:none}}
 /* ---- UI v25 ---- */
-:root{--home-bg:#E8E2F7;--hl-bg:#FFF4D6}
+:root{--home-bg:#E8E2F7;--hl-bg:#FFF4D6;--ap:#2F6FD6;--ap-bg:#E1EBFA}
+:root[data-theme="dark"]{--ap:#7DB0F7;--ap-bg:#1B2C47}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ap:#7DB0F7;--ap-bg:#1B2C47}}
+.seg button[aria-pressed="true"].a.ap{background:var(--ap)}
+.pill.ap{background:var(--ap-bg);color:var(--ap)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.84rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:5px;vertical-align:-1px}
+.round-h{background:linear-gradient(135deg,var(--brand),var(--accent));color:#fff;border-radius:14px;padding:12px 14px;display:grid;gap:6px;box-shadow:0 6px 18px -10px var(--accent)}
+.round-h .r1{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.round-h b{font-family:var(--f-display);font-weight:400;font-size:1.2rem}
+.round-h .dl{background:rgba(255,255,255,.2);border-radius:99px;padding:2px 10px;font-size:.86rem;display:inline-flex;align-items:center;gap:6px}
+.round-h .dl.over{background:#fff;color:var(--bad);font-weight:700}
+.round-h input[type=time]{background:rgba(255,255,255,.9);color:#16222A;border:0;border-radius:8px;padding:1px 4px;font:inherit;font-size:.86rem;width:auto;min-height:0}
+.round-h .bar2{height:6px;border-radius:9px;background:rgba(255,255,255,.25);overflow:hidden}.round-h .bar2 i{display:block;height:100%;background:#fff;border-radius:9px}
+.ab-r{flex-basis:100%;font-size:.9rem;padding:6px 8px}
+.imp{color:var(--bad);font-weight:700}
+.io{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.io .g{border-radius:12px;padding:10px;display:grid;gap:6px;align-content:start;border:1px solid transparent}
+.io .g.in{background:var(--ok-bg)}.io .g.ou{background:var(--ap-bg)}.io .g.lt{background:var(--bad-bg);border-color:var(--bad)}
+.io .g .n{font:400 1.6rem var(--f-display);line-height:1}.io .g.in .n{color:var(--ok)}.io .g.ou .n{color:var(--ap)}.io .g.lt .n{color:var(--bad)}
+.io .g .l{font-size:.85rem;font-weight:600}
+.io .avs{display:flex;flex-wrap:wrap;gap:3px}.io .avs button{border:0;background:none;padding:0;cursor:pointer}
+.io .avs .av{width:28px;height:28px;font-size:.62rem;border:2px solid var(--surface)}
+.io .more{font-size:.8rem;color:var(--muted);align-self:center}
+.late-p{border:1px solid var(--bad);background:var(--bad-bg);border-radius:14px;padding:12px 14px;display:grid;gap:8px}
+.late-p h2{margin:0;font-size:1.02rem;color:var(--bad)}
+.late-p .item{background:var(--surface);border-radius:10px;padding:8px 10px}
+.sum .pill[data-act]{cursor:pointer;border:0;font:inherit}.sum .pill[aria-pressed="true"]{outline:2px solid currentColor;outline-offset:1px}
 :root[data-theme="dark"]{--home-bg:#2E2747;--hl-bg:#3A2F12}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--home-bg:#2E2747;--hl-bg:#3A2F12}}
 html.big body{font-size:18px}
@@ -466,6 +493,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <div id="hmBackup"></div>
     <div id="hmNotif"></div>
     <div class="home-tiles" id="hmTiles"></div>
+    <div id="hmLate"></div>
     <div class="panel" id="hmBdP" hidden><h2>🎂 ימי הולדת</h2><div id="hmBd"></div></div>
     <div class="panel" id="hmNextP"><h2>בקרוב בלוח השנה</h2><div id="hmNext"></div></div>
     <div><h2 style="margin-bottom:8px">מעבר מהיר</h2><div class="home-links" id="hmLinks"></div></div>
@@ -479,8 +507,11 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <span class="muted" style="font-size:.88rem">סימון אחרי חצות נרשם לערב הקודם</span>
     </div>
     <div id="nightCal"></div>
+    <div class="round-h" id="cHead"></div>
     <div id="breakdown"></div>
     <div class="prog" id="cProg"></div>
+    <div id="cFil" class="sum"></div>
+    <div class="legend"><span><i style="background:var(--ok)"></i>נוכח</span><span><i style="background:var(--warn)"></i>באיחור</span><span><i style="background:var(--bad)"></i>חסר</span><span><i style="background:var(--ap)"></i>חסר באישור</span><span><i style="background:var(--warn-bg);border:1px solid var(--warn)"></i>בחוץ</span><span><i style="background:var(--home-bg)"></i>בבית</span></div>
     <div class="tools"><input id="cq" type="search" placeholder="🔍 חיפוש תלמיד או חדר" aria-label="חיפוש תלמיד"><button class="btn small tgl" type="button" data-act="onlyOpen" id="cOpen" aria-pressed="false">רק מי שלא סומן</button></div>
     <div class="panel nn-list" id="nnP" hidden><h2>🌙 הערות הלילה</h2><div id="nnList"></div></div>
     <div id="countList"></div>
@@ -495,6 +526,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
       <input type="time" id="mornTarget" value="07:00">
     </div>
     <div id="mornCal"></div>
+    <div class="round-h" id="mHead"></div>
     <div id="mornSum" class="sum"></div>
     <div class="prog" id="mProg"></div>
     <div class="tools"><input id="mq" type="search" placeholder="🔍 חיפוש תלמיד או חדר" aria-label="חיפוש תלמיד"><button class="btn small tgl" type="button" data-act="onlyOpenM" id="mOpen" aria-pressed="false">רק מי שלא סומן</button></div>
@@ -522,6 +554,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 
   <!-- יציאות -->
   <section id="tab-out" hidden style="display:grid;gap:16px">
+    <div class="panel"><h2>מי בפנימייה ומי בחוץ</h2><div class="io" id="ioBoard"></div></div>
     <form id="outForm" class="panel writer">
       <h2>רישום יציאה</h2>
       <select id="outStudent" required aria-label="תלמיד"></select>
@@ -770,6 +803,7 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
     <textarea id="nnText" rows="2" placeholder="פירוט (לא חובה), למשל: דיבר בחדר אחרי כיבוי אורות"></textarea>
     <div class="row" style="gap:8px"><select id="nnSev" aria-label="חומרה"><option value="1" selected>חומרה: קלה</option><option value="2">חומרה: בינונית</option><option value="3">חומרה: חמורה</option></select>
       <span class="muted" style="font-size:.88rem">ההערה תישמר בכרטיס התלמיד ותישלח למנהל.</span></div>
+    <label class="row" style="gap:8px;font-weight:600"><input type="checkbox" id="nnImp" style="width:auto"> <span class="imp">⚠ חשוב</span> <span class="muted" style="font-weight:400;font-size:.88rem">המנהל יקבל התראה מיידית</span></label>
     <div id="nnPrev"></div>
     <div><button class="btn primary" type="submit" id="nnBtn">שמור הערה</button></div>
   </form>
@@ -941,12 +975,24 @@ function setAv(id,ph){const s=S.students.get(id);document.querySelectorAll('[dat
 function av(s){if(s.photoAt&&S.photoVer.get(s.id)!==s.photoAt){S.photoVer.set(s.id,s.photoAt);if(S.photos.get(s.id)!==null)S.photos.delete(s.id)}if(has('personal'))loadPhoto(s.id);const ph=S.photos.get(s.id);return `<span class="av" data-av="${s.id}" aria-hidden="true">${ph?`<img src="${esc(ph)}" alt="">`:esc(initials(s.name))}</span>`}
 function progBar(el,parts,total,label){const done=parts.reduce((a,x)=>a+x[0],0);
   $(el).innerHTML=total?`<div class="row"><b>${label(done,total)}</b><span class="muted" style="font-size:.88rem">${parts.filter(x=>x[0]).map(x=>`${x[0]} ${x[2]}`).join(' · ')}</span></div><div class="bar" role="img" aria-label="${done} מתוך ${total}">${parts.map(([n,c])=>n?`<i style="width:${n/total*100}%;background:${c}"></i>`:'').join('')}</div>`:'';$(el).hidden=!total}
+const ABR=[['לא הודיע',0],['לא ידוע',0],['חולה בבית',1],['באישור הורים',1],['אירוע משפחתי',1],['באישור המנהל',1]];
+const apOf=r=>!!(ABR.find(x=>x[0]===r)||[])[1];
+function roundHead(el,title,date,key,def,done,tot,canSet){const now=new Date(),dl=S.settings?.[key]||def;
+  const isToday=date===(key==='countBy'?nightKey():ymd(now)),over=isToday&&done<tot&&hm(now.getTime())>dl;
+  $(el).innerHTML=`<div class="r1"><b>${title}</b><span class="dl ${over?'over':''}">${over?'⏰ הזמן עבר · ':'● פתוח עד '}${canSet?`<input type="time" data-dl="${key}" value="${dl}" aria-label="שעת סגירה">`:dl}</span></div>
+   <div class="r1" style="font-size:.9rem"><span>${nf.format(new Date(date+'T12:00'))}</span><span>סומנו ${done} מתוך ${tot}</span></div><div class="bar2"><i style="width:${tot?done/tot*100:0}%"></i></div>`;return over}
 function renderCount(){
   const all=sorted();if(!all.length){$('countList').innerHTML=emptyStudents();$('cProg').hidden=true;return}
   {const inn=all.filter(s=>!isOut(s.id));let p=0,l=0,a=0;inn.forEach(s=>{const m=S.marks.get(s.id);if(m?.s==='p'){if(m.late)l++;else p++}else if(m?.s==='a')a++});
-   progBar('cProg',[[p,'var(--ok)','נוכחים'],[l,'var(--warn)','באיחור'],[a,'var(--bad)','חסרים']],inn.length,(d,tt)=>d===tt?'✓ כולם סומנו':`סומנו ${d} מתוך ${tt}`);markDone('cProg',inn.length>0&&p+l+a===inn.length)}
+   const ap=inn.filter(s=>{const m=S.marks.get(s.id);return m?.s==='a'&&m.ap}).length,un=inn.length-p-l-a;
+   progBar('cProg',[[p,'var(--ok)','נוכחים'],[l,'var(--warn)','באיחור'],[a-ap,'var(--bad)','חסרים'],[ap,'var(--ap)','באישור']],inn.length,(d,tt)=>d===tt?'✓ כולם סומנו':`סומנו ${d} מתוך ${tt}`);markDone('cProg',inn.length>0&&p+l+a===inn.length);
+   const over=roundHead('cHead','נוכחות ערב',S.night,'countBy','20:00',p+l+a,inn.length,S.owner||has('mgr'));
+   if(over&&S.mgr)notify('נוכחות הערב לא הושלמה',`עברה שעת הסגירה ועדיין ${un} תלמידים לא סומנו`,'round-c-'+S.night);
+   const F=[['a','חסרים',a-ap,'bad'],['ap','באישור',ap,'ap'],['l','באיחור',l,'warn'],['u','לא סומנו',un,'']];
+   $('cFil').innerHTML=F.filter(f=>f[2]||S.cf===f[0]).map(f=>`<button type="button" class="pill ${f[3]}" data-act="cf" data-f="${f[0]}" aria-pressed="${S.cf===f[0]}">${f[2]} ${f[1]}</button>`).join('')+(S.cf?'<button type="button" class="pill" data-act="cf" data-f="">✕ הצג הכל</button>':'');}
   $('cOpen').setAttribute('aria-pressed',!!S.onlyOpen);
-  const st=all.filter(qMatch(S.cq)).filter(s=>!S.onlyOpen||(!isOut(s.id)&&!S.marks.get(s.id)));
+  const cfOk=s=>{if(!S.cf)return true;if(isOut(s.id))return false;const m=S.marks.get(s.id);return S.cf==='a'?m?.s==='a'&&!m.ap:S.cf==='ap'?m?.s==='a'&&!!m.ap:S.cf==='l'?!!m?.late:!m};
+  const st=all.filter(qMatch(S.cq)).filter(s=>!S.onlyOpen||(!isOut(s.id)&&!S.marks.get(s.id))).filter(cfOk);
   if(!st.length){$('countList').innerHTML=`<div class="empty">${S.onlyOpen?'כל התלמידים סומנו 👏':'אין תלמידים שמתאימים לחיפוש.'}</div>`;renderNightNotes();return}
   let h='';
   for(const [room,list] of groupRooms(st)){
@@ -956,13 +1002,14 @@ function renderCount(){
       const stt=S.status.get(s.id),m=S.marks.get(s.id);
       const parts=[s.grade?'כיתה '+s.grade:''];
       if(isOut(s.id))parts.push((stt.reason||'')+(stt.backBy?' · חזרה '+when(stt.backBy):''));
-      else if(m)parts.push((m.s==='p'?(m.late?'הגיע באיחור ':'סומן נוכח '):'סומן חסר ')+(m.late&&m.lt?hm(m.lt):m.at?tf.format(new Date(m.at)):'')+' · '+byName(m.by));
+      else if(m)parts.push((m.s==='p'?(m.late?'הגיע באיחור ':'סומן נוכח '):'סומן חסר '+(m.r?'('+m.r+') ':''))+(m.late&&m.lt?hm(m.lt):m.at?tf.format(new Date(m.at)):'')+' · '+byName(m.by));
       const meta=parts.filter(Boolean).join(' · ');
       h+=`<div class="item">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}${meta?`<span class="meta">${esc(meta)}</span>`:''}</button>`;
       if(isOut(s.id))h+=`<span class="chip ${stt.backBy&&stt.backBy<Date.now()?'bad':'warn'}">${stt.backBy&&stt.backBy<Date.now()?'באיחור':stt.long?'בבית':'בחוץ'}</span>`;
       else{const nn=nightNotes(s.id).length;if(canNN())h+=`<button class="nn-btn ${nn?'has':''}" type="button" data-act="nn" data-id="${s.id}" title="הערת לילה" aria-label="הערת לילה ל${esc(s.name)}">🌙${nn?' '+nn:''}</button>`;h+=''}
       if(!isOut(s.id)&&m?.late&&!S.ro)h+=`<input type="time" class="lt-in" data-id="${s.id}" value="${m.lt?hm(m.lt):''}" aria-label="שעת הגעה" title="שעת הגעה">`;
-      if(!isOut(s.id))h+=`<div class="seg"><button class="p" aria-pressed="${m?.s==='p'&&!m.late}" data-act="mark" data-id="${s.id}" data-v="p" ${S.ro?'disabled':''}>נוכח</button><button class="l" aria-pressed="${!!m?.late}" data-act="mark" data-id="${s.id}" data-v="l" ${S.ro?'disabled':''}>באיחור</button><button class="a" aria-pressed="${m?.s==='a'}" data-act="mark" data-id="${s.id}" data-v="a" ${S.ro?'disabled':''}>חסר</button></div>`;
+      if(!isOut(s.id))h+=`<div class="seg"><button class="p" aria-pressed="${m?.s==='p'&&!m.late}" data-act="mark" data-id="${s.id}" data-v="p" ${S.ro?'disabled':''}>✓ נוכח</button><button class="l" aria-pressed="${!!m?.late}" data-act="mark" data-id="${s.id}" data-v="l" ${S.ro?'disabled':''}>⏱ באיחור</button><button class="a ${m?.ap?'ap':''}" aria-pressed="${m?.s==='a'}" data-act="mark" data-id="${s.id}" data-v="a" ${S.ro?'disabled':''}>✗ חסר</button></div>`;
+      if(!isOut(s.id)&&m?.s==='a'&&!S.ro)h+=`<select class="ab-r" data-id="${s.id}" aria-label="סיבת היעדרות"><option value="">בחר סיבה…</option>${ABR.map(([r])=>`<option ${m.r===r?'selected':''}>${r}</option>`).join('')}</select>`;
       h+=`</div>`;
     }
     h+=`</div></div>`;
@@ -976,9 +1023,9 @@ const canNN=()=>has('notes')&&!S.ro;
 const nightNotes=sid=>(S.notes||[]).filter(n=>n.night===S.night&&(!sid||n.sid===sid));
 function renderNightNotes(){const el=$('nnP');if(!el)return;const L=nightNotes().filter(n=>S.students.has(n.sid)&&inFilter(S.students.get(n.sid)));
   el.hidden=!L.length;if(!L.length)return;
-  $('nnList').innerHTML=L.slice().sort((a,b)=>a.at-b.at).map(n=>`<div class="ev"><span class="when">${tf.format(new Date(n.at))}</span><b>${esc(S.students.get(n.sid).name)} <span class="sub">· ${esc(n.text||'')}${n.by?' · '+esc(n.byName||byName(n.by)):''}</span></b></div>`).join('')}
+  $('nnList').innerHTML=L.slice().sort((a,b)=>a.at-b.at).map(n=>`<div class="ev"><span class="when">${tf.format(new Date(n.at))}</span><b>${n.imp?'<span class="imp">⚠ </span>':''}${esc(S.students.get(n.sid).name)} <span class="sub">· ${esc(n.text||'')}${n.by?' · '+esc(n.byName||byName(n.by)):''}</span></b></div>`).join('')}
 function openNN(sid){const s=S.students.get(sid);if(!s)return;S.nnSid=sid;S.nnCats=new Set();
-  $('nnName').textContent='הערת לילה · '+s.name;$('nnText').value='';$('nnSev').value='1';
+  $('nnName').textContent='הערת לילה · '+s.name;$('nnText').value='';$('nnSev').value='1';$('nnImp').checked=false;
   $('nnCats').innerHTML=NN_CATS.map(c=>`<button type="button" data-act="nnCat" data-c="${esc(c)}" aria-pressed="false">${esc(c)}</button>`).join('');
   const prev=nightNotes(sid);$('nnPrev').innerHTML=prev.length?'<div class="muted" style="font-size:.88rem;margin-bottom:4px">כבר נרשם הלילה:</div>'+prev.map(n=>`<div class="ev"><span class="when">${tf.format(new Date(n.at))}</span><b>${esc(n.text||'')}</b></div>`).join(''):'';
   $('nnBg').hidden=false}
@@ -987,7 +1034,7 @@ $('nnForm').addEventListener('submit',async e=>{e.preventDefault();const sid=S.n
   const cats=[...S.nnCats],extra=$('nnText').value.trim();if(!cats.length&&!extra){toast('בחרו סיבה או כתבו פירוט');return}
   const text='הערת לילה: '+[cats.join(', '),extra].filter(Boolean).join(' – ');
   const b=$('nnBtn');b.disabled=true;
-  try{await OW(db.collection('notes').add({sid,kind:'התנהגות',sev:+$('nnSev').value,text,night:S.night,cats,at:Date.now(),by:S.me,byName:S.myName}));closeNN();toast('הערת הלילה נשמרה ונשלחה למנהל')}catch(err){fail(err)}
+  try{await OW(db.collection('notes').add({sid,kind:'התנהגות',sev:$('nnImp').checked?3:+$('nnSev').value,imp:$('nnImp').checked,text,night:S.night,cats,at:Date.now(),by:S.me,byName:S.myName}));closeNN();toast('הערת הלילה נשמרה ונשלחה למנהל')}catch(err){fail(err)}
   b.disabled=false});
 
 function renderOut(){
@@ -1003,8 +1050,16 @@ function renderOut(){
   {const hs=st.filter(s=>isHome(s.id)).sort((a,b)=>(S.status.get(a.id).backBy||9e15)-(S.status.get(b.id).backBy||9e15));$('homeP').hidden=!hs.length;
    $('homeList').innerHTML=hs.length?`<div class="list">`+hs.map(s=>{const t=S.status.get(s.id),late=t.backBy&&t.backBy<Date.now();
     return `<div class="item"><button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${esc(t.reason||'')} · ${fmtShort(t.from)}–${fmtShort(t.to)} (${absLen(t.from,t.to)} ימים)</span></button>${late?'<span class="chip bad">באיחור</span>':'<span class="chip" style="background:var(--home-bg)">בבית</span>'}${S.ro?'':`<button class="btn small" data-act="back" data-id="${s.id}">חזר</button>`}</div>`}).join('')+`</div>`:''}
+  renderIO();
   $('moveLog').innerHTML=moveList(S.moves.filter(m=>{const s=S.students.get(m.sid);return !S.grade||(s&&inFilter(s))}).slice(0,40),true);
 }
+const lateOuts=list=>list.filter(s=>{const t=S.status.get(s.id);return t&&t.state==='out'&&t.backBy&&t.backBy<Date.now()}).sort((a,b)=>S.status.get(a.id).backBy-S.status.get(b.id).backBy);
+function ago(t){const m=Math.round((Date.now()-t)/6e4);return m<60?m+' דק׳':m<1440?Math.floor(m/60)+' שע׳'+(m%60?' ו-'+m%60+' דק׳':''):Math.floor(m/1440)+' ימים'}
+function lateList(list){return list.map(s=>{const t=S.status.get(s.id);return `<div class="item">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${esc(t.reason||'')} · היה אמור לחזור ${when(t.backBy)} · מאחר ${ago(t.backBy)}</span></button>${S.ro||!has('out')?'':`<button class="btn small" data-act="back" data-id="${s.id}">חזר</button>`}</div>`}).join('')}
+function renderIO(){const el=$('ioBoard');if(!el)return;const st=sorted(),late=lateOuts(st),lateS=new Set(late.map(s=>s.id));
+  const ins=st.filter(s=>!isOut(s.id)),ou=st.filter(s=>isOut(s.id)&&!lateS.has(s.id));
+  const g=(cls,label,L,max)=>`<div class="g ${cls}"><span class="n">${L.length}</span><span class="l">${label}</span><div class="avs">${L.slice(0,max).map(s=>`<button type="button" data-act="open" data-id="${s.id}" title="${esc(s.name)}">${av(s)}</button>`).join('')}${L.length>max?`<span class="more">+${L.length-max}</span>`:''}</div></div>`;
+  el.innerHTML=g('in','בפנימייה',ins,11)+g('ou','בחוץ / בבית',ou,11)+g('lt','לא חזרו בזמן',late,11)}
 function moveList(list,showName){
   if(!list.length)return `<div class="empty">אין רישומים עדיין.</div>`;
   return `<div class="list log">`+list.map(m=>{const s=S.students.get(m.sid);
@@ -1118,7 +1173,7 @@ function renderMgr(){
   document.title=(allOpen?`(${allOpen}) `:'')+'נוכחות פנימייה';
   if(S.tab!=='mgr')return;
   const beh=S.notes.filter(n=>isBeh(n)&&stuOk(n));
-  const open=beh.filter(n=>!n.handled).sort((a,b)=>sevOf(b)-sevOf(a)||b.at-a.at);
+  const open=beh.filter(n=>!n.handled).sort((a,b)=>(!!b.imp-!!a.imp)||sevOf(b)-sevOf(a)||b.at-a.at);
   const wk=Date.now()-7*864e5,mo=Date.now()-30*864e5;
   const wkB=beh.filter(n=>n.at>=wk).length,wkP=S.notes.filter(n=>n.kind==='שבח'&&n.at>=wk&&stuOk(n)).length;
   const scope=S.grade?(S.grade==='-'?'ללא כיתה':'כיתה '+S.grade):'כל הפנימייה';
@@ -1127,7 +1182,7 @@ function renderMgr(){
     ${open.length?`<div class="row" style="gap:6px">${[3,2,1].map(v=>{const c=open.filter(n=>sevOf(n)===v).length;return c?`<span class="sev s${v}">${c} ${SEV[v]}</span>`:''}).join('')}</div>`:''}
     <div class="muted" style="font-size:.92rem">בשבוע האחרון: ${wkB} הערות התנהגות · ${wkP} שבחים</div></div></div>`;
   $('alerts').innerHTML=open.length?`<div class="list">`+open.map(n=>{const s=S.students.get(n.sid);
-    return `<div class="alert s${sevOf(n)}"><div class="alert-top">${sevChip(n.sev)}<button class="who" data-act="open" data-id="${n.sid}">${esc(s.name)}</button><span class="muted" style="font-size:.88rem">${esc(metaOf(s))}</span></div>
+    return `<div class="alert s${sevOf(n)}"><div class="alert-top">${n.imp?'<span class="sev s3">⚠ חשוב</span>':sevChip(n.sev)}<button class="who" data-act="open" data-id="${n.sid}">${esc(s.name)}</button><span class="muted" style="font-size:.88rem">${esc(metaOf(s))}</span></div>
     <p>${esc(n.text)}</p><div class="row" style="justify-content:space-between"><span class="time">${when(n.at)} · ${esc(byName(n.by))}</span><button class="btn small primary" data-act="handle" data-id="${n.id}">סמן כטופל</button></div></div>`}).join('')+`</div>`
     :`<div class="empty">כל הערות ההתנהגות טופלו. הערות חדשות יופיעו כאן ויסומנו בתג אדום על הלשונית.</div>`;
   // 14-day bars
@@ -1167,6 +1222,7 @@ function renderMorn(){
   st.forEach(s=>{if(isOut(s.id)){out++;return}const m=S.wake.get(s.id);
     if(!m)un++;else if(m.s==='up'){up++;if(isLate(m))late++;if(m.t)mins.push(toMin(hm(m.t)))}else if(m.s==='no')no++;else sick++});
   const avg=mins.length?Math.round(mins.reduce((a,b)=>a+b,0)/mins.length):null;
+  {const over=roundHead('mHead','השכמה',S.mornDate,'wakeBy','08:00',st.length-out-un,st.length-out,S.owner||has('mgr'));if(over&&S.mgr)notify('ההשכמה לא הושלמה',`עברה שעת הסגירה ועדיין ${un} תלמידים לא סומנו`,'round-m-'+S.mornDate)}
   $('mornSum').innerHTML=`${nAbs?`<span class="pill bad">${nAbs} לא נכחו בערב</span>`:''}<span class="pill ok">${up} קמו</span>${late?`<span class="pill warn">${late} באיחור</span>`:''}<span class="pill bad">${no} לא קמו</span>${sick?`<span class="pill warn">${sick} חולים</span>`:''}<span class="pill">${un} לא נבדקו</span>${out?`<span class="pill">${out} בחוץ</span>`:''}${avg!=null?`<span class="pill">ממוצע ${pad(Math.floor(avg/60))}:${pad(avg%60)}</span>`:''}`;
   {const inn=st.filter(s=>!isOut(s.id));let u2=0,l2=0,n2=0,s2=0;inn.forEach(s=>{const m=S.wake.get(s.id);if(m?.s==='up'){if(isLate(m))l2++;else u2++}else if(m?.s==='no')n2++;else if(m)s2++});
    progBar('mProg',[[u2,'var(--ok)','קמו בזמן'],[l2,'var(--warn)','באיחור'],[n2,'var(--bad)','לא קמו'],[s2,'var(--muted)','חולים']],inn.length,(d,tt)=>d===tt?'✓ כולם סומנו':`סומנו ${d} מתוך ${tt}`);markDone('mProg',inn.length>0&&u2+l2+n2+s2===inn.length)}
@@ -1200,10 +1256,10 @@ const wakeRef=id=>db.collection('morning/'+S.mornDate+'/marks').doc(id);
 const prevNightOf=d=>addD(d,-1);
 function morningReport(){
   const night=prevNightOf(S.mornDate),out={};
-  for(const s of allSorted()){const g=s.grade||'-';const o=out[g]||(out[g]={absent:[],noWake:[],sick:[],late:[],home:[],nightN:[],lateIn:[],slept:0,woke:0});
+  for(const s of allSorted()){const g=s.grade||'-';const o=out[g]||(out[g]={absent:[],noWake:[],sick:[],late:[],home:[],nightN:[],lateIn:[],apAbs:[],slept:0,woke:0});
     const n=S.prevNight.get(s.id),m=S.wake.get(s.id),st=S.status.get(s.id);
     if(st&&st.state==='out'){o.home.push(s.name+(st.long?' (היעדרות ממושכת'+(st.reason?': '+st.reason:'')+', עד '+fmtShort(st.to)+')':st.reason?' ('+st.reason+')':''));continue}
-    if(n&&n.s==='a')o.absent.push(s.name);else{o.slept++;if(m&&m.s==='up')o.woke++}
+    if(n&&n.s==='a'){if(n.ap)o.apAbs.push(s.name+' ('+n.r+')');else o.absent.push(s.name+(n.r?' ('+n.r+')':''))}else{o.slept++;if(m&&m.s==='up')o.woke++}
     if(n&&n.late)o.lateIn.push(s.name+(n.lt?' – '+hm(n.lt):''));
     if(m){if(m.s==='no')o.noWake.push(s.name);else if(m.s==='sick')o.sick.push(s.name);else if(isLate(m))o.late.push(s.name+' – '+hm(m.t))}}
   return {night,out}}
@@ -1212,7 +1268,7 @@ function reportText(g,o,dateK){
   const L=[],sec=(t,a)=>{if(a.length){L.push(t+' ('+a.length+'):');a.forEach(x=>L.push('• '+x));L.push('')}};
   L.push(`דוח נוכחות בוקר – ${g==='-'?'ללא כיתה':'כיתה '+g} – ${nf.format(new Date(dateK+'T12:00'))}`,'');
   if(allUp(o))L.push('✓ כולם קמו בזמן הבוקר.','');
-  sec('לא נכחו בנוכחות הערב',o.absent);sec('הגיעו באיחור לפנימייה בערב',o.lateIn);sec('לא קמו בבוקר',o.noWake);sec('חולים / נשארו בחדר',o.sick);sec(`איחרו להשכמה (השכמה ב-${S.wakeTarget||'07:00'})`,o.late);sec('בבית / מחוץ לפנימייה',o.home);
+  sec('לא נכחו בנוכחות הערב',o.absent);sec('נעדרו באישור',o.apAbs);sec('הגיעו באיחור לפנימייה בערב',o.lateIn);sec('לא קמו בבוקר',o.noWake);sec('חולים / נשארו בחדר',o.sick);sec(`איחרו להשכמה (השכמה ב-${S.wakeTarget||'07:00'})`,o.late);sec('בבית / מחוץ לפנימייה',o.home);
   if(!o.absent.length&&!o.noWake.length&&!o.sick.length&&!o.late.length&&!o.nightN.length&&!o.lateIn.length)L.push('כל התלמידים נכחו וקמו בזמן.','');
   L.push('נשלח ממערכת הנוכחות של הפנימייה');return L.join('\n')}
 function mailHref(to,subj,body){const cc=(S.settings?.educators?.cc)||'';return 'mailto:'+encodeURIComponent(to||'')+'?'+(cc?'cc='+encodeURIComponent(cc)+'&':'')+'subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body)}
@@ -1228,12 +1284,12 @@ function renderReport(){
   const gs=[...GRADES,'-'].filter(g=>out[g]);
   if(!gs.length){$('mrPreview').innerHTML='<div class="empty">אין תלמידים ברשימה.</div>';return}
   let all=[];const sent=mrSentG(),UPD='עדכון – ',updNote='עדכון לדוח שנשלח קודם הבוקר.\n\n';
-  $('mrPreview').innerHTML=gs.map(g=>{const o=out[g];const cnt=o.absent.length+o.noWake.length+o.sick.length+o.late.length+o.nightN.length+o.lateIn.length;
+  $('mrPreview').innerHTML=gs.map(g=>{const o=out[g];const cnt=o.apAbs.length+o.absent.length+o.noWake.length+o.sick.length+o.late.length+o.nightN.length+o.lateIn.length;
     const txt=reportText(g,o,d);all.push(txt);const upd=sent[g]>0,subj=(upd?UPD:'')+`דוח נוכחות בוקר – ${g==='-'?'ללא כיתה':'כיתה '+g} – ${fmtShort(d)}`;
     const li=(t,a,c)=>a.length?`<div><b class="${c||''}">${t}:</b> ${a.map(esc).join(', ')}</div>`:'';
     return `<div class="mr-grade"><div class="row"><b>${g==='-'?'ללא כיתה':'כיתה '+g}</b><span class="row" style="gap:6px">${g!=='-'?(E[g]?`<a class="btn small primary" data-mrsend="${g}" href="${mailHref(E[g],subj,(upd?updNote:'')+txt)}" title="${esc(E[g])}">${upd?'שלח עדכון למחנך':'שלח למחנך'}</a>`:(canSet?'<span class="muted" style="font-size:.85rem">אין מייל למחנך</span>':'')):''}<button class="btn small" type="button" data-act="mrCopy" data-g="${g}">העתק</button></span></div>
       ${allUp(o)?'<div style="font-weight:600;margin:2px 0;color:var(--ok)">✓ כולם קמו בזמן הבוקר.</div>':''}
-      ${cnt?li('לא נכחו בערב',o.absent)+li('הגיעו באיחור בערב',o.lateIn)+li('לא קמו',o.noWake)+li('חולים',o.sick)+li('איחרו',o.late)+li('בבית',o.home):`<span class="muted">כל התלמידים נכחו וקמו בזמן${o.home.length?' · '+o.home.length+' בבית':''}.</span>`}</div>`}).join('')
+      ${cnt?li('לא נכחו בערב',o.absent)+li('נעדרו באישור',o.apAbs)+li('הגיעו באיחור בערב',o.lateIn)+li('לא קמו',o.noWake)+li('חולים',o.sick)+li('איחרו',o.late)+li('בבית',o.home):`<span class="muted">כל התלמידים נכחו וקמו בזמן${o.home.length?' · '+o.home.length+' בבית':''}.</span>`}</div>`}).join('')
     +(gs.length>1?`<div class="row" style="padding-top:10px;border-top:1px solid var(--line)"><a class="btn small" data-mrsend="*" href="${mailHref(GRADES.map(g=>E[g]).filter(Boolean).join(/Windows/i.test(navigator.userAgent)?';':','),(Object.keys(sent).length?UPD:'')+'דוח נוכחות בוקר – '+fmtShort(d),(Object.keys(sent).length?updNote:'')+all.join('\n\n────────\n\n'))}">${Object.keys(sent).length?'שלח עדכון לכל המחנכים':'שלח דוח מלא לכל המחנכים'}</a><button class="btn small" type="button" data-act="mrCopy" data-g="*">העתק דוח מלא</button></div>`:'');
   S.mrTexts=Object.fromEntries(gs.map((g,i)=>[g,all[i]]));S.mrTexts['*']=all.join('\n\n────────\n\n');
   GRADES.forEach(g=>{const el=$('edu-'+g);if(el&&document.activeElement!==el)el.value=E[g]||''});{const c=$('edu-cc');if(document.activeElement!==c)c.value=E.cc||''}
@@ -1522,6 +1578,7 @@ document.addEventListener('click',async e=>{
     case'schSave':await schSave(b);break;
     case'schCopy':{schCollect();const to=[...$('schList').querySelectorAll('[data-copy]:checked')].map(x=>+x.dataset.copy);if(!to.length){toast('סמנו לאילו ימים להעתיק');break}
       await schSave(b,to);break}
+    case'cf':S.cf=b.dataset.f||'';renderCount();break;
     case'mrCopy':{const t=S.mrTexts?.[b.dataset.g]||'';try{await navigator.clipboard.writeText(t);toast('הדוח הועתק')}catch{toast('לא הצלחתי להעתיק')}break}
     case'go':$('t-'+b.dataset.to)?.click();break;
     case'stuRep':{const sid=S.sel;closeSheet();$('t-rep')?.click();renderRep();$('repStu').value=sid;repStuChg();$('repForm').scrollIntoView({behavior:'smooth'});break}
@@ -1749,6 +1806,9 @@ function renderAudit(){const el=$('auditList'),A=S.audL||[];const OP={set:'שמ�
   el.innerHTML=`<div class="grid2" style="margin:8px 0"><select id="audBy" aria-label="סינון לפי איש צוות"><option value="">כל הצוות (${A.length})</option>${people.map(n=>`<option ${S.audF.by===n?'selected':''} value="${esc(n)}">${esc(n)} (${cntBy(n)})</option>`).join('')}</select><select id="audCol" aria-label="סינון לפי סוג"><option value="">כל הפעולות</option>${cols.map(c=>`<option ${S.audF.col===c?'selected':''} value="${esc(c)}">${esc(AUD_COL[c]||c)}</option>`).join('')}</select></div>`
    +(L.length?`<div class="list log">`+L.slice(0,200).map(e=>`<div class="item"><span class="time">${when(e.at)}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(e.byName||'')}</b> · ${esc(AUD_COL[e.col]||e.col)}${e.label?' · <b>'+esc(e.label)+'</b>':''}${e.detail?`<span class="meta">${esc(e.detail)}</span>`:''}</span><span class="chip ${e.op==='delete'?'bad':''}">${OP[e.op]||e.op}</span></div>`).join('')+`</div>`
     :`<div class="empty">${A.length?'אין פעולות שמתאימות לסינון.':'עדיין אין רישומים. מעכשיו כל פעולה של כל איש צוות תירשם כאן.'}</div>`)}
+document.addEventListener('change',async e=>{const t=e.target;if(!db)return;
+  if(t.classList?.contains('ab-r')){const id=t.dataset.id,r=t.value;try{await OW(db.collection('nightcount/'+S.night+'/marks').doc(id).update({r,ap:apOf(r)}));toast('הסיבה נשמרה')}catch(err){fail(err)}}
+  if(t.dataset?.dl&&/^\d{2}:\d{2}$/.test(t.value)){try{await db.doc('settings/app').update({[t.dataset.dl]:t.value});toast('שעת הסגירה נשמרה')}catch(err){fail(err)}}});
 document.addEventListener('change',e=>{if(e.target.id==='audBy'){S.audF.by=e.target.value;renderAudit()}if(e.target.id==='audCol'){S.audF.col=e.target.value;renderAudit()}});
 
 /* ---------- phone notifications ---------- */
@@ -1761,7 +1821,7 @@ async function notify(title,body,tag){if(!canNotify()||Notification.permission!=
   const opt={body,tag,icon:'icon-192.png',badge:'icon-192.png',lang:'he',dir:'rtl'};
   try{const reg=await navigator.serviceWorker?.getRegistration();if(reg){await reg.showNotification(title,opt);return}}catch{}
   try{new Notification(title,opt)}catch{}}
-function notifyNote(n){if(!S.mgr||!isBeh(n)||sevOf(n)<3)return;const s=S.students.get(n.sid);notify('הערת התנהגות חמורה',`${s?.name||''}: ${String(n.text||'').slice(0,120)}`,'note-'+(n.id||n.at))}
+function notifyNote(n){if(!S.mgr||!isBeh(n)||(sevOf(n)<3&&!n.imp))return;const s=S.students.get(n.sid);notify(n.imp?'⚠ הערה חשובה':'הערת התנהגות חמורה',`${s?.name||''}: ${String(n.text||'').slice(0,120)}`,'note-'+(n.id||n.at))}
 function checkLateReturns(){if(!(S.mgr||has('out')))return;const now=Date.now();
   for(const s of S.students.values()){const t=S.status.get(s.id);if(t&&t.state==='out'&&t.backBy&&t.backBy<now&&now-t.backBy<12*36e5)
     notify('תלמיד לא חזר בזמן',`${s.name} היה אמור לחזור ב-${hm(t.backBy)}${t.reason?' ('+t.reason+')':''}`,'late-'+s.id+'-'+t.backBy)}}
@@ -2073,6 +2133,7 @@ function renderHome(){
   if(canMt()){const o=S.mt.filter(m=>(m.status||'open')!=='done'),u=o.filter(m=>m.urg===2).length;tile('maint','תקלות תחזוקה',o.length,o.length?(u?`<b>${u}</b> דחופות · `:'')+`${o.filter(m=>m.status==='prog').length} בטיפול`:'אין תקלות פתוחות',u>0)}
   if(has('mgr')){const open=S.notes.filter(n=>isBeh(n)&&!n.handled&&S.students.has(n.sid)).length;tile('mgr','התראות התנהגות',open,open?'ממתינות לטיפול':'אין התראות פתוחות',open>0)}
   $('hmTiles').innerHTML=tiles.join('');
+  {const late=has('out')||S.mgr?lateOuts(st):[];$('hmLate').innerHTML=late.length?`<div class="late-p"><h2>⏰ היו אמורים לחזור ולא חזרו (${late.length})</h2><div class="list">${lateList(late)}</div></div>`:''}
   renderBirthdays();renderBackupNote();renderNotifBtn();renderBoard();
   const nx=events().filter(e=>e.to>=today).slice(0,3);
   $('hmNextP').hidden=!nx.length;
