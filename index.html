@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-03-33";
+const APP_VERSION = "2026-11-03-34";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -374,6 +374,8 @@ body.desk .sheet{max-width:640px;max-height:none;height:100%;border-radius:0;box
 .tv .spot{border-radius:18px;padding:18px 22px;background:linear-gradient(120deg,rgba(255,255,255,.12),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.15);animation:secIn .5s ease}
 .tv .spot h3{margin:0 0 10px;font-size:1.5rem}.tv .spot .big{font-size:2.2rem;font-weight:700}.tv .spot ul{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:1.35rem}.tv .spot li{display:flex;justify-content:space-between;gap:12px}
 .tv .dots{display:flex;gap:6px;justify-content:center;margin-top:10px}.tv .dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3)}.tv .dots i.on{background:#fff}
+.dayline .mk.alt{top:70px}.dayline .mk.alt::before{height:30px;margin-top:-24px}.dayline{height:104px}#hmDayP{padding-bottom:8px!important}
+@media (max-height:820px){.tv{gap:10px;padding:12px 20px}.tv .clk{font-size:2.6rem}.tv h1{font-size:1.5rem}.tv .c{padding:10px 14px}.tv .c .n{font-size:2.3rem}.tv .spot{padding:10px 18px}.tv .spot h3{font-size:1.2rem;margin-bottom:6px}.tv .spot ul{font-size:1.1rem;gap:4px}.tv .spot .big{font-size:1.8rem}.tv .spot li:nth-child(n+4){display:none}.tv .g .c li:nth-child(n+5){display:none}.tv .dots{margin-top:4px}.tv .g{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}.tv .g .c{padding:10px 14px}}
 @media (prefers-reduced-motion:reduce){.confetti{display:none}.t-n.bump{animation:none}}
 /* ---- calmer home + grouped menu ---- */
 .uhide{display:none!important}
@@ -2835,7 +2837,7 @@ function renderDish(){const P=$('hmDishP');if(!P)return;const show=S.access&&(ha
    </div></details>`}
 function confetti(){const c=document.createElement('div');c.className='confetti';const col=['#0E5DB4','#C9A227','#2EAA6E','#E08A2E','#D45A9A','#5AA7FF'];
   c.innerHTML=Array.from({length:46},(_,i)=>`<i style="left:${Math.random()*100}%;background:${col[i%col.length]};animation-delay:${Math.random()*.35}s;transform:rotate(${Math.random()*180}deg)"></i>`).join('');document.body.appendChild(c);setTimeout(()=>c.remove(),2600)}
-function tvSpot(){const S2=[];const D=compData();if(D.rooms.length)S2.push(['🏆 תחרות החדרים השבוע',`<ul>${D.rooms.slice(0,5).map((x,i)=>`<li><b>${i===0&&x.t>0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':''}חדר ${x.r}</b><span>${x.t} נק׳</span></li>`).join('')}</ul>`]);
+function tvSpot(){const S2=[];
   const k=thuOf(ymd(new Date())),h=S.dish?.hist?.[k];if(h)S2.push(['🍲 תורן שטיפת סירים – יום חמישי',`<div class="big">${esc(h.name)}</div><div>כיתה ${esc(h.grade)}${h.done?' · ✓ בוצע':''}</div>`]);
   const ev=events().filter(e=>e.to>=ymd(new Date())).slice(0,4);if(ev.length)S2.push(['📅 בקרוב',`<ul>${ev.map(e=>`<li><b>${esc(e.name)}</b><span>${rangeTxt(e.from,e.to)}</span></li>`).join('')}</ul>`]);
   const bd=typeof birthdays==='function'?birthdays(7):[];if(bd.length)S2.push(['🎂 ימי הולדת השבוע',`<ul>${bd.slice(0,5).map(x=>`<li><b>${esc(x.s.name)}</b><span>${x.i===0?'היום! 🎉':x.i===1?'מחר':fmtShort(x.k)}</span></li>`).join('')}</ul>`]);
@@ -3120,7 +3122,7 @@ function renderDay(){const el=$('hmDay');if(!el)return;const n=new Date(),now=n.
   const M=[['morn','השכמה'],['count','נוכחות ערב'],['lights','כיבוי אורות']].map(([k,l])=>{const r=roundStat(k);const dl=k==='morn'&&S.mornDate!==today?wb:k!=='morn'&&S.night!==nightKey()?(tplOf(k).times[n.getDay()]||S.settings?.[RK[k][1]]||RK[k][2]):r.dl;const d=r.isToday&&r.tot>0&&r.done>=r.tot,LT=k==='lights'?lightsTimes():[];return LT.length>1?[LT[0][1],l,d,!d&&r.isToday&&r.over,LT[0][1]+'–'+LT[LT.length-1][1]]:[dl,l,d,!d&&r.isToday&&r.over]});
   const p=Math.max(0,Math.min(100,((now-360)/(1080))*100)),cl=v=>Math.max(0,Math.min(100,v));
   const SI=(S.sched?schDayItems(n.getDay()):[]).filter(x=>x.from&&toMin(x.from)<1440).map(x=>{const a=Math.max(360,toMin(x.from)),b=Math.min(1440,x.to?toMin(x.to):a+30),r=cl((a-360)/10.8),w=Math.max(1.2,cl((b-360)/10.8)-r);return `<span class="blk ${now>=a&&now<b?'cur':''}" style="right:${r}%;width:${w}%;background:${SK[x.k]?.[1]||'var(--soft)'}" title="${esc(x.from+(x.to?'–'+x.to:'')+' '+x.title)}">${w>4?esc(x.title):''}</span>`}).join('');
-  el.innerHTML=`${SI}<div class="tr"></div>${M.map(([t,l,d,o,ds])=>`<span class="mk ${d?'done':o?'over':''}" style="right:${tPct(t)}%">${d?'✓ ':DLI[l]||''}${l}<br>${ds||t}</span>`).join('')}${now>=360?`<span class="now" style="right:${p}%" data-t="עכשיו ${pad(n.getHours())}:${pad(n.getMinutes())}"></span>`:''}`}
+  el.innerHTML=`${SI}<div class="tr"></div>${M.map(([t,l,d,o,ds],i)=>`<span class="mk ${i===2?'alt':''} ${d?'done':o?'over':''}" style="right:${tPct(t)}%">${d?'✓ ':DLI[l]||''}${l}<br><bdi dir="ltr">${ds||t}</bdi></span>`).join('')}${now>=360?`<span class="now" style="right:${p}%" data-t="עכשיו ${pad(n.getHours())}:${pad(n.getMinutes())}"></span>`:''}`}
 function renderRounds(){const el=$('hmRounds');if(!el)return;if(S.access)subRq();const n=new Date(),today=ymd(n),now=hm(n.getTime()),inn=allSorted().filter(s=>!isOut(s.id)),R=[];
   [['השכמה','morn','morning'],['נוכחות ערב','count','count'],['כיבוי אורות','lights','count']].forEach(([l,k,p])=>{if(!(has(p)||S.mgr))return;const r=roundStat(k);if(r.isToday&&r.act)R.push([l,k,r.done,r.tot,r.dl,r.req,r.over])});
   if(S.unIns&&S.insWeek===weekOf(today)){const RS=roomsList().filter(r=>!STAFF_ROOMS.has(r));R.push(['בדיקת חדרים (השבוע)','rooms',RS.filter(r=>S.ins.has(r)).length,RS.length,''])}
