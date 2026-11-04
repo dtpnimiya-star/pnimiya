@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-04-51";
+const APP_VERSION = "2026-11-04-52";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -598,6 +598,11 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) body::after{opacity:.09;filter:saturate(.7) brightness(1.4)}}
 :root[data-theme="dark"] body::after{opacity:.09;filter:saturate(.7) brightness(1.4)}
 .app{position:relative;z-index:1}
+.nav-merged{display:none!important}
+.subnav{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}.subnav::-webkit-scrollbar{display:none}
+.subnav button{flex:1 0 auto;padding-inline:11px!important;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 14px;font:inherit;font-weight:600;font-size:.92rem;cursor:pointer;white-space:nowrap}
+.subnav button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.st-more>summary,.st-add>summary{font-size:1.05rem;font-weight:700;cursor:pointer}
 .lg-logo{display:block;width:min(260px,80%);height:auto;margin:4px auto 0;border-radius:8px}
 body:has(#login:not([hidden])){background:radial-gradient(140% 70% at 50% -10%,#3D97FF 0%,#1361C4 38%,#0B3A78 75%,#082A57 100%) fixed;min-height:100vh}
 body:has(#login:not([hidden])) header{display:none}
@@ -703,7 +708,7 @@ body:has(#login:not([hidden])) header{display:none}
     <button type="button" id="t-staff" data-tab="staff" data-perm="owner" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="lbl">צוות</span></button>
   </div>
   <div style="padding:0 0 10px"><a class="btn small apk-dl" style="display:block" href="pnimiya.apk" download="pnimiya.apk" hidden style="text-align:center;text-decoration:none">📲 הורדת האפליקציה לאנדרואיד</a></div>
-  <div class="view-opts"><button class="btn small tgl" type="button" data-act="theme" id="vTheme">🌙 מצב כהה</button><button class="btn small tgl" type="button" data-act="bigText" id="vBig">A+ טקסט גדול</button><button class="btn small tgl" type="button" data-act="nightMode" id="vNight">🔦 סיור לילה: אוטומטי</button></div>
+  <div class="view-opts"><button class="btn small tgl" type="button" data-act="view" id="vView">🌓 תצוגה: אוטומטית</button><button class="btn small tgl" type="button" data-act="theme" id="vTheme" hidden>🌙 מצב כהה</button><button class="btn small tgl" type="button" data-act="bigText" id="vBig">A+ טקסט גדול</button><button class="btn small tgl" type="button" data-act="nightMode" id="vNight" hidden>🔦 סיור לילה: אוטומטי</button></div>
   <div class="drawer-foot"><span class="muted" id="drawerUser"></span><span class="row" style="gap:6px"><button class="btn small" type="button" data-act="tour">🧭 סיור</button><button class="btn small" type="button" data-act="stMine">הכרטיס שלי</button><button class="btn small" type="button" data-act="logout">יציאה</button></span></div>
 </nav>
 <main><div class="wrap">
@@ -923,6 +928,7 @@ body:has(#login:not([hidden])) header{display:none}
   <section id="tab-meet" hidden style="display:grid;gap:14px">
     <div class="row" style="justify-content:space-between;gap:8px"><label class="muted" style="display:flex;gap:6px;align-items:center;font-size:.9rem">תאריך הישיבה <input type="date" id="mtDate" style="width:auto"></label><span class="pill">החומר מוכן אוטומטית מהנתונים של השבוע</span></div>
     <div class="calnote" style="background:var(--soft)"><span>שעה אחת, סדר קבוע: החלטות קודמות 10 דק׳ · תלמידים לדיון 30 · אירועים חריגים ולקחים 10 · לוגיסטיקה 5 · סיכום 5.</span></div>
+    <div class="panel" id="smP" hidden><div class="row" style="justify-content:space-between"><h2>📊 נתונים לישיבה</h2><div class="seg" id="smSeg"></div></div><span class="muted" style="font-size:.88rem">תלמידים שחוזרים על אותה בעיה כמה פעמים, עם המספרים, וגם מי שבלט לטובה.</span><div id="sm"></div></div>
     <div class="panel"><h2>1. החלטות מהישיבות הקודמות <small class="muted">· 10 דק׳</small></h2><div id="mtPrev"></div></div>
     <div class="panel"><h2>2. תלמידים לדיון <small class="muted">· 30 דק׳</small></h2><span class="muted" style="font-size:.86rem">לכל תלמיד: מה ידוע ← מה לא ברור ← מה מחליטים ← מי אחראי ועד מתי.</span><div id="mtStu"></div></div>
     <div class="panel"><h2>3. אירועים חריגים ולקחים <small class="muted">· 10 דק׳</small></h2><div id="mtEv"></div></div>
@@ -1072,7 +1078,6 @@ body:has(#login:not([hidden])) header{display:none}
 
   <!-- דוחות -->
   <section id="tab-rep" hidden style="display:grid;gap:16px">
-    <div class="panel" id="smP" hidden><div class="row" style="justify-content:space-between"><h2>📋 דוח לישיבת צוות</h2><div class="seg" id="smSeg"></div></div><span class="muted" style="font-size:.88rem">תלמידים שחוזרים על אותה בעיה כמה פעמים, עם המספרים, וגם מי שבלט לטובה. <button class="btn small" type="button" data-act="go" data-to="meet">לניהול הישיבה המלא ←</button></span><div id="sm"></div></div>
     <div class="panel" id="wkEduP" hidden><h2>📨 סיכום שבועי למחנכים</h2><span class="muted" style="font-size:.88rem">סיכום של 7 הימים האחרונים לכל כיתה. הוא לא נשלח לבד: אפשר לערוך את הנוסח ואז לשלוח במייל, בוואטסאפ או להעתיק.</span><div id="wkEdu" style="display:grid;gap:8px;margin-top:8px"></div></div>
     <form id="repForm" class="panel">
       <h2>הפקת דוח לאקסל</h2>
@@ -1101,8 +1106,8 @@ body:has(#login:not([hidden])) header{display:none}
 
   <!-- צוות -->
   <section id="tab-staff" hidden style="display:grid;gap:16px">
-    <form id="newStaff" class="panel">
-      <h2>הוספת עובד</h2>
+    <details class="panel st-add"><summary>➕ הוספת עובד חדש</summary>
+    <form id="newStaff" style="display:grid;gap:10px;margin-top:10px">
       <div class="grid2">
         <input id="nsName" placeholder="שם מלא" required aria-label="שם מלא">
         <select id="nsRole" aria-label="תפקיד"><option>מדריך</option><option>רכז</option><option>עו"ס</option><option>סגן מנהל</option><option>איש תחזוקה</option></select>
@@ -1114,14 +1119,16 @@ body:has(#login:not([hidden])) header{display:none}
       <span class="muted" style="font-size:.88rem">שם משתמש: אותיות באנגלית, מספרים, נקודה או מקף. מסרו לעובד את שם המשתמש והסיסמה; הוא יוכל להחליף סיסמה בעצמו.</span>
       <div><button class="btn primary" type="submit" id="nsBtn">צור עובד</button></div>
       <div id="nsMsg" class="notice" hidden></div>
-    </form>
+    </form></details>
     <div style="display:grid;gap:8px"><h2>אנשי צוות</h2><div id="staffList"></div></div>
-    <div class="panel"><h2>💾 גיבוי נתונים</h2>
+    <details class="panel st-more"><summary>⚙ גיבוי ויומן פעילות</summary><div style="display:grid;gap:16px;margin-top:10px">
+    <div><h2>💾 גיבוי נתונים</h2>
       <span class="muted" style="font-size:.9rem">קובץ אקסל אחד עם כל הנתונים: תלמידים, פרטים אישיים, יציאות, הערות, נוכחות לילה והשכמה (90 יום אחרונים), בדיקות חדרים וצוות. מומלץ פעם בשבוע; האתר יזכיר לך.</span>
       <div class="row" style="gap:8px"><button class="btn primary" type="button" data-act="backup" id="bkBtn">הורד גיבוי מלא</button><span class="muted" id="bkLast" style="font-size:.9rem"></span></div></div>
-    <div class="panel audit"><div class="row" style="justify-content:space-between"><h2>🕓 יומן פעילות</h2><button class="btn small" type="button" data-act="auditLoad">רענן</button></div>
+    <div class="audit"><div class="row" style="justify-content:space-between"><h2>🕓 יומן פעילות</h2><button class="btn small" type="button" data-act="auditLoad">רענן</button></div>
       <span class="muted" style="font-size:.9rem">כל פעולה של כל איש צוות: נוכחות ערב, השכמה, יציאות, הערות, תלמידים, הרשאות, תחזוקה, מרכז למידה ושבתות. אפשר לסנן לפי איש צוות או סוג פעולה.</span>
       <div id="auditList"></div></div>
+    </div></details>
   </section>
 </div></main>
 
@@ -1717,7 +1724,7 @@ function menu(open){if(open&&document.body.classList.contains('desk'))return;S.m
   if(open){($('drawer').querySelector('[aria-selected="true"]:not([hidden])')||$('drawer').querySelector('.drawer-list button:not([hidden])'))?.focus()}else $('menuBtn').focus({preventScroll:true})}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.menuOpen)menu(false)});
 function applyPerms(){
-  const ok=S.permReady&&(S.owner||PERMS.some(([k])=>has(k)));S.access=ok;if(ok&&!S.goDone){S.goDone=1;try{const u=new URL(location.href),g=u.searchParams.get('go');if(g&&/^[a-z]+$/.test(g)){u.searchParams.delete('go');history.replaceState(null,'',u.pathname+u.search+u.hash);setTimeout(()=>{const b=$('t-'+g);if(b&&!b.hidden)b.click()},500)}}catch(e){}}$('menuBtn').hidden=!ok;$('cpBtn').hidden=!ok;deskNav();setTimeout(dgrpSync,0);if(!ok&&S.menuOpen)menu(false);$('drawerUser').textContent=S.myName||'';if(!$('drawerLogo').src)$('drawerLogo').src=document.querySelector('.lg-logo').src;
+  const ok=S.permReady&&(S.owner||PERMS.some(([k])=>has(k)));S.access=ok;if(ok&&!S.goDone){S.goDone=1;try{const u=new URL(location.href),g=u.searchParams.get('go');if(g&&/^[a-z]+$/.test(g)){u.searchParams.delete('go');history.replaceState(null,'',u.pathname+u.search+u.hash);setTimeout(()=>{const b=$('t-'+g);if(b&&!b.hidden)b.click()},500)}}catch(e){}}$('menuBtn').hidden=!ok;$('cpBtn').hidden=!ok;deskNav();setTimeout(()=>{navMerge();dgrpSync()},0);if(!ok&&S.menuOpen)menu(false);$('drawerUser').textContent=S.myName||'';if(!$('drawerLogo').src)$('drawerLogo').src=document.querySelector('.lg-logo').src;
   document.querySelectorAll('[data-perm]').forEach(el=>el.hidden=!ok||!has(el.dataset.perm));
   S.mgr=ok&&has('mgr');setTimeout(renderBnav,0);
   $('topSum').hidden=!ok;
@@ -1897,7 +1904,7 @@ document.addEventListener('click',async e=>{
   if(!b)return;
   if(b.dataset.tab){S.tab=b.dataset.tab;document.body.dataset.page=S.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
     ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','clubs','shab','act','lights','roster','beds','meet','pw','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='beds')renderBeds();if(S.tab==='meet')renderMeet();if(S.tab==='pw')renderPW();if(S.tab==='roster')renderRoster();if(S.tab==='lights')renderLights();if(S.tab==='act'){subAc();renderAc()}if(S.tab==='home')renderHome();if(S.tab==='rooms')subIns();if(S.tab==='maint'){subMt();renderMt()}if(S.tab==='learn'){subLn();renderLearn()}if(S.tab==='clubs'){subCl();if(has('learn')||has('count'))subLn();renderClubs(true)}if(S.tab==='shab'){subShab();renderShab()}if(S.tab==='staff')loadAudit();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
-    try{localStorage.setItem('pn-tab',S.tab)}catch{}renderBnav();dgrpSync();window.scrollTo(0,0);return}
+    try{localStorage.setItem('pn-tab',S.tab)}catch{}navMerge();renderBnav();dgrpSync();window.scrollTo(0,0);return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
   if(!db&&!['close','open','nnClose','nnCat','absLen','onlyOpen','onlyOpenM','mtab','insSel','theme','bigText','go','menuOpen','bRead','bShowAll','mtF','mtImg','lnT','lnGrade','lnClr','shNew','shCancel'].includes(b.dataset.act))return;
   const id=b.dataset.id;
@@ -1934,6 +1941,7 @@ document.addEventListener('click',async e=>{
     case'shT':shTab(b.dataset.t);document.querySelector('#sheetBg .sheet')?.scrollTo({top:0});break;
     case'nightMode':{const o=['auto','off','on'],c=nightPref();try{localStorage.setItem('pn-night',o[(o.indexOf(c)+1)%3])}catch{}applyNight();toast(({auto:'סיור לילה: יופעל לבד משעת כיבוי האורות עד 06:00',off:'סיור לילה כבוי',on:'סיור לילה פעיל תמיד'})[nightPref()]);break}
     case'theme':setTheme(S.theme==='dark'?'light':'dark');break;
+    case'view':{const o=['auto','light','dark'],nx=o[(o.indexOf(viewMode())+1)%3];try{localStorage.setItem('pn-night',nx==='auto'?'auto':'off')}catch{}setTheme(nx);applyNight();viewBtn();toast(({auto:'תצוגה אוטומטית: לפי הגדרת הטלפון, ומעומעמת לסיור לילה מכיבוי אורות עד 06:00',light:'תצוגה בהירה',dark:'תצוגה כהה'})[nx]);break}
     case'bigText':setBig(!document.documentElement.classList.contains('big'));break;
     case'seOpen':seOpen();break;
     case'praise':{const sid=S.sel;if(!sid)break;b.disabled=true;try{const r=db.collection('notes').doc();await OW(r.set({sid,kind:'שבח',pts:1,text:'שבח: '+b.dataset.c,at:Date.now(),by:S.me,byName:S.myName}));toast('+1 נקודה ל'+(S.students.get(sid)?.name||''),()=>OW(r.delete()))}catch(e){fail(e)}b.disabled=false;break}
@@ -2885,11 +2893,13 @@ function shTab(k){if(k)S.shT=k;const sh=document.querySelector('#sheetBg .sheet'
   sh.querySelectorAll('[data-st]').forEach(e=>e.classList.toggle('st-off',e.dataset.st!==S.shT))}
 ['seForm','pfForm'].forEach(id=>{const f=$(id);if(f)new MutationObserver(()=>{if(!f.hidden){const t=f.closest('[data-st]')?.dataset.st;if(t&&S.shT!==t)shTab(t)}}).observe(f,{attributes:true,attributeFilter:['hidden']})});
 /* ---------- night patrol mode: dim, warm screen from lights-out to 06:00 ---------- */
+function viewMode(){const n=nightPref(),t=S.theme||'auto';return n==='off'&&t==='light'?'light':n==='off'&&t==='dark'?'dark':'auto'}
+function viewBtn(){const b=$('vView');if(b){const m=viewMode();b.textContent=({light:'☀️ תצוגה: בהירה',dark:'🌙 תצוגה: כהה',auto:'🌓 תצוגה: אוטומטית'})[m];b.setAttribute('aria-pressed',m!=='auto')}}
 const nightPref=()=>{try{return localStorage.getItem('pn-night')||'auto'}catch{return 'auto'}};
 function inNight(){const n=new Date(),m=n.getHours()*60+n.getMinutes();let s=23*60;try{const L=lightsTimes();if(L.length)s=toMin(L[0][1]);else if(S.settings?.lightsBy)s=toMin(S.settings.lightsBy)}catch{}if(s<18*60)s+=24*60;const mm=m<360?m+1440:m;return mm>=s&&mm<1440+360}
 function applyNight(){const p=nightPref(),on=!(typeof PA!=='undefined'&&PA)&&!FIXQ&&!S.tv&&(p==='on'||(p==='auto'&&inNight()));const was=document.documentElement.classList.contains('nightdim');
   document.documentElement.classList.toggle('nightdim',on);if(on)document.documentElement.dataset.theme='dark';else if(was)setTheme(S.theme||'auto');
-  const b=$('vNight');if(b){b.textContent='🔦 סיור לילה: '+({auto:'אוטומטי',off:'כבוי',on:'פעיל'})[p];b.setAttribute('aria-pressed',on)}}
+  const b=$('vNight');if(b){b.textContent='🔦 סיור לילה: '+({auto:'אוטומטי',off:'כבוי',on:'פעיל'})[p];b.setAttribute('aria-pressed',on)}viewBtn()}
 setInterval(applyNight,60000);setTimeout(applyNight,1500);
 /* ---------- learning centre ---------- */
 S.ln=[];S.lnT='new';S.lnSel=new Set();
@@ -2996,7 +3006,7 @@ function smData(N){const {days,morn,night}=S.trend,from=Date.now()-N*864e5,R=new
 function smHtml(D,click){const c=(v,t)=>`<td class="n ${v>=t?'hot':''}">${v||''}</td>`,nm=x=>click?`<button class="name" type="button" data-act="open" data-id="${x.s.id}" style="padding:0">${esc(x.s.name)}</button>`:esc(x.s.name);
   return (D.flag.length?`<div style="overflow-x:auto"><table class="sm-tbl"><thead><tr><th>תלמיד</th><th>כיתה</th><th>חסר בלי אישור</th><th>חסר באישור</th><th>איחור לערב</th><th>איחור בהשכמה</th><th>לא קם</th><th>הערות התנהגות</th></tr></thead><tbody>${D.flag.map(x=>`<tr><td>${nm(x)}</td><td><span class="gdot" style="background:${gColor(x.s.grade)}"></span>${esc(x.s.grade||'')}</td>${c(x.ab,2)}${c(x.abA,99)}${c(x.late,3)}${c(x.wl,3)}${c(x.wn,2)}${c(x.beh,2)}</tr>`).join('')}</tbody></table></div>`:`<p>✓ אין תלמידים עם בעיה חוזרת ב-${D.N} הימים האחרונים.</p>`)
    +(D.top.length?`<p style="margin-bottom:0"><b>🌟 בלטו לטובה:</b> ${D.top.map(x=>esc(x.s.name)+' ('+x.pr+' נק׳)').join(', ')}</p>`:'')}
-function renderSM(){const P=$('smP');if(!P)return;P.hidden=!S.mgr;if(!S.mgr||S.tab!=='rep')return;
+function renderSM(){const P=$('smP');if(!P)return;P.hidden=!S.mgr;if(!S.mgr||S.tab!=='meet')return;
   $('smSeg').innerHTML=[7,14,30].map(n=>`<button type="button" data-act="smPer" data-d="${n}" aria-pressed="${S.smN===n}">${n} יום</button>`).join('');
   if(!S.trend){$('sm').innerHTML=SKEL;loadTrends();return}
   $('sm').innerHTML=smHtml(smData(S.smN),true)+'<div class="row" style="margin-top:10px"><button class="btn small" type="button" data-act="smPrint">🖨 הדפסה / שמירה כ-PDF</button></div>'}
@@ -3042,7 +3052,7 @@ function mtText(){const D=S.mtDate,m=S.meet?.mt?.[D]||{},L=decs().filter(x=>x.m=
   return [`סיכום ישיבת צוות – ${fmtShort(D)}`,`משתתפים: ${($('mtAtt')?.value||m.att||'').trim()||'—'}`,'',...(L.length?L.map((x,i)=>`החלטה ${i+1}: ${nm(x)}${x.t}. אחראי: ${x.who}. עד ${fmtShort(x.due)}.`):['לא התקבלו החלטות חדשות.']),
     ...(m.lessons||[]).map(x=>`לקח: ${x}`),...(P.length?['',`מעקב אחרי החלטות קודמות: ${P.filter(x=>x.st==='done').length} בוצעו, ${P.filter(x=>x.st==='no').length} לא בוצעו, ${P.filter(x=>x.st==='open').length} עדיין פתוחות.`,...P.filter(x=>x.st!=='done').map(x=>`• ${nm(x)}${x.t} (${x.who}, עד ${fmtShort(x.due)})${x.st==='no'?' – לא בוצע'+(x.why?': '+x.why:''):''}`)]:[]),
     '','לישיבה הבאה: מעקב אחרי ההחלטות הפתוחות.'].join('\n')}
-function renderMeet(){if(S.tab!=='meet')return;if(!S.mtDate)S.mtDate=ymd(new Date());const di=$('mtDate');if(di.value!==S.mtDate)di.value=S.mtDate;
+function renderMeet(){if(S.tab!=='meet')return;renderSM();if(!S.mtDate)S.mtDate=ymd(new Date());const di=$('mtDate');if(di.value!==S.mtDate)di.value=S.mtDate;
   if(!S.trend)loadTrends();if(!S.mtAt||Date.now()-S.mtAt>5*6e4)mtLoad();
   const names=new Set();Object.values(S.names||{}).forEach(n=>n&&names.add(n));Object.values(S.roster?.d||{}).flat().forEach(x=>x?.n&&names.add(x.n));$('mtWho').innerHTML=[...names].map(n=>`<option value="${esc(n)}">`).join('');
   const D=S.mtDate,P=decs().filter(x=>x.m<D&&(x.st==='open'||(x.stAt&&x.stAt>=new Date(D+'T00:00').getTime()-6*864e5)));
@@ -3187,6 +3197,13 @@ const DGRP=[['main','',['home','count','lights','morn','out','stu']],['kids','ת
   const tg=h=>{const g=h.closest('.dgrp');g.classList.toggle('closed');h.setAttribute('aria-expanded',String(!g.classList.contains('closed')));const c=[...list.querySelectorAll('.dgrp.closed')].map(x=>x.dataset.g);try{localStorage.setItem('pn-dgrp',JSON.stringify(c))}catch{}};
   list.addEventListener('click',e=>{const h=e.target.closest('.dgrp-h');if(h)tg(h)});
   list.addEventListener('keydown',e=>{const h=e.target.closest('.dgrp-h');if(h&&(e.key==='Enter'||e.key===' ')){e.preventDefault();tg(h)}})})();
+const SNL={sched:'מערכת שבועית',cal:'לוח שנה',shab:'שבתות',act:'פעילויות',beds:'מיטות ושיבוץ',rooms:'בדיקת חדרים'};
+const NAVG=[['rooms','חדרים',['beds','rooms']],['time','לוח זמנים',['sched','cal','shab','act']]];
+function navMerge(){NAVG.forEach(([k,l,M])=>{const vis=M.filter(t=>$('t-'+t)&&!$('t-'+t).hidden);
+  M.forEach(t=>{const b=$('t-'+t);if(!b)return;const lb=b.querySelector('.lbl');if(!b.dataset.orig)b.dataset.orig=lb.textContent;b.classList.toggle('nav-merged',vis.length>1&&t!==vis[0]);lb.textContent=vis.length>1&&t===vis[0]?l:b.dataset.orig});
+  document.querySelectorAll(`.subnav[data-sn="${k}"]`).forEach(el=>{el.hidden=vis.length<2;el.innerHTML=vis.map(t=>`<button type="button" data-tab="${t}" aria-pressed="${S.tab===t}"><span class="lbl">${esc(SNL[t]||$('t-'+t).dataset.orig)}</span></button>`).join('')});
+  if(vis.length>1&&vis.includes(S.tab)){const p=$('t-'+vis[0]);p.setAttribute('aria-selected','true');p.setAttribute('aria-current','page');$('pageTitle').textContent=$('t-'+S.tab).dataset.orig}})}
+NAVG.forEach(([k,,M])=>M.forEach(t=>{const s=$('tab-'+t);if(s&&!s.querySelector('.subnav')){const d=document.createElement('div');d.className='subnav';d.dataset.sn=k;d.hidden=true;s.prepend(d)}}));
 function dgrpSync(){document.querySelectorAll('.dgrp').forEach(g=>{const any=[...g.querySelectorAll('[data-tab]')].some(b=>!b.hidden);g.hidden=!any;if(g.querySelector('[aria-selected="true"]'))g.classList.remove('closed')})}
 /* ---------- desktop layout ---------- */
 const DESK=matchMedia('(min-width:1100px)');
@@ -3541,7 +3558,7 @@ function renderHome(){
   const nx=events().filter(e=>e.to>=today).slice(0,3);
   $('hmNextP').hidden=!nx.length;
   $('hmNext').innerHTML=nx.map(e=>`<div class="ev"><i style="background:${dotC(e.k)}"></i><span class="when">${rangeTxt(e.from,e.to)}</span><b>${esc(e.name)}</b></div>`).join('');
-  $('hmLinks').innerHTML=[...document.querySelectorAll('.drawer-list button')].filter(b=>!b.hidden&&b.dataset.tab!=='home').map(b=>`<button type="button" data-act="go" data-to="${b.dataset.tab}">${b.querySelector('svg').outerHTML.replace('class="ni"','')}<span>${b.querySelector('.lbl').textContent}</span></button>`).join('');
+  $('hmLinks').innerHTML=[...document.querySelectorAll('.drawer-list button')].filter(b=>!b.hidden&&!b.classList.contains('nav-merged')&&b.dataset.tab!=='home').map(b=>`<button type="button" data-act="go" data-to="${b.dataset.tab}">${b.querySelector('svg').outerHTML.replace('class="ni"','')}<span>${b.querySelector('.lbl').textContent}</span></button>`).join('');
 }
 
 /* ---------- reports ---------- */
@@ -3549,7 +3566,7 @@ const dmy=k=>k.slice(8)+'.'+k.slice(5,7);
 function datesBetween(a,b){const out=[];const d=new Date(a+'T12:00'),e=new Date(b+'T12:00');while(d<=e&&out.length<93){out.push(ymd(d));d.setDate(d.getDate()+1)}return out}
 function setRange(k){const to=new Date(),from=new Date();if(k==='month')from.setDate(1);else from.setDate(from.getDate()-(+k-1));$('repFrom').value=ymd(from);$('repTo').value=ymd(to)}
 function renderRep(){
-  if(S.tab!=='rep')return;renderSM();if(!document.activeElement?.classList?.contains('wkT'))renderWkEdu();
+  if(S.tab!=='rep')return;if(!document.activeElement?.classList?.contains('wkT'))renderWkEdu();
   if(!$('repFrom').value)setRange(7);
   const canNotes=has('notes')||has('mgr');$('rk-notes-l').hidden=!canNotes;$('rk-contacts-l').hidden=!has('personal');
   {const sel=$('repStu'),v=sel.value,st=[...S.students.values()].sort((a,b)=>GRADES.indexOf(a.grade)-GRADES.indexOf(b.grade)||(a.name||'').localeCompare(b.name||'','he'));
