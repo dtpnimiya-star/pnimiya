@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-04-52";
+const APP_VERSION = "2026-11-04-53";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -603,6 +603,8 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 .subnav button{flex:1 0 auto;padding-inline:11px!important;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 14px;font:inherit;font-weight:600;font-size:.92rem;cursor:pointer;white-space:nowrap}
 .subnav button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .st-more>summary,.st-add>summary{font-size:1.05rem;font-weight:700;cursor:pointer}
+.hr-l{display:grid;gap:4px;font-size:.92rem;color:var(--muted);text-align:right}.hr-l input,.hr-l select,.hr-l textarea{font:inherit;color:var(--ink)}
+.hr-seg{display:flex;gap:6px}.hr-seg label{flex:1}.hr-seg input{position:absolute;opacity:0;pointer-events:none}.hr-seg span{display:block;text-align:center;border:1px solid var(--line);border-radius:10px;padding:9px;cursor:pointer;font-weight:600}.hr-seg input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .lg-logo{display:block;width:min(260px,80%);height:auto;margin:4px auto 0;border-radius:8px}
 body:has(#login:not([hidden])){background:radial-gradient(140% 70% at 50% -10%,#3D97FF 0%,#1361C4 38%,#0B3A78 75%,#082A57 100%) fixed;min-height:100vh}
 body:has(#login:not([hidden])) header{display:none}
@@ -842,7 +844,11 @@ body:has(#login:not([hidden])) header{display:none}
       <div class="row" style="gap:8px"><button class="btn primary" type="submit">רשום יציאה</button><button class="btn" type="button" data-act="paReq">📲 שלח להורים לאישור</button></div>
       <span class="muted" style="font-size:.85rem">אפשר לשלוח להורים קישור לאישור היציאה לפני שהתלמיד יוצא. כשההורים מאשרים, האישור נשמר ביציאה.</span>
     </form>
+    <div id="hrList" hidden></div>
     <div id="paList" hidden></div>
+    <details class="panel" id="hrLinkP" hidden><summary style="font-weight:700;cursor:pointer">🔗 קישור להורים לבקשת יציאה הביתה</summary>
+      <div style="display:grid;gap:10px;margin-top:10px"><span class="muted" style="font-size:.88rem">לכל תלמיד יש קישור אישי. ההורים שומרים אותו, ובכל פעם שהם רוצים שהבן ייצא הם ממלאים טופס קצר. הבקשה מגיעה לכאן, והמנהל מאשר או דוחה.</span>
+      <select id="hrStu" aria-label="תלמיד"></select><div id="hrLink"></div></div></details>
     <form id="absForm" class="panel writer">
       <h2>רישום היעדרות ממושכת</h2>
       <span class="muted" style="font-size:.9rem;margin-top:-6px">לתלמיד שנעדר כמה ימים, שבוע או יותר. בזמן ההיעדרות הוא לא ייספר כחסר בלילה ובהשכמה.</span>
@@ -2001,6 +2007,12 @@ document.addEventListener('click',async e=>{
     case'fixCopy':try{await navigator.clipboard.writeText(fixUrl(S.fixKey));toast('הקישור הועתק')}catch{toast('לא הצלחתי להעתיק')}break;
     case'fixNew':await fixNew(b);break;
     case'paReq':await paReq(b);break;
+    case'hrOk':await hrDecide(b.dataset.id,true,b);break;
+    case'hrNo':{if(!armed(b,'לדחות?'))break;await hrDecide(b.dataset.id,false,b);break}
+    case'hrDel':{if(!armed(b,'בטוח?'))break;try{await OW(db.doc('hreq/'+b.dataset.id).delete());S.hr=S.hr.filter(x=>x.id!==b.dataset.id);renderHr()}catch(e){fail(e)}break}
+    case'hrMk':await hrMk(b.dataset.id);break;
+    case'hrNew':{if(!armed(b,'הקישור הישן יפסיק לעבוד. להחליף?'))break;await hrMk(b.dataset.id,S.htok.get(b.dataset.id)?.id);break}
+    case'hrCopy':{const u=hrUrl(b.dataset.id);try{await navigator.clipboard.writeText(u);toast('הקישור הועתק')}catch{prompt('העתיקו את הקישור:',u)}break}
     case'paCopy':{const u=paUrl(b.dataset.id);try{await navigator.clipboard.writeText(u);toast('הקישור הועתק')}catch{prompt('העתיקו את הקישור:',u)}break}
     case'paDel':{if(!armed(b,'בטוח?'))break;try{await OW(db.doc('pappr/'+b.dataset.id).delete());S.pa=S.pa.filter(x=>x.id!==b.dataset.id);renderPa()}catch(e){fail(e)}break}
     case'paGo':{const x=S.pa.find(y=>y.id===b.dataset.id);if(!x)break;b.disabled=true;const at=Date.now(),px={pa:x.pName||'הורה',paAt:x.pAt||at};try{await OW(db.doc('status/'+x.sid).set({state:'out',reason:x.reason||'',outAt:at,backBy:x.backBy||null,by:S.me,byName:S.myName,...px}));await OW(db.collection('moves').add({sid:x.sid,type:'out',reason:x.reason||'',backBy:x.backBy||null,at,by:S.me,byName:S.myName,...px}));await OW(db.doc('pappr/'+x.id).update({used:true}));toast('נרשמה יציאה באישור ההורים')}catch(e){fail(e)}break}
@@ -2373,7 +2385,7 @@ function renderAudit(){const el=$('auditList'),A=S.audL||[];const OP={set:'שמ�
   el.innerHTML=`<div class="grid2" style="margin:8px 0"><select id="audBy" aria-label="סינון לפי איש צוות"><option value="">כל הצוות (${A.length})</option>${people.map(n=>`<option ${S.audF.by===n?'selected':''} value="${esc(n)}">${esc(n)} (${cntBy(n)})</option>`).join('')}</select><select id="audCol" aria-label="סינון לפי סוג"><option value="">כל הפעולות</option>${cols.map(c=>`<option ${S.audF.col===c?'selected':''} value="${esc(c)}">${esc(AUD_COL[c]||c)}</option>`).join('')}</select></div>`
    +(L.length?`<div class="list log">`+L.slice(0,200).map(e=>`<div class="item"><span class="time">${when(e.at)}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(e.byName||'')}</b> · ${esc(AUD_COL[e.col]||e.col)}${e.label?' · <b>'+esc(e.label)+'</b>':''}${e.detail?`<span class="meta">${esc(e.detail)}</span>`:''}</span><span class="chip ${e.op==='delete'?'bad':''}">${OP[e.op]||e.op}</span></div>`).join('')+`</div>`
     :`<div class="empty">${A.length?'אין פעולות שמתאימות לסינון.':'עדיין אין רישומים. מעכשיו כל פעולה של כל איש צוות תירשם כאן.'}</div>`)}
-document.addEventListener('change',async e=>{const t=e.target;if(!db)return;
+document.addEventListener('change',async e=>{const t=e.target;if(t.id==='hrStu'){renderHrLink();return}if(!db)return;
   if(t.classList?.contains('wk-r')){try{await OW(wakeRef(t.dataset.id).update({r:t.value}));toast('הסיבה נשמרה')}catch(err){fail(err)}return}
   if(t.classList?.contains('ab-r')){const id=t.dataset.id,r=t.value;try{await OW(db.collection('nightcount/'+S.night+'/marks').doc(id).update(t.dataset.k==='l'?{r}:{r,ap:apOf(r)}));toast('הסיבה נשמרה')}catch(err){fail(err)}}
   if(t.dataset?.dl&&/^\d{2}:\d{2}$/.test(t.value)){try{await db.doc('settings/app').update({[t.dataset.dl]:t.value});toast('שעת הסגירה נשמרה')}catch(err){fail(err)}}});
@@ -2776,7 +2788,69 @@ document.addEventListener('change',async e=>{const t=e.target;
 document.addEventListener('input',e=>{if(e.target.id!=='clQ')return;S.clQ=e.target.value;renderClubs(true);const q=$('clQ');if(q){q.focus();const n=q.value.length;try{q.setSelectionRange(n,n)}catch{}}});
 $('tab-clubs').addEventListener('focusout',()=>{if(S.clPend){S.clPend=0;setTimeout(()=>renderClubs(),80)}});
 /* ---------- parent approval for exits ---------- */
-S.pa=[];S.paPh={};S.paPhL=new Set();
+S.pa=[];S.paPh={};S.paPhL=new Set();S.hr=[];S.htok=new Map();
+const HR=(()=>{try{return new URLSearchParams(location.search).get('hr')}catch{return null}})();
+const hrUrl=t=>SITE_URL+'?hr='+t;
+const hrCan=()=>(S.mgr||S.owner)&&!S.ro;
+const rid=()=>[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(36).padStart(2,'0')).join('').slice(0,24);
+function subHr(){if(!db||S.unHr||!(has('out')||S.mgr))return;S.unHr=1;
+  S.subs.push(db.collection('htok').onSnapshot(q=>{S.htok=new Map(q.docs.map(d=>[d.data().sid,{id:d.id,...d.data()}]));renderHrLink()},onErr));
+  S.subs.push(db.collection('hreq').where('at','>=',Date.now()-14*864e5).onSnapshot(q=>{const prev=new Set(S.hr.map(x=>x.id));S.hr=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.at-a.at);
+    if(S.hrLoaded)S.hr.filter(x=>!prev.has(x.id)&&x.status==='pending').forEach(x=>{const nm=S.students.get(x.sid)?.name||x.first||'';toast(`🏠 בקשת יציאה חדשה מההורים: ${nm}`);if(hrCan())notify('בקשת יציאה מההורים',`${nm} · ${x.pName||''} · ${paWhen(x.from)}`,'hr-'+x.id)});
+    S.hrLoaded=true;renderHr();renderHome()},onErr))}
+const hrPend=()=>S.hr.filter(x=>x.status==='pending'&&S.students.has(x.sid));
+function hrTxt(x,ok){const f=x.first||S.students.get(x.sid)?.firstName||'';return ok?`שלום ${x.pName||''},\nבקשת היציאה של ${f} אושרה ✓\nיציאה: ${paWhen(x.from)}\nחזרה: ${paWhen(x.to)}\nבברכה, ${S.myName||'צוות הפנימייה'}, פנימיית דעת תבונות`:`שלום ${x.pName||''},\nבקשת היציאה של ${f} ל${paWhen(x.from)} לא אושרה.\nלפרטים אפשר להתקשר אליי.\nבברכה, ${S.myName||'צוות הפנימייה'}, פנימיית דעת תבונות`}
+function renderHr(){const el=$('hrList');if(!el)return;const L=S.hr.filter(x=>S.students.has(x.sid)&&(x.status==='pending'||Date.now()-(x.dAt||x.at)<864e5));
+  el.hidden=!L.length;if(!L.length){el.innerHTML='';return}
+  L.filter(x=>!S.paPhL.has(x.sid)).forEach(x=>{S.paPhL.add(x.sid);paPhones(x.sid).then(p=>{S.paPh[x.sid]=p;renderHr()})});
+  el.innerHTML=`<div class="panel" style="display:grid;gap:8px"><h2 style="margin:0">🏠 בקשות יציאה מההורים${hrPend().length?` <span class="chip warn">${hrPend().length} ממתינות</span>`:''}</h2><div class="list">${L.map(x=>{const s=S.students.get(x.sid),st=x.status,ph=(S.paPh[x.sid]||[]).map(p=>waNum(p[1])),known=ph.includes(waNum(x.phone));
+    return `<div class="item" style="flex-wrap:wrap;align-items:flex-start">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${esc(x.pName||'')}${x.rel?' ('+esc(x.rel)+')':''} · נשלח ${when(x.at)}</span></button>
+     <span class="chip ${st==='ok'?'ok':st==='no'?'bad':'warn'}">${st==='ok'?'✓ אושר'+(x.dByName?' – '+esc(x.dByName):''):st==='no'?'✗ לא אושר':'⏳ ממתין לאישור'}</span>
+     <div style="flex-basis:100%;display:grid;gap:3px;font-size:.92rem;background:var(--soft);border-radius:10px;padding:8px 10px">
+      <div>🚪 יציאה: <b>${esc(paWhen(x.from))}</b></div><div>↩ חזרה: <b>${esc(paWhen(x.to))}</b></div>
+      ${x.reason?`<div>סיבה: ${esc(x.reason)}</div>`:''}${x.how?`<div>איך: ${esc(x.how)}</div>`:''}${x.note?`<div>הערה: ${esc(x.note)}</div>`:''}
+      <div>📞 <a href="tel:${esc(x.phone||'')}" dir="ltr">${esc(x.phone||'')}</a> ${ph.length?(known?'<span class="chip ok">הטלפון מופיע בתיק</span>':'<span class="chip bad">⚠ הטלפון לא מופיע בתיק – כדאי להתקשר לוודא</span>'):''}</div></div>
+     <div class="row" style="gap:6px;flex-basis:100%">${st==='pending'?(hrCan()?`<button class="btn small primary" type="button" data-act="hrOk" data-id="${x.id}">✓ אשר</button><button class="btn small" type="button" data-act="hrNo" data-id="${x.id}">✗ לא מאשר</button>`:'<span class="muted" style="font-size:.88rem">ממתין לאישור המנהל</span>'):(waNum(x.phone)?`<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/${waNum(x.phone)}?text=${encodeURIComponent(hrTxt(x,st==='ok'))}">💬 עדכן את ההורה</a>`:'')}${hrCan()?`<button class="btn small" type="button" data-act="hrDel" data-id="${x.id}">הסר</button>`:''}</div></div>`}).join('')}</div></div>`}
+async function hrDecide(id,ok,b){const x=S.hr.find(y=>y.id===id);if(!x)return;if(b)b.disabled=true;const at=Date.now();
+  try{if(ok){const s=S.students.get(x.sid),pid=rid();await OW(db.doc('pappr/'+pid).set({sid:x.sid,first:x.first||s?.firstName||String(s?.name||'').split(' ')[0],reason:'בקשת ההורים'+(x.reason?': '+x.reason:''),backBy:x.to||null,status:'ok',pName:(x.pName||'הורה')+(x.rel?' ('+x.rel+')':''),pAt:x.at,at,exp:at+3*864e5,by:S.me,byName:S.myName||'',hr:id}))}
+    await OW(db.doc('hreq/'+id).update({status:ok?'ok':'no',dBy:S.me,dByName:S.myName||'',dAt:at}));toast(ok?'הבקשה אושרה – כשהתלמיד יוצא לוחצים "רשום יציאה"':'הבקשה נדחתה')}catch(e){fail(e);if(b)b.disabled=false}}
+function renderHrLink(){const P=$('hrLinkP');if(!P)return;P.hidden=!((has('out')||S.mgr)&&!S.ro);if(P.hidden)return;const sel=$('hrStu'),v=sel.value;
+  if(sel.options.length!==allSorted().length+1){sel.innerHTML='<option value="">בחרו תלמיד…</option>'+allSorted().map(s=>`<option value="${s.id}">${esc(s.name)}${s.grade?' · '+esc(s.grade):''}${S.htok.has(s.id)?' ✓':''}</option>`).join('');sel.value=v}
+  const sid=sel.value,el=$('hrLink');if(!sid){el.innerHTML=`<span class="muted" style="font-size:.88rem">${S.htok.size} תלמידים כבר קיבלו קישור (מסומנים ב-✓).</span>`;return}
+  const t=S.htok.get(sid),s=S.students.get(sid);if(!t){el.innerHTML=`<button class="btn small primary" type="button" data-act="hrMk" data-id="${sid}">צור קישור ל${esc(s?.name||'')}</button>`;return}
+  const ph=S.paPh[sid];if(!ph&&!S.paPhL.has(sid)){S.paPhL.add(sid);paPhones(sid).then(p=>{S.paPh[sid]=p;renderHrLink()})}
+  const txt=n=>`שלום${n?' '+n:''},\nזה הקישור האישי של ${t.first||''} לבקשת יציאה מהפנימייה. בכל פעם שתרצו שהוא ייצא הביתה, מלאו את הטופס הקצר בקישור, והבקשה תגיע ישירות למנהל הפנימייה לאישור.\n${hrUrl(t.id)}\nכדאי לשמור את הקישור.\nבברכה, ${S.myName||'צוות הפנימייה'}, פנימיית דעת תבונות`;
+  el.innerHTML=`<div class="row" style="gap:6px;flex-wrap:wrap">${(ph||[]).map(([n,p])=>`<a class="btn small primary" target="_blank" rel="noopener" href="https://wa.me/${waNum(p)}?text=${encodeURIComponent(txt(n))}">💬 שלח ל${esc(n||'הורה')}</a>`).join('')}<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(txt(''))}">💬 וואטסאפ${ph?.length?' – איש קשר אחר':''}</a><button class="btn small" type="button" data-act="hrCopy" data-id="${t.id}">📋 העתק קישור</button><button class="btn small" type="button" data-act="hrNew" data-id="${sid}" title="הקישור הישן יפסיק לעבוד">🔄 החלף קישור</button></div>`}
+async function hrMk(sid,old){const s=S.students.get(sid);if(!s)return;const id=rid();try{if(old)await OW(db.doc('htok/'+old).delete());await OW(db.doc('htok/'+id).set({sid,first:s.firstName||String(s.name||'').split(' ')[0],grade:s.grade||'',at:Date.now(),by:S.me}));S.htok.set(sid,{id,sid,first:s.firstName||String(s.name||'').split(' ')[0]});renderHrLink();toast(old?'נוצר קישור חדש – הישן כבר לא עובד':'הקישור נוצר')}catch(e){fail(e)}}
+async function hrPage(tok){const v=document.createElement('main');v.id='paView';document.body.appendChild(v);const logo=document.querySelector('.lg-logo')?.src||'';
+  const box=h=>{v.innerHTML=`<div class="pa-card" style="text-align:right">${logo?`<img src="${logo}" alt="" class="pa-logo">`:''}<div class="muted" style="font-size:.9rem;text-align:center">ישיבה לצעירים דעת תבונות · פנימייה</div>${h}</div>`};
+  box('<p style="text-align:center">טוען…</p>');let t=null;try{const d=await db.doc('htok/'+tok).get();t=d.exists?d.data():null}catch{}
+  if(!t){box('<h1 style="text-align:center">הקישור אינו פעיל</h1><p>ייתכן שהקישור הוחלף. אפשר לבקש קישור חדש מצוות הפנימייה.</p>');return}
+  const K='pn-hr-'+tok;let mine=[];try{mine=JSON.parse(localStorage.getItem(K)||'[]')}catch{}
+  const hist=async()=>{const el=$('hrHist');if(!el||!mine.length)return;const R=[];for(const id of mine.slice(-5).reverse()){try{const d=await db.doc('hreq/'+id).get();if(d.exists)R.push(d.data())}catch{}}
+    el.innerHTML=R.length?`<h2 style="font-size:1.05rem;margin:6px 0 0">הבקשות ששלחתם</h2>`+R.map(x=>`<div class="pa-info" style="text-align:right"><div><b>${x.status==='ok'?'✓ אושרה':x.status==='no'?'✗ לא אושרה':'⏳ ממתינה לאישור'}</b></div><div>יציאה: ${esc(paWhen(x.from))}</div><div>חזרה: ${esc(paWhen(x.to))}</div></div>`).join(''):''};
+  const form=()=>{box(`<h1 style="text-align:center">בקשת יציאה הביתה</h1><div class="pa-info" style="text-align:center"><b>${esc(t.first||'')}</b>${t.grade?' · כיתה '+esc(t.grade):''}</div>
+    <form id="hrF" style="display:grid;gap:10px">
+     <label class="hr-l">השם שלך<input id="hrN" required maxlength="50" autocomplete="name"></label>
+     <div class="hr-seg" role="radiogroup" aria-label="קרבה">${['אבא','אמא','אחר'].map((r,i)=>`<label><input type="radio" name="hrRel" value="${r}" ${i?'':'checked'}><span>${r}</span></label>`).join('')}</div>
+     <label class="hr-l">טלפון לחזרה<input id="hrP" type="tel" required maxlength="20" dir="ltr" autocomplete="tel"></label>
+     <label class="hr-l">מתי לצאת<input id="hrFrom" type="datetime-local" required></label>
+     <label class="hr-l">מתי יחזור<input id="hrTo" type="datetime-local" required></label>
+     <label class="hr-l">סיבה<select id="hrR"><option>שבת בבית</option><option>אירוע משפחתי</option><option>תור לרופא / טיפול</option><option>אחר</option></select></label>
+     <label class="hr-l">איך יצא<select id="hrHow"><option>ההורים אוספים</option><option>תחבורה ציבורית</option><option>הסעה אחרת</option></select></label>
+     <label class="hr-l">הערה (לא חובה)<textarea id="hrNote" maxlength="280" rows="2"></textarea></label>
+     <div id="hrErr" class="notice" hidden></div>
+     <button class="btn primary" type="submit" id="hrSend">שליחת הבקשה למנהל הפנימייה</button></form><div id="hrHist" style="display:grid;gap:8px"></div>`);
+    $('hrF').onsubmit=async e=>{e.preventDefault();const err=m=>{$('hrErr').textContent=m;$('hrErr').hidden=false};const f=new Date($('hrFrom').value).getTime(),to=new Date($('hrTo').value).getTime();
+      if(!(f>0&&to>0))return err('נא למלא מתי לצאת ומתי לחזור');if(to<=f)return err('שעת החזרה צריכה להיות אחרי שעת היציאה');if(f<Date.now()-2*36e5)return err('שעת היציאה כבר עברה');
+      if(String($('hrP').value).replace(/\D/g,'').length<9)return err('נא לכתוב מספר טלפון מלא');
+      const d={tok,sid:t.sid,first:t.first||'',pName:$('hrN').value.trim().slice(0,50),rel:(v.querySelector('[name=hrRel]:checked')||{}).value||'',phone:$('hrP').value.trim().slice(0,20),from:f,to,reason:$('hrR').value,how:$('hrHow').value,note:$('hrNote').value.trim().slice(0,280),at:Date.now(),status:'pending'};
+      $('hrSend').disabled=true;try{const id=rid();await db.doc('hreq/'+id).set(d);mine.push(id);try{localStorage.setItem(K,JSON.stringify(mine.slice(-10)))}catch{}
+        box(`<h1 style="text-align:center">✓ הבקשה נשלחה</h1><p>הבקשה של ${esc(t.first||'')} הגיעה למנהל הפנימייה. אחרי ההחלטה נעדכן אתכם. אפשר לחזור לקישור הזה כדי לראות אם הבקשה אושרה.</p><button class="btn" type="button" id="hrAgain">בקשה נוספת</button><div id="hrHist" style="display:grid;gap:8px"></div>`);$('hrAgain').onclick=form;hist()}
+      catch(x){$('hrSend').disabled=false;err('לא הצלחנו לשלוח. בדקו את החיבור לאינטרנט ונסו שוב, או התקשרו לצוות הפנימייה.')}};
+    hist()};
+  form()}
+
 const paUrl=id=>SITE_URL+'?pa='+id;
 const paWhen=t=>{try{return new Intl.DateTimeFormat('he-IL',{weekday:'long',day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(t))}catch{return new Date(t).toLocaleString('he-IL')}};
 const paTxt=(x,pn)=>`שלום${pn?' '+pn:''},\nכאן ${x.byName||'צוות הפנימייה'} מפנימיית דעת תבונות.\n${x.first||''} מבקש לצאת מהפנימייה${x.reason?' ('+x.reason+')':''}${x.backBy?', עם חזרה צפויה '+paWhen(x.backBy):''}.\nלאישור או לדחייה לחצו כאן:\n${paUrl(x.id)}\nתודה!`;
@@ -2786,7 +2860,7 @@ function subPa(){if(!db||S.unPa||!(has('out')||S.mgr))return;S.unPa=1;
     if(S.paLoaded)S.pa.forEach(x=>{if(prev.get(x.id)==='pending'&&(x.status==='ok'||x.status==='no')){const nm=S.students.get(x.sid)?.name||x.first||'',ok=x.status==='ok';toast(`${ok?'✓':'✗'} ההורים של ${nm} ${ok?'אישרו':'לא אישרו'} את היציאה`);notify(ok?'ההורים אישרו יציאה':'ההורים לא אישרו יציאה',`${nm}${x.pName?' · '+x.pName:''}${x.reason?' · '+x.reason:''}`,'pa-'+x.id)}});
     S.paLoaded=true;renderPa()},onErr))}
 async function paPhones(sid){if(!(has('personal')||S.mgr))return [];try{const p=(await db.doc('profiles/'+sid).get()).data()||{};return [[p.fatherName,p.fatherPhone],[p.motherName,p.motherPhone]].filter(x=>waNum(x[1]))}catch{return []}}
-function renderPa(){const el=$('paList');if(!el)return;const L=(S.pa||[]).filter(x=>!x.used&&S.students.has(x.sid)&&!(x.status==='ok'&&isOut(x.sid)));
+function renderPa(){renderHr();renderHrLink();const el=$('paList');if(!el)return;const L=(S.pa||[]).filter(x=>!x.used&&S.students.has(x.sid)&&!(x.status==='ok'&&isOut(x.sid)));
   el.hidden=!L.length;if(!L.length){el.innerHTML='';return}
   L.filter(x=>x.status==='pending'&&!S.paPhL.has(x.sid)).forEach(x=>{S.paPhL.add(x.sid);paPhones(x.sid).then(p=>{S.paPh[x.sid]=p;if(p.length)renderPa()})});
   el.innerHTML=`<div class="panel" style="display:grid;gap:8px"><h2 style="margin:0">📲 בקשות אישור מההורים</h2><div class="list">${L.map(x=>{const s=S.students.get(x.sid),ph=S.paPh[x.sid]||[],st=x.status;
@@ -2897,7 +2971,7 @@ function viewMode(){const n=nightPref(),t=S.theme||'auto';return n==='off'&&t===
 function viewBtn(){const b=$('vView');if(b){const m=viewMode();b.textContent=({light:'☀️ תצוגה: בהירה',dark:'🌙 תצוגה: כהה',auto:'🌓 תצוגה: אוטומטית'})[m];b.setAttribute('aria-pressed',m!=='auto')}}
 const nightPref=()=>{try{return localStorage.getItem('pn-night')||'auto'}catch{return 'auto'}};
 function inNight(){const n=new Date(),m=n.getHours()*60+n.getMinutes();let s=23*60;try{const L=lightsTimes();if(L.length)s=toMin(L[0][1]);else if(S.settings?.lightsBy)s=toMin(S.settings.lightsBy)}catch{}if(s<18*60)s+=24*60;const mm=m<360?m+1440:m;return mm>=s&&mm<1440+360}
-function applyNight(){const p=nightPref(),on=!(typeof PA!=='undefined'&&PA)&&!FIXQ&&!S.tv&&(p==='on'||(p==='auto'&&inNight()));const was=document.documentElement.classList.contains('nightdim');
+function applyNight(){const p=nightPref(),on=!(typeof PA!=='undefined'&&PA)&&!FIXQ&&!HR&&!S.tv&&(p==='on'||(p==='auto'&&inNight()));const was=document.documentElement.classList.contains('nightdim');
   document.documentElement.classList.toggle('nightdim',on);if(on)document.documentElement.dataset.theme='dark';else if(was)setTheme(S.theme||'auto');
   const b=$('vNight');if(b){b.textContent='🔦 סיור לילה: '+({auto:'אוטומטי',off:'כבוי',on:'פעיל'})[p];b.setAttribute('aria-pressed',on)}viewBtn()}
 setInterval(applyNight,60000);setTimeout(applyNight,1500);
@@ -3198,7 +3272,7 @@ const DGRP=[['main','',['home','count','lights','morn','out','stu']],['kids','ת
   list.addEventListener('click',e=>{const h=e.target.closest('.dgrp-h');if(h)tg(h)});
   list.addEventListener('keydown',e=>{const h=e.target.closest('.dgrp-h');if(h&&(e.key==='Enter'||e.key===' ')){e.preventDefault();tg(h)}})})();
 const SNL={sched:'מערכת שבועית',cal:'לוח שנה',shab:'שבתות',act:'פעילויות',beds:'מיטות ושיבוץ',rooms:'בדיקת חדרים'};
-const NAVG=[['rooms','חדרים',['beds','rooms']],['time','לוח זמנים',['sched','cal','shab','act']]];
+const NAVG=[['rooms','חדרים',['beds','rooms']]];
 function navMerge(){NAVG.forEach(([k,l,M])=>{const vis=M.filter(t=>$('t-'+t)&&!$('t-'+t).hidden);
   M.forEach(t=>{const b=$('t-'+t);if(!b)return;const lb=b.querySelector('.lbl');if(!b.dataset.orig)b.dataset.orig=lb.textContent;b.classList.toggle('nav-merged',vis.length>1&&t!==vis[0]);lb.textContent=vis.length>1&&t===vis[0]?l:b.dataset.orig});
   document.querySelectorAll(`.subnav[data-sn="${k}"]`).forEach(el=>{el.hidden=vis.length<2;el.innerHTML=vis.map(t=>`<button type="button" data-tab="${t}" aria-pressed="${S.tab===t}"><span class="lbl">${esc(SNL[t]||$('t-'+t).dataset.orig)}</span></button>`).join('')});
@@ -3520,6 +3594,7 @@ function nowActs(){const A=[],n=Date.now(),d=new Date(),today=ymd(d),m0=d.getHou
   try{[['השכמה','morn','morning'],['נוכחות ערב','count','count'],['כיבוי אורות','lights','count']].forEach(([l,k,p])=>{if(!has(p)&&!S.mgr)return;const r=roundStat(k);if(!r.isToday||!r.act||r.complete||!r.tot)return;const left=r.dlTs-n,sub=`${r.done}/${r.tot} סומנו`+(r.req?` · ${r.req} שאלות פתוחות`:'');
     if(r.over)A.push([0,'⏰',l+' – עבר זמן הסגירה',sub,k]);else if(left<75*6e4)A.push([1,'▶️',l+' – עכשיו',sub+' · נסגר ב-'+r.dl,k])})}catch(e){}
   if(canMt()){const b=(S.mt||[]).filter(m=>(m.status||'open')==='open'&&m.urg===3).length;if(b)A.push([0,'⚠️',b===1?'תקלת בטיחות פתוחה':b+' תקלות בטיחות פתוחות','דורש טיפול מיידי','maint'])}
+  if(hrCan()){const p=hrPend();if(p.length)A.push([1,'🏠',p.length===1?'בקשת יציאה מההורים ממתינה לאישור':p.length+' בקשות יציאה מההורים ממתינות',p.slice(0,3).map(x=>S.students.get(x.sid)?.name||x.first).join(', '),'out'])}
   if(has('out')||S.mgr){const ok=(S.pa||[]).filter(x=>x.status==='ok'&&!x.used&&S.students.has(x.sid)&&!isOut(x.sid)&&n-x.at<2*864e5);if(ok.length)A.push([2,'✅',ok.length===1?'הגיע אישור הורים ליציאה':ok.length+' אישורי הורים ליציאה הגיעו',ok.slice(0,3).map(x=>S.students.get(x.sid).name).join(', ')+' – אפשר לרשום יציאה','out'])}
   if(canClA()&&S.cl)clOn(today).forEach(x=>{const reg=(x.sids||[]).filter(id=>S.students.has(id));if(!reg.length||!x.from)return;const f=toMin(x.from),t=x.to?toMin(x.to):f+60;if(m0<f-20||m0>t+120)return;const At=clAttOf(x.id,today)||{},dn=reg.filter(id=>(At.came||[]).includes(id)||(At.absent||[]).includes(id)).length;if(dn>=reg.length)return;
     A.push([m0<f?3:2,x.emo||'🎯',`חוג ${x.name} – `+(m0<f?'מתחיל ב-'+x.from:'סימון נוכחות'),`${dn}/${reg.length} סומנו`,'clubs'])});
@@ -3753,7 +3828,7 @@ $('newStaff').addEventListener('submit',async e=>{e.preventDefault();if(!S.owner
 /* ---------- Firebase: data ---------- */
 function unsubAll(){S.subs.forEach(f=>{try{f()}catch{}});S.subs=[];S.unEm=S.unLog=S.unMt=S.unLn=S.unShab=S.unAc=S.unCl=S.unPa=S.unFix=0;S.paLoaded=false;S.clSub=null;S.unPu=null;S.unDish=0;S.mtLoaded=S.lnLoaded=false;if(unMarks){unMarks();unMarks=null}if(S.unWake){S.unWake();S.unWake=null}if(S.unPrev){S.unPrev();S.unPrev=null}}
 function subscribeAll(){
-  unsubAll();S.unMt=S.unLn=S.unShab=null;if(!S.access)return;setTimeout(()=>{subMt();if(has('learn'))subLn();subCl();subPa()},0);
+  unsubAll();S.unMt=S.unLn=S.unShab=S.unHr=null;if(!S.access)return;setTimeout(()=>{subMt();if(has('learn'))subLn();subCl();subPa();subHr()},0);
   const timer=setTimeout(()=>{if(!S.ready){S.ready=true;sys('לא ניתן להתחבר לנתונים כרגע. ייתכן שמה שמוצג אינו מעודכן.');renderAll()}},10000);
   S.subs.push(db.collection('students').onSnapshot({includeMetadataChanges:true},snap=>{S.students=new Map(snap.docs.map(d=>[d.id,{id:d.id,...d.data()}]));if(!snap.metadata.fromCache){S.ready=true;clearTimeout(timer);sys('')}renderAll()},e=>{clearTimeout(timer);S.ready=true;onErr(e);renderAll()}));
   S.subs.push(db.collection('status').onSnapshot(snap=>{S.status=new Map(snap.docs.filter(d=>d.id[0]!=='_').map(d=>[d.id,d.data()]));resolveNames(snap.docs.map(d=>d.data()));renderAll()},onErr));
@@ -3808,7 +3883,7 @@ function addEyes(){document.querySelectorAll('input[type=password]').forEach(inp
   b.addEventListener('click',()=>{const show=inp.type==='password';inp.type=show?'text':'password';b.innerHTML=show?EYE_OFF:EYE;
     b.setAttribute('aria-label',show?'הסתר סיסמה':'הצג סיסמה');b.setAttribute('aria-pressed',String(show));inp.focus()});
   w.appendChild(b)})}
-async function checkUpdate(){if(PA||FIXQ)return;try{const t=await (await fetch('./?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/APP_VERSION = "([^"]+)"/);
+async function checkUpdate(){if(PA||FIXQ||HR)return;try{const t=await (await fetch('./?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/APP_VERSION = "([^"]+)"/);
   if(m&&m[1]!==APP_VERSION){const k='pn-upd-'+m[1];let tried=false;try{tried=sessionStorage.getItem(k)}catch{}if(!tried){try{sessionStorage.setItem(k,'1')}catch{}location.replace('./?v='+encodeURIComponent(m[1]))}}}catch{}}
 /* ---------- view options & bottom nav ---------- */
 function setTheme(v){S.theme=v;if(v==='dark'||v==='light')document.documentElement.dataset.theme=v;else delete document.documentElement.dataset.theme;
@@ -3821,7 +3896,7 @@ function renderBnav(){const n=$('bnav');const tabs=BN.filter(t=>{const b=$('t-'+
   n.innerHTML=tabs.map(t=>`<button type="button" data-act="go" data-to="${t}" ${S.tab===t?'aria-current="page"':''}>${ico(t)}<span>${lbl[t]}</span></button>`).join('')+`<button type="button" data-act="menuOpen">${'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'}<span>עוד</span></button>`}
 const PA=(()=>{try{return new URLSearchParams(location.search).get('pa')}catch{return null}})();
 function start(){
-  if(PA||FIXQ)document.body.classList.add('pa-mode');
+  if(PA||FIXQ||HR)document.body.classList.add('pa-mode');
   try{setTheme(localStorage.getItem('pn-theme')||'auto');setBig(!!localStorage.getItem('pn-big'))}catch{}
   {const inApp=matchMedia('(display-mode: standalone)').matches||document.referrer.startsWith('android-app://');
    if(/Android/i.test(navigator.userAgent)&&!inApp)document.querySelectorAll('.apk-dl').forEach(a=>a.hidden=false)}
@@ -3835,6 +3910,7 @@ function start(){
   firebase.initializeApp(FIREBASE_CONFIG);
   auth=firebase.auth();db=firebase.firestore();
   if(PA){paPage(PA);return}
+  if(HR){hrPage(HR);return}
   if(FIXQ){fixPage(FIXQ);return}
   window.addEventListener('load',()=>setTimeout(xlsxLoad,4000));
   db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
