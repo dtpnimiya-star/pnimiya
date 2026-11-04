@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-04-50";
+const APP_VERSION = "2026-11-04-51";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -553,6 +553,7 @@ svg .base{stroke:var(--line);stroke-width:1}svg .grid{stroke:var(--line);stroke-
 .mr-grade:first-child{border-top:0;padding-top:0}
 .mr-grade ul{margin:0;padding-inline-start:18px;display:grid;gap:2px}
 .mr-grade .row{justify-content:space-between}
+body:not([data-page="count"]) #topSum,#cProg,#mProg{display:none!important}
 body[data-page="home"] #topSum,body[data-page="home"] #gradeFilter,body[data-page="sched"] #topSum,body[data-page="sched"] #gradeFilter,body[data-page="cal"] #topSum,body[data-page="cal"] #gradeFilter,body[data-page="staff"] #topSum,body[data-page="staff"] #gradeFilter{display:none!important}
 .home-hero{display:grid;gap:4px;padding:6px 2px}
 .home-hero .hi{font-family:var(--f-display);font-size:1.7rem;line-height:1.2;margin:0;font-weight:400}
@@ -788,8 +789,7 @@ body:has(#login:not([hidden])) header{display:none}
     <div class="row">
       <label for="mornDate" class="muted">בוקר של</label>
       <input type="date" id="mornDate">
-      <label for="mornTarget" class="muted">שעת השכמה</label>
-      <input type="time" id="mornTarget" value="07:00">
+      <input type="time" id="mornTarget" value="07:00" hidden>
     </div>
     <div id="mornCal"></div>
     <div class="round-h" id="mHead"></div>
@@ -1657,7 +1657,7 @@ function reportText(g,o,dateK){
   L.push(`דוח נוכחות בוקר – ${g==='-'?'ללא כיתה':'כיתה '+g} – ${nf.format(new Date(dateK+'T12:00'))}`,'');
   {const dn=dutyTxt(prevNightOf(dateK));if(dn)L.push('מדריך תורן בלילה: '+dn,'')}
   if(allUp(o))L.push('✓ כולם קמו בזמן הבוקר.','');
-  sec('🔴 לא נכחו בפנימייה הלילה – לא באישור',o.absent);sec('לא נכחו בפנימייה הלילה – באישור',o.apAbs);sec('הגיעו באיחור לפנימייה בערב',o.lateIn);sec('לא היו בחדר בכיבוי אורות',o.noRoom);sec('לא קמו בבוקר',o.noWake);sec('חולים / נשארו בחדר',o.sick);sec(`קמו מאוחר (השכמה ב-${S.wakeTarget||'07:00'})`,o.late);sec('בבית / מחוץ לפנימייה',o.home);
+  sec('🔴 לא נכחו בפנימייה הלילה – לא באישור',o.absent);sec('לא נכחו בפנימייה הלילה – באישור',o.apAbs);sec('הגיעו באיחור לפנימייה בערב',o.lateIn);sec('לא היו בחדר בכיבוי אורות',o.noRoom);sec('לא קמו בבוקר',o.noWake);sec('חולים / נשארו בחדר',o.sick);sec(`קמו מאוחר`,o.late);sec('בבית / מחוץ לפנימייה',o.home);
   if(!o.unm.length&&!o.absent.length&&!o.noWake.length&&!o.sick.length&&!o.late.length&&!o.nightN.length&&!o.lateIn.length)L.push('כל התלמידים נכחו וקמו בזמן.','');
   L.push('נשלח ממערכת הנוכחות של הפנימייה');return L.join('\n')}
 function mailHref(to,subj,body){const cc=(S.settings?.educators?.cc)||'';return 'mailto:'+encodeURIComponent(to||'')+'?'+(cc?'cc='+encodeURIComponent(cc)+'&':'')+'subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body)}
@@ -3171,7 +3171,7 @@ function tvSpot(){const S2=[];
   if(!S2.length)return '';const i=Math.floor(Date.now()/15000)%S2.length;return `<div class="spot"><h3>${S2[i][0]}</h3>${S2[i][1]}${S2.length>1?`<div class="dots">${S2.map((_,j)=>`<i class="${j===i?'on':''}"></i>`).join('')}</div>`:''}</div>`}
 /* ---------- home customisation ---------- */
 const HM_SECT=[['hmDayP','ציר הזמן'],['hmBoard','הודעות לצוות'],['hmTiles','מספרים מהירים'],['hmLate','מי לא חזר בזמן'],['hmRoundsP','דיווחים להיום'],['hmFuP','מעקבים להיום'],['hmDishP','תורנות שטיפת סירים'],['hmCleanP','ניקיון חדרים'],['hmLogP','יומן משמרת'],['hmLn','מרכז למידה'],['hmClP','חוגים היום'],['hmMore','נתונים ומידע נוסף']];
-S.hmHide=new Set();try{S.hmHide=new Set(JSON.parse(localStorage.getItem('pn-hm-hide')||'[]'))}catch{}
+S.hmHide=new Set(['hmRoundsP']);try{const v=localStorage.getItem('pn-hm-hide');if(v)S.hmHide=new Set(JSON.parse(v))}catch{}
 function applyHm(){HM_SECT.forEach(([id])=>$(id)?.classList.toggle('uhide',S.hmHide.has(id)))}
 function renderCust(){$('hmCustP').innerHTML=`<b>מה להציג במסך הבית?</b><span class="muted" style="font-size:.85rem">ההגדרה נשמרת במכשיר הזה. חלוניות שאין בהן כרגע תוכן מוסתרות ממילא.</span><div class="cust-grid" style="margin-top:8px">${HM_SECT.map(([id,l])=>`<label class="perm" style="padding:6px 10px"><input type="checkbox" data-hmc="${id}" ${S.hmHide.has(id)?'':'checked'}> ${l}</label>`).join('')}</div><div style="margin-top:8px"><button class="btn small" type="button" data-act="hmCust">סגור</button></div>`}
 document.addEventListener('change',e=>{const id=e.target.dataset?.hmc;if(!id)return;if(e.target.checked)S.hmHide.delete(id);else S.hmHide.add(id);try{localStorage.setItem('pn-hm-hide',JSON.stringify([...S.hmHide]))}catch{}applyHm()});
@@ -3527,7 +3527,7 @@ function renderHome(){
   if(has('count')){let p=0,a=0;act.forEach(s=>{const m=S.marks.get(s.id)?.s;if(m==='p')p++;else if(m==='a')a++});const u=act.length-p-a;
     tile('count','נוכחות ערב',`${p}/${act.length}`,a?`<b>${a}</b> חסרים · ${u} לא נבדקו`:u?`${u} לא נבדקו`:'כולם נבדקו',a>0)}
   if(has('morning')){let up=0,late=0,no=0,pa=0;act.forEach(s=>{const m=S.wake.get(s.id);if(m?.s==='up'){up++;if(isLate(m))late++}else if(m?.s==='no')no++;if(S.prevNight.get(s.id)?.s==='a')pa++});
-    tile('morn','השכמה היום',`${up}/${act.length}`,[late?`<b>${late}</b> איחרו`:'',no?`<b>${no}</b> לא קמו`:'',pa?`<b>${pa}</b> לא נכחו בערב`:''].filter(Boolean).join(' · ')||'עדיין אין חריגים',no>0)}
+    tile('morn','השכמה היום',`${up}/${act.length}`,[late?`<b>${late}</b> קמו מאוחר`:'',no?`<b>${no}</b> לא קמו`:'',pa?`<b>${pa}</b> לא נכחו בערב`:''].filter(Boolean).join(' · ')||'עדיין אין חריגים',no>0)}
   if(has('out')){const outs=st.filter(s=>isOut(s.id)),late=outs.filter(s=>{const b=S.status.get(s.id)?.backBy;return b&&b<Date.now()});
     {const hn=outs.filter(s=>isHome(s.id)).length;tile('out','מחוץ לפנימייה',outs.length,[hn?`<b>${hn}</b> בבית (היעדרות)`:'',late.length?`<b>${late.length}</b> באיחור בחזרה`:'אין איחורים בחזרה'].filter(Boolean).join(' · '),late.length>0)}}
   if(canMt()){const o=S.mt.filter(m=>(m.status||'open')!=='done'),u=o.filter(m=>m.urg>=2).length;tile('maint','תקלות תחזוקה',o.length,o.length?(u?`<b>${u}</b> חשובות/בטיחות · `:'')+`${o.filter(m=>m.status==='prog').length} בטיפול`:'אין תקלות פתוחות',u>0)}
