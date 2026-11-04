@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-04-49";
+const APP_VERSION = "2026-11-04-50";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -2014,7 +2014,7 @@ document.addEventListener('click',async e=>{
     case'wkAtt':{const x=S.lnSlots.find(y=>y.id===S.wkSel);if(!x)break;const ins=[...document.querySelectorAll('#wkAtt [data-att]')];const came=ins.filter(i=>i.checked).map(i=>i.dataset.att),abs=ins.filter(i=>!i.checked).map(i=>i.dataset.att);
       const d={date:ymd(new Date()),from:x.from,to:x.to,type:'שיעור קבוע',subject:x.subject,tutor:x.tutor||'',sids:came,absent:abs,slotId:x.id,note:'',at:Date.now(),by:S.me,byName:S.myName};
       try{await OW(db.collection('learn').add(d));toast(abs.length?`נשמר. ${abs.length} לא הגיעו – המדריכים יקבלו התראה`:'הנוכחות נשמרה – כולם הגיעו')}catch(e){fail(e)}break}
-    case'mrPrint':{const t=S.mrTexts?.['*']||Object.values(S.mrTexts||{})[0]||'';printHtml('דוח בוקר למחנכים',`<h1>דוח בוקר למחנכים</h1><div class="mut">${fmtShort(S.mornDate)}</div><pre style="white-space:pre-wrap;font:14px/1.75 Arial">${esc(t)}</pre>`,['ראש הפנימייה','המדריך התורן']);break}
+    case'mrPrint':{const t=S.mrTexts?.['*']||Object.values(S.mrTexts||{})[0]||'';printHtml('דוח בוקר למחנכים',`<h1>דוח בוקר למחנכים</h1><div class="mut">${fmtShort(S.mornDate)}</div><pre style="white-space:pre-wrap;font:14px/1.75 Arial">${esc(t)}</pre>`,['מנהל הפנימייה','המדריך התורן']);break}
     case'rqA':{const [k,i]=b.dataset.k.split('|');await rqSave(k,i,+b.dataset.v);break}
     case'rqEdit':{const k=b.dataset.k;if(S.rqEd===k){S.rqEd=null}else{S.rqEd=k;S.rqDraft=JSON.parse(JSON.stringify(tplOf(k)))}renderRq();break}
     case'rqDay':{rqCollect();const d=+b.dataset.d,D=S.rqDraft.days;S.rqDraft.days=D.includes(d)?D.filter(x=>x!==d):[...D,d].sort();rqRe();break}
@@ -3002,7 +3002,7 @@ function renderSM(){const P=$('smP');if(!P)return;P.hidden=!S.mgr;if(!S.mgr||S.t
   $('sm').innerHTML=smHtml(smData(S.smN),true)+'<div class="row" style="margin-top:10px"><button class="btn small" type="button" data-act="smPrint">🖨 הדפסה / שמירה כ-PDF</button></div>'}
 const PR_CSS='@page{margin:14mm}.lh{display:flex;align-items:center;gap:14px;border-bottom:3px solid #0E5DB4;padding-bottom:10px;margin-bottom:18px}.lh img{height:58px;width:auto}.lh b{display:block;font-size:19px;color:#0E5DB4}.lh span{color:#667;font-size:13px}.lh-d{margin-right:auto;text-align:left;color:#445;font-size:12px;line-height:1.6}.sig{display:flex;gap:28px;margin-top:56px;break-inside:avoid}.sig div{flex:1;text-align:center;font-size:12px;color:#556}.sig i{display:block;border-bottom:1px solid #333;height:34px;margin-bottom:5px}.pf{margin-top:22px;border-top:1px solid #ccd;padding-top:6px;font-size:10px;color:#889;text-align:center}';
 function prHead(){const k=ymd(new Date()),h=heb(k),logo=document.querySelector('.lg-logo')?.src||'';return `<div class="lh">${logo?`<img src="${logo}" alt="">`:''}<div><b>ישיבה לצעירים דעת תבונות</b><span>הפנימייה</span></div><div class="lh-d">${h?hNum(h.day)+' '+h.m+'<br>':''}${nf.format(new Date())}</div></div>`}
-function prFoot(sigs){return `<div class="sig">${(sigs||['ראש הפנימייה','איש הצוות המדווח']).map(x=>`<div><i></i>${x}</div>`).join('')}</div><div class="pf">ישיבה לצעירים דעת תבונות · הפנימייה · הופק ממערכת הנוכחות ב-${nf.format(new Date())} ${tf.format(new Date())}${S.myName?' · על ידי '+esc(S.myName):''}</div>`}
+function prFoot(sigs){return `<div class="sig">${(sigs||['מנהל הפנימייה','איש הצוות המדווח']).map(x=>`<div><i></i>${x}</div>`).join('')}</div><div class="pf">ישיבה לצעירים דעת תבונות · הפנימייה · הופק ממערכת הנוכחות ב-${nf.format(new Date())} ${tf.format(new Date())}${S.myName?' · על ידי '+esc(S.myName):''}</div>`}
 function printHtml(title,body,sigs){body=prHead()+body.replace('<div class="mut">ישיבה לצעירים דעת תבונות · פנימייה</div>','')+prFoot(sigs);const html=`<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Arial,sans-serif;color:#16222A;padding:24px;max-width:860px;margin:auto}h1{margin:0 0 4px;color:#0E5DB4;font-size:22px}.mut{color:#667}${PR_CSS}table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}td,th{border-bottom:1px solid #ccd;padding:5px;text-align:right}td.n{text-align:center}td.hot{color:#B23A2F;font-weight:700}.gdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:4px}</style></head><body>${body}<script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
   let f=$('prFrame');if(!f){f=document.createElement('iframe');f.id='prFrame';f.style.cssText='position:fixed;width:0;height:0;border:0;left:-9999px';document.body.appendChild(f)}f.srcdoc=html}
 function smPrint(){if(!S.trend)return;const D=smData(S.smN);printHtml('דוח לישיבת צוות',`<div class="mut">ישיבה לצעירים דעת תבונות · פנימייה</div><h1>דוח לישיבת צוות</h1><div class="mut">${D.N} הימים האחרונים · הופק ${nf.format(new Date())}</div>${smHtml(D,false).replace(/var\(--gc-(\d)\)/g,(m,i)=>['#3E8EDE','#2EAA6E','#E08A2E','#9A5BD0'][i])}`)}
@@ -3312,7 +3312,7 @@ function stuMonthly(sid){const s=S.students.get(sid),c=S.sumC.get(sid+'|'+ymd(ne
    ${pr.length?`<h2>שבחים</h2><ul>${pr.map(n=>`<li>${fmtShort(ymd(new Date(n.at)))} – ${esc(n.text)}</li>`).join('')}</ul>`:''}
    ${bh.length?`<h2>הערות התנהגות</h2><ul>${bh.map(n=>`<li>${fmtShort(ymd(new Date(n.at)))} – ${esc(n.text)}</li>`).join('')}</ul>`:''}
    ${GL.length||TK.length?`<h2>תוכנית אישית</h2><ul>${GL.map(G=>`<li>🎯 ${esc(G.type==='free'?G.txt:GOALS[G.type]?.[0]||'')}${G.who?' (אחראי: '+esc(G.who)+')':''}</li>`).join('')}${TK.map(t=>`<li>${t.done?'✓':'☐'} ${esc(t.t)}${t.due?' – עד '+fmtShort(t.due):''}</li>`).join('')}</ul>`:''}
-   ${prFoot(['ראש הפנימייה','המחנך','חתימת ההורים'])}<script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+   ${prFoot(['מנהל הפנימייה','המחנך','חתימת ההורים'])}<script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
   let f=$('prFrame');if(!f){f=document.createElement('iframe');f.id='prFrame';f.style.cssText='position:fixed;width:0;height:0;border:0;left:-9999px';document.body.appendChild(f)}
   f.srcdoc=html}
 /* ---------- staff duty roster ---------- */
