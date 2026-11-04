@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-04-54";
+const APP_VERSION = "2026-11-04-55";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1396,6 +1396,7 @@ function renderCount(){subRq();renderRq();
       const parts=[s.grade?'כיתה '+s.grade:''];
       if(isOut(s.id))parts.push((stt.reason||'')+(stt.backBy?' · חזרה '+when(stt.backBy):''));
       else if(m)parts.push((m.s==='p'?(m.late?'הגיע באיחור '+(m.r?'('+m.r+') ':''):'סומן נוכח '):'סומן חסר '+(m.r?'('+m.r+') ':''))+(m.late&&m.lt?hm(m.lt):m.at?tf.format(new Date(m.at)):'')+' · '+byName(m.by));
+      {const sn=!isOut(s.id)&&paSoon(s.id);if(sn)parts.push('🚪 יוצא באישור '+when(paFrom(sn)))}
       const meta=parts.filter(Boolean).join(' · ');
       h+=`<div class="item">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}${meta?`<span class="meta">${esc(meta)}</span>`:''}</button>`;
       if(isOut(s.id))h+=`<span class="chip ${stt.backBy&&stt.backBy<Date.now()?'bad':'warn'}">${stt.backBy&&stt.backBy<Date.now()?'באיחור':stt.long?'בבית':'בחוץ'}</span>`;
@@ -1636,6 +1637,7 @@ function renderMorn(){
       if(isOut(s.id))parts.push('מחוץ לפנימייה');
       else if(m)parts.push((isLate(m)?'קם מאוחר'+(m.t?' '+hm(m.t):'')+(m.r?' ('+m.r+')':''):({up:'קם בזמן',no:'לא קם',sick:'נשאר בחדר, חולה'})[m.s])+' · '+byName(m.by));
       else if(!pn)parts.push('לא נבדק בנוכחות הערב');
+      if(!isOut(s.id)){const sn=paSoon(s.id);if(sn)parts.push('🚪 יוצא באישור '+when(paFrom(sn)))}
       const meta=parts.filter(Boolean).join(' · ');
       h+=`<div class="item">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}${meta?`<span class="meta">${esc(meta)}</span>`:''}</button>`;
       if(isOut(s.id)){h+=`<span class="chip warn">בחוץ</span></div>`;continue}
@@ -2800,7 +2802,7 @@ function subHr(){if(!db||S.unHr||!(has('out')||S.mgr))return;S.unHr=1;
   S.subs.push(db.collection('htok').onSnapshot(q=>{S.htok=new Map(q.docs.map(d=>[d.data().sid,{id:d.id,...d.data()}]));renderHrLink()},onErr));
   S.subs.push(db.collection('hreq').where('at','>=',Date.now()-14*864e5).onSnapshot(q=>{const prev=new Set(S.hr.map(x=>x.id));S.hr=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.at-a.at);
     if(S.hrLoaded)S.hr.filter(x=>!prev.has(x.id)&&x.status==='pending').forEach(x=>{const nm=S.students.get(x.sid)?.name||x.first||'';toast(`🏠 בקשת יציאה חדשה מההורים: ${nm}`);if(hrCan())notify('בקשת יציאה מההורים',`${nm} · ${x.pName||''} · ${paWhen(x.from)}`,'hr-'+x.id)});
-    S.hrLoaded=true;renderHr();renderHome()},onErr))}
+    S.hrLoaded=true;renderHr();renderHome();paAuto();renderAll()},onErr))}
 const hrPend=()=>S.hr.filter(x=>x.status==='pending'&&S.students.has(x.sid));
 function hrTxt(x,ok){const f=x.first||S.students.get(x.sid)?.firstName||'';return ok?`שלום ${x.pName||''},\nבקשת היציאה של ${f} אושרה ✓\nיציאה: ${paWhen(x.from)}\nחזרה: ${paWhen(x.to)}\nבברכה, ${S.myName||'צוות הפנימייה'}, פנימיית דעת תבונות`:`שלום ${x.pName||''},\nבקשת היציאה של ${f} ל${paWhen(x.from)} לא אושרה.\nלפרטים אפשר להתקשר אליי.\nבברכה, ${S.myName||'צוות הפנימייה'}, פנימיית דעת תבונות`}
 function renderHr(){const el=$('hrList');if(!el)return;const L=S.hr.filter(x=>S.students.has(x.sid)&&(x.status==='pending'||Date.now()-(x.dAt||x.at)<864e5));
@@ -2815,7 +2817,7 @@ function renderHr(){const el=$('hrList');if(!el)return;const L=S.hr.filter(x=>S.
       <div>📞 <a href="tel:${esc(x.phone||'')}" dir="ltr">${esc(x.phone||'')}</a> ${ph.length?(known?'<span class="chip ok">הטלפון מופיע בתיק</span>':'<span class="chip bad">⚠ הטלפון לא מופיע בתיק – כדאי להתקשר לוודא</span>'):''}</div></div>
      <div class="row" style="gap:6px;flex-basis:100%">${st==='pending'?(hrCan()?`<button class="btn small primary" type="button" data-act="hrOk" data-id="${x.id}">✓ אשר</button><button class="btn small" type="button" data-act="hrNo" data-id="${x.id}">✗ לא מאשר</button>`:'<span class="muted" style="font-size:.88rem">ממתין לאישור המנהל</span>'):(waNum(x.phone)?`<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/${waNum(x.phone)}?text=${encodeURIComponent(hrTxt(x,st==='ok'))}">💬 עדכן את ההורה</a>`:'')}${hrCan()?`<button class="btn small" type="button" data-act="hrDel" data-id="${x.id}">הסר</button>`:''}</div></div>`}).join('')}</div></div>`}
 async function hrDecide(id,ok,b){const x=S.hr.find(y=>y.id===id);if(!x)return;if(b)b.disabled=true;const at=Date.now();
-  try{if(ok){const s=S.students.get(x.sid),pid=rid();await OW(db.doc('pappr/'+pid).set({sid:x.sid,first:x.first||s?.firstName||String(s?.name||'').split(' ')[0],reason:'בקשת ההורים'+(x.reason?': '+x.reason:''),backBy:x.to||null,status:'ok',pName:(x.pName||'הורה')+(x.rel?' ('+x.rel+')':''),pAt:x.at,at,exp:at+3*864e5,by:S.me,byName:S.myName||'',hr:id}))}
+  try{if(ok){const s=S.students.get(x.sid),pid=rid();await OW(db.doc('pappr/'+pid).set({sid:x.sid,first:x.first||s?.firstName||String(s?.name||'').split(' ')[0],reason:'בקשת ההורים'+(x.reason?': '+x.reason:''),backBy:x.to||null,from:x.from||null,status:'ok',pName:(x.pName||'הורה')+(x.rel?' ('+x.rel+')':''),pAt:x.at,at,exp:at+3*864e5,by:S.me,byName:S.myName||'',hr:id}))}
     await OW(db.doc('hreq/'+id).update({status:ok?'ok':'no',dBy:S.me,dByName:S.myName||'',dAt:at}));toast(ok?'הבקשה אושרה – כשהתלמיד יוצא לוחצים "רשום יציאה"':'הבקשה נדחתה')}catch(e){fail(e);if(b)b.disabled=false}}
 function renderHrLink(){const P=$('hrLinkP');if(!P)return;P.hidden=!((has('out')||S.mgr)&&!S.ro);if(P.hidden)return;const sel=$('hrStu'),v=sel.value;
   if(sel.options.length!==allSorted().length+1){sel.innerHTML='<option value="">בחרו תלמיד…</option>'+allSorted().map(s=>`<option value="${s.id}">${esc(s.name)}${s.grade?' · '+esc(s.grade):''}${S.htok.has(s.id)?' ✓':''}</option>`).join('');sel.value=v}
@@ -2857,11 +2859,22 @@ async function hrPage(tok){const v=document.createElement('main');v.id='paView';
 const paUrl=id=>SITE_URL+'?pa='+id;
 const paWhen=t=>{try{return new Intl.DateTimeFormat('he-IL',{weekday:'long',day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(t))}catch{return new Date(t).toLocaleString('he-IL')}};
 const paTxt=(x,pn)=>`שלום${pn?' '+pn:''},\nכאן ${x.byName||'צוות הפנימייה'} מפנימיית דעת תבונות.\n${x.first||''} מבקש לצאת מהפנימייה${x.reason?' ('+x.reason+')':''}${x.backBy?', עם חזרה צפויה '+paWhen(x.backBy):''}.\nלאישור או לדחייה לחצו כאן:\n${paUrl(x.id)}\nתודה!`;
+const paFrom=x=>x.from||(x.hr?(S.hr||[]).find(h=>h.id===x.hr)?.from:null)||null;
+const paStart=x=>paFrom(x)||(x.hr?null:x.pAt||x.at);
+const paSoon=sid=>(S.pa||[]).find(x=>{const f=paFrom(x);return x.sid===sid&&x.status==='ok'&&!x.used&&f&&f>Date.now()});
+S.paAuto=new Set();
+async function paAuto(){if(!db||S.ro||!(has('out')||S.owner))return;const now=Date.now();
+  for(const x of (S.pa||[])){if(x.status!=='ok'||x.used||S.paAuto.has(x.id)||!S.students.has(x.sid)||isOut(x.sid))continue;const st=paStart(x);if(!st||st>now||now-st>2*864e5)continue;
+    S.paAuto.add(x.id);const at=Math.min(st,now),px={pa:x.pName||'הורה',paAt:x.pAt||at,auto:true};
+    try{await OW(db.doc('status/'+x.sid).set({state:'out',reason:x.reason||'',outAt:at,backBy:x.backBy||null,by:S.me,byName:S.myName||'',...px}));
+      try{await OW(db.doc('moves/pa_'+x.id).set({sid:x.sid,type:'out',reason:x.reason||'',backBy:x.backBy||null,at,by:S.me,byName:S.myName||'',...px}))}catch{}
+      await OW(db.doc('pappr/'+x.id).update({used:true}));toast(`🚪 ${S.students.get(x.sid)?.name||''}: נרשמה יציאה אוטומטית לפי אישור ההורים`)}catch(e){S.paAuto.delete(x.id);fail(e)}}}
+setInterval(()=>{if(S.access)paAuto()},60000);
 function paOk(sid){return (S.pa||[]).find(x=>x.sid===sid&&x.status==='ok'&&!x.used&&Date.now()-x.at<2*864e5)}
 function subPa(){if(!db||S.unPa||!(has('out')||S.mgr))return;S.unPa=1;
   S.subs.push(db.collection('pappr').where('at','>=',Date.now()-4*864e5).onSnapshot(q=>{const prev=new Map((S.pa||[]).map(x=>[x.id,x.status]));S.pa=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.at-a.at);
     if(S.paLoaded)S.pa.forEach(x=>{if(prev.get(x.id)==='pending'&&(x.status==='ok'||x.status==='no')){const nm=S.students.get(x.sid)?.name||x.first||'',ok=x.status==='ok';toast(`${ok?'✓':'✗'} ההורים של ${nm} ${ok?'אישרו':'לא אישרו'} את היציאה`);notify(ok?'ההורים אישרו יציאה':'ההורים לא אישרו יציאה',`${nm}${x.pName?' · '+x.pName:''}${x.reason?' · '+x.reason:''}`,'pa-'+x.id)}});
-    S.paLoaded=true;renderPa()},onErr))}
+    S.paLoaded=true;renderPa();paAuto();renderAll()},onErr))}
 async function paPhones(sid){if(!(has('personal')||S.mgr))return [];try{const p=(await db.doc('profiles/'+sid).get()).data()||{};return [[p.fatherName,p.fatherPhone],[p.motherName,p.motherPhone]].filter(x=>waNum(x[1]))}catch{return []}}
 function renderPa(){renderHr();renderHrLink();const el=$('paList');if(!el)return;const L=(S.pa||[]).filter(x=>!x.used&&S.students.has(x.sid)&&!(x.status==='ok'&&isOut(x.sid)));
   el.hidden=!L.length;if(!L.length){el.innerHTML='';return}
@@ -2869,7 +2882,8 @@ function renderPa(){renderHr();renderHrLink();const el=$('paList');if(!el)return
   el.innerHTML=`<div class="panel" style="display:grid;gap:8px"><h2 style="margin:0">📲 בקשות אישור מההורים</h2><div class="list">${L.map(x=>{const s=S.students.get(x.sid),ph=S.paPh[x.sid]||[],st=x.status;
     return `<div class="item" style="flex-wrap:wrap">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${esc(x.reason||'')}${x.backBy?' · חזרה '+when(x.backBy):''} · נשלח ${when(x.at)}</span></button>
      <span class="chip ${st==='ok'?'ok':st==='no'?'bad':'warn'}">${st==='ok'?'✓ ההורים אישרו':st==='no'?'✗ ההורים לא אישרו':'⏳ ממתין לאישור'}${x.pName&&st!=='pending'?' ('+esc(x.pName)+')':''}</span>
-     <div class="row" style="gap:6px;flex-basis:100%">${st==='ok'&&!S.ro&&!isOut(x.sid)?`<button class="btn small primary" type="button" data-act="paGo" data-id="${x.id}">רשום יציאה</button>`:''}${st==='pending'?ph.map(([n,p])=>`<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/${waNum(p)}?text=${encodeURIComponent(paTxt(x,n))}">💬 שלח ל${esc(n||'הורה')}</a>`).join('')+`<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(paTxt(x,''))}">💬 וואטסאפ${ph.length?' – איש קשר אחר':''}</a><button class="btn small" type="button" data-act="paCopy" data-id="${x.id}">📋 העתק קישור</button>`:''}${S.ro?'':`<button class="btn small" type="button" data-act="paDel" data-id="${x.id}">${st==='pending'?'בטל בקשה':'הסר'}</button>`}</div></div>`}).join('')}</div></div>`}
+     ${st==='ok'&&paFrom(x)>Date.now()?`<span class="muted" style="flex-basis:100%;font-size:.88rem">🕒 היציאה תירשם אוטומטית ${esc(paWhen(paFrom(x)))}, ומאותו רגע הוא יופיע כ"בחוץ" בנוכחות, בכיבוי אורות ובהשכמה.</span>`:''}
+     <div class="row" style="gap:6px;flex-basis:100%">${st==='ok'&&!S.ro&&!isOut(x.sid)?`<button class="btn small primary" type="button" data-act="paGo" data-id="${x.id}">${paFrom(x)>Date.now()?'יצא כבר – רשום עכשיו':'רשום יציאה'}</button>`:''}${st==='pending'?ph.map(([n,p])=>`<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/${waNum(p)}?text=${encodeURIComponent(paTxt(x,n))}">💬 שלח ל${esc(n||'הורה')}</a>`).join('')+`<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(paTxt(x,''))}">💬 וואטסאפ${ph.length?' – איש קשר אחר':''}</a><button class="btn small" type="button" data-act="paCopy" data-id="${x.id}">📋 העתק קישור</button>`:''}${S.ro?'':`<button class="btn small" type="button" data-act="paDel" data-id="${x.id}">${st==='pending'?'בטל בקשה':'הסר'}</button>`}</div></div>`}).join('')}</div></div>`}
 async function paReq(b){const sid=$('outStudent').value;if(!sid){toast('בחרו תלמיד');return}const s=S.students.get(sid);if(!s)return;
   const reason=[$('outReason').value,$('outOther').value.trim()].filter(Boolean).join(' · '),bv=$('outBack').value,backBy=bv?new Date(bv).getTime():null;
   const id=[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(36).padStart(2,'0')).join('').slice(0,26);
@@ -3451,7 +3465,7 @@ function renderLights(){if(S.tab!=='lights')return;subRq();renderRq();roundHead(
   for(const [room,list] of groupRooms(gst)){const open=list.filter(s=>!M.get(s.id));
     h+=`<div class="room"><div class="room-h"><span>חדר ${esc(room)}</span>${open.length&&!ro?`<button class="btn small" data-act="lRoom" data-room="${esc(room)}" data-g="${g}">✓ כולם בחדר</button>`:''}</div><div class="list">`;
     for(const s of list){const m=M.get(s.id),ev=S.marks.get(s.id);
-      const meta=[s.grade?'כיתה '+s.grade:'',ev?.s==='a'?'⚠ חסר בנוכחות הערב':ev?.late?'הגיע באיחור בערב':'',m?(m.s==='p'?(lSelf(s.grade)?'ישן'+(m.sl?' מ-'+m.sl:''):'בחדר'):'לא בחדר'+(m.r?' ('+m.r+')':''))+' · '+tf.format(new Date(m.at))+' · '+byName(m.by):''].filter(Boolean).join(' · ');
+      const meta=[s.grade?'כיתה '+s.grade:'',(sn=>sn?'🚪 יוצא באישור '+when(paFrom(sn)):'')(paSoon(s.id)),ev?.s==='a'?'⚠ חסר בנוכחות הערב':ev?.late?'הגיע באיחור בערב':'',m?(m.s==='p'?(lSelf(s.grade)?'ישן'+(m.sl?' מ-'+m.sl:''):'בחדר'):'לא בחדר'+(m.r?' ('+m.r+')':''))+' · '+tf.format(new Date(m.at))+' · '+byName(m.by):''].filter(Boolean).join(' · ');
       h+=`<div class="item">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${esc(meta)}</span></button>${canNN()?`<button class="nn-btn ${nightNotes(s.id).length?'has':''}" type="button" data-act="nn" data-id="${s.id}" title="הערת לילה">🌙${nightNotes(s.id).length?' '+nightNotes(s.id).length:''}</button>`:''}<div class="seg"><button class="p" aria-pressed="${m?.s==='p'}" data-act="lMark" data-id="${s.id}" data-v="p" ${ro?'disabled':''}>${lSelf(s.grade)?'😴 ישן':'✓ בחדר'}</button><button class="a" aria-pressed="${m?.s==='a'}" data-act="lMark" data-id="${s.id}" data-v="a" ${ro?'disabled':''}>✗ לא בחדר</button></div>
         ${m?.s==='p'&&lSelf(s.grade)&&!ro?`<label class="muted" style="font-size:.85rem;display:flex;gap:6px;align-items:center">הלך לישון ב-<input type="time" class="lt-sl" data-id="${s.id}" value="${esc(m.sl||'')}" style="width:auto"></label>`:''}
         ${m?.s==='a'&&!ro?`<select class="ab-r lt-r" data-id="${s.id}" aria-label="איפה הוא"><option value="">איפה הוא? בחר…</option>${['בחדר של חבר','במקלחת / שירותים','אצל המדריך','חולה – במרפאה','לא ידוע – בבירור'].map(r=>`<option ${m.r===r?'selected':''}>${r}</option>`).join('')}</select>`:''}</div>`}
