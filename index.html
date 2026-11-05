@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-05-57";
+const APP_VERSION = "2026-11-05-58";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1423,7 +1423,7 @@ function renderCount(){subRq();renderRq();
     }
     h+=`</div></div>`;
   }
-  $('countList').innerHTML=h;
+  $('countList').innerHTML=(S.cPend&&!navigator.onLine||S.cPend&&S.cPendLong?pendNote():'')+h;if(S.cPend){clearTimeout(S.cPT);S.cPT=setTimeout(()=>{if(S.cPend){S.cPendLong=1;renderCount()}},8000)}else S.cPendLong=0;
   renderNightNotes();
 }
 /* ---------- evening / night notes ---------- */
@@ -1766,7 +1766,7 @@ document.addEventListener('change',async e=>{
   const el=e.target;if(!db)return;
   if(el.dataset?.mact==='time'&&el.value){try{await wakeRef(el.dataset.id).update({t:new Date(S.mornDate+'T'+el.value).getTime()});toast('שעת הקימה עודכנה')}catch(err){fail(err)}}
   if(el.id==='mornTarget'&&el.value){try{await db.doc('settings/app').set({...(S.settings||{}),wakeTarget:el.value});toast('שעת ההשכמה נשמרה')}catch(err){fail(err)}}
-  if(el.id==='mornDate'&&el.value){S.mornDate=el.value;S.wake=new Map();subWake();renderMorn();renderCalNotes()}
+  if(el.id==='mornDate'&&el.value){S.mornDate=el.value;S.mornAuto=S.mornDate===ymd(new Date());S.wake=new Map();subWake();renderMorn();renderCalNotes()}
 });
 
 /* ---------- staff & permissions ---------- */
@@ -2246,7 +2246,7 @@ $('xlFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)
 $('q').addEventListener('input',e=>{S.q=e.target.value;renderStudents()});
 $('cq').addEventListener('input',e=>{S.cq=e.target.value;renderCount()});
 $('mq').addEventListener('input',e=>{S.mq=e.target.value;renderMorn()});
-$('nightDate').addEventListener('change',e=>{if(!e.target.value)return;S.night=e.target.value;S.marks=new Map();subMarks();renderAll()});
+$('nightDate').addEventListener('change',e=>{if(!e.target.value)return;S.night=e.target.value;S.nightAuto=S.night===nightKey();S.marks=new Map();subMarks();renderAll()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.sel)closeSheet();if(e.key==='Escape'&&S.stSel)closeStaff()});
 
 /* ---------- data ---------- */
@@ -3521,7 +3521,7 @@ function renderLights(){if(S.tab!=='lights')return;subRq();renderRq();roundHead(
         ${m?.s==='p'&&lSelf(s.grade)&&!ro?`<label class="muted" style="font-size:.85rem;display:flex;gap:6px;align-items:center">הלך לישון ב-<input type="time" class="lt-sl" data-id="${s.id}" value="${esc(m.sl||'')}" style="width:auto"></label>`:''}
         ${m?.s==='a'&&!ro?`<select class="ab-r lt-r" data-id="${s.id}" aria-label="איפה הוא"><option value="">איפה הוא? בחר…</option>${['בחדר של חבר','במקלחת / שירותים','אצל המדריך','חולה – במרפאה','לא ידוע – בבירור'].map(r=>`<option ${m.r===r?'selected':''}>${r}</option>`).join('')}</select>`:''}</div>`}
     h+='</div></div>'}}
-  $('lList').innerHTML=h}
+  $('lList').innerHTML=(S.lPend&&!navigator.onLine||S.lPend&&S.lPendLong?pendNote():'')+h;if(S.lPend){clearTimeout(S.lPT);S.lPT=setTimeout(()=>{if(S.lPend){S.lPendLong=1;renderLights()}},8000)}else S.lPendLong=0}
 $('lq').addEventListener('input',()=>renderLights());
 document.addEventListener('change',async e=>{const g=e.target.dataset?.lg;if(!g||!e.target.value)return;try{await db.doc('settings/app').set({lightsG:{[g]:e.target.value}},{merge:true});toast(`כיבוי אורות כיתה ${g}: ${e.target.value}`)}catch(err){fail(err)}});
 document.addEventListener('change',async e=>{if(!e.target.classList?.contains('lt-sl')||!e.target.value)return;try{await OW(db.doc('lights/'+S.night+'/marks/'+e.target.dataset.id).update({sl:e.target.value}));toast('נשמר')}catch(err){fail(err)}});
@@ -3921,9 +3921,16 @@ function subscribeAll(){
 }
 function subMarks(){
   if(unMarks)unMarks();unMarks=null;if(!db||!S.access)return;
-  unMarks=db.collection('nightcount/'+S.night+'/marks').onSnapshot(snap=>{S.marks=new Map(snap.docs.filter(d=>d.id[0]!=='_').map(d=>[d.id,d.data()]));resolveNames(snap.docs.map(d=>d.data()));renderAll()},onErr);
-  S.unL?.();S.lmarks=new Map();S.unL=db.collection('lights/'+S.night+'/marks').onSnapshot(snap=>{S.lmarks=new Map(snap.docs.filter(d=>d.id[0]!=='_').map(d=>[d.id,d.data()]));renderLights();renderHome()},()=>{});
+  unMarks=db.collection('nightcount/'+S.night+'/marks').onSnapshot({includeMetadataChanges:true},snap=>{S.cPend=snap.metadata.hasPendingWrites;S.marks=new Map(snap.docs.filter(d=>d.id[0]!=='_').map(d=>[d.id,d.data()]));resolveNames(snap.docs.map(d=>d.data()));renderAll()},onErr);
+  S.unL?.();S.lmarks=new Map();S.unL=db.collection('lights/'+S.night+'/marks').onSnapshot({includeMetadataChanges:true},snap=>{S.lPend=snap.metadata.hasPendingWrites;S.lmarks=new Map(snap.docs.filter(d=>d.id[0]!=='_').map(d=>[d.id,d.data()]));renderLights();renderHome()},onErr);
 }
+// the app can stay open for days: move to the current night / morning by itself
+S.nightAuto=true;S.mornAuto=true;
+function dayRoll(){if(!db||!S.access)return;const nk=nightKey(),td=ymd(new Date());
+  if(S.nightAuto&&S.night!==nk){S.night=nk;$('nightDate').value=nk;S.marks=new Map();subMarks();renderAll()}
+  if(S.mornAuto&&S.mornDate!==td){S.mornDate=td;$('mornDate').value=td;S.wake=new Map();subWake();renderMorn()}}
+setInterval(dayRoll,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)dayRoll()});
+const pendNote=()=>`<div class="notice" style="margin-bottom:8px">⏳ יש סימונים שעוד לא הגיעו לשרת ולא נראים אצל שאר הצוות. בדקו את החיבור לאינטרנט. הם יישלחו לבד כשהחיבור יחזור, אל תסגרו את האפליקציה.</div>`;
 function recompute(){
   const o=S.ownerDoc,me=S.selfDoc;
   S.owner=!!o&&o.uid===S.me;
