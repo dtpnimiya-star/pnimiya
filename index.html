@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-05-58";
+const APP_VERSION = "2026-11-08-59";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -984,6 +984,8 @@ body:has(#login:not([hidden])) header{display:none}
   <!-- תחזוקה -->
   <section id="tab-maint" hidden style="display:grid;gap:14px">
     <details class="panel" id="fixLinkP" hidden></details>
+    <details class="panel" id="mtOwnP" hidden></details>
+    <div id="mtWaitP"></div>
     <form id="mtForm" class="panel">
       <h2>🔧 דיווח תקלה</h2>
       <div class="grid2">
@@ -1973,6 +1975,9 @@ document.addEventListener('click',async e=>{
     case'mtF':S.mtF=b.dataset.f;renderMt();break;
     case'mtSet':{const s=b.dataset.s,u={status:s};if(s==='prog'){u.progAt=Date.now();u.progBy=S.myName}if(s==='done'){u.doneAt=Date.now();u.doneBy=S.myName}if(s==='open'){u.doneAt=null}
       try{await OW(db.doc('maint/'+id).update(u));toast(s==='done'?'סומן כתוקן ✓':s==='prog'?'סומן בטיפול':'נפתח מחדש')}catch(e){fail(e)}break}
+    case'mtCf':{const m=S.mt.find(x=>x.id===id);if(!m)break;const v=b.dataset.v;let why='';if(v==='no'){why=(prompt('מה עדיין לא תקין? (לא חובה)')||'').trim().slice(0,120)}
+      const cur=(m.seen&&m.seen[S.me])||{};try{await OW(db.doc('maint/'+id).update({['seen.'+S.me]:{...cur,at:cur.at||Date.now(),n:S.myName||'',conf:v,confAt:Date.now(),...(why?{why}:{})}}));toast(v==='ok'?'תודה! התקלה נסגרה סופית':'התקלה חזרה לרשימת הפתוחות והצוות קיבל עדכון')}catch(e){fail(e)}break}
+    case'mtOwn':{break}
     case'mtDel':{if(!armed(b,'למחוק?'))return;try{await OW(db.doc('maint/'+id).delete())}catch(e){fail(e)}break}
     case'mtImg':{const m=S.mt.find(x=>x.id===id);if(!m?.photo)break;const v=document.createElement('div');v.className='imgview';v.innerHTML=`<img src="${esc(m.photo)}" alt="">`;v.onclick=()=>v.remove();document.body.appendChild(v);break}
     case'insMt':goMaint(b.dataset.room);break;
@@ -2701,30 +2706,54 @@ function patterns(){const now=Date.now(),out=[];const by=new Map();(S.notes||[])
 /* ---------- maintenance ---------- */
 S.mt=[];S.mtF='open';S.mtPhoto=null;
 const canMt=()=>has('maint')||has('mgr')||S.owner;
+const mtMine=m=>m&&m.by&&m.by===S.me;
+const mtCf=m=>(m.seen&&m.by&&m.seen[m.by])||{};
+const mtRej=m=>m.status==='done'&&mtCf(m).conf==='no'&&(mtCf(m).confAt||0)>(m.doneAt||0);
+const mtOk=m=>m.status==='done'&&mtCf(m).conf==='ok'&&(mtCf(m).confAt||0)>=(m.doneAt||0);
+const mtS=m=>mtRej(m)?'open':(m.status||'open');
+const mtOwn=cat=>(S.settings?.mtOwners||{})[cat]||null;
+const mtCats=()=>[...document.querySelectorAll('#mtCat option')].map(o=>o.textContent);
+const mtWait=()=>(S.mt||[]).filter(m=>mtMine(m)&&m.status==='done'&&!mtOk(m)&&!mtRej(m)&&Date.now()-(m.doneAt||0)<14*864e5);
 const MT_ST={open:['פתוחה','bad'],prog:['בטיפול','warn'],done:['תוקנה','ok']};
 const URG={1:'שוטף',2:'חשוב',3:'בטיחות'};
 const dur=ms=>{const m=Math.max(1,Math.round(ms/6e4));return m<60?m+' דקות':m<1440?Math.floor(m/60)+' שעות'+(m%60?' ו-'+m%60+' דק׳':''):Math.round(m/1440)+' ימים'};
-function mtSeen(){if(!db||S.ro||S.tab!=='maint')return;S.mt.filter(m=>(m.status||'open')!=='done'&&!(m.seen&&m.seen[S.me])).forEach(m=>{db.doc('maint/'+m.id).update({['seen.'+S.me]:{at:Date.now(),n:S.myName||''}}).catch(()=>{})})}
-function renderMtMap(){const el=$('mtMap');if(!el)return;const open=S.mt.filter(m=>(m.status||'open')!=='done');
+function mtSeen(){if(!db||S.ro||S.tab!=='maint')return;S.mt.filter(m=>mtS(m)!=='done'&&!(m.seen&&m.seen[S.me])).forEach(m=>{db.doc('maint/'+m.id).update({['seen.'+S.me]:{at:Date.now(),n:S.myName||''}}).catch(()=>{})})}
+function renderMtMap(){const el=$('mtMap');if(!el)return;const open=S.mt.filter(m=>mtS(m)!=='done');
   el.innerHTML=mtRooms().map(([r,l])=>{const L=open.filter(m=>m.room===r),u=Math.max(0,...L.map(m=>m.urg||1));return `<button type="button" class="rm ${L.length?'u'+u:''}" data-act="mtRm" data-r="${esc(r)}" aria-pressed="${S.mtRm===r}" title="${esc(l)}">${r==='common'?'משותף':r==='other'?'אחר':r}${STAFF_ROOMS.has(r)?'<br><small class="muted">מדריכים</small>':''}${L.length?`<span class="dot">${L.length}</span>`:''}</button>`}).join('');
   const D=S.mt.filter(m=>m.doneAt&&m.at&&Date.now()-m.doneAt<30*864e5),avg=D.length?D.reduce((a,m)=>a+(m.doneAt-m.at),0)/D.length:0;
   $('mtStat').textContent=`${open.length} פתוחות`+(D.length?` · זמן טיפול ממוצע: ${dur(avg)}`:'')}
 function mtRooms(){const r=roomsList().map(x=>[x,'חדר '+x+(STAFF_ROOMS.has(x)?' (מדריכים)':'')]);return [...r,['common','שטח משותף'],['other','אחר']]}
 function fillMtRooms(pre){const s=$('mtRoom'),v=pre||s.value;s.innerHTML=mtRooms().map(([v2,l])=>`<option value="${esc(v2)}">${esc(l)}</option>`).join('');if(v)s.value=v}
-function subMt(){if(!db||S.unMt)return;S.unMt=1;S.subs.push(db.collection('maint').orderBy('at','desc').limit(300).onSnapshot(q=>{if(S.mtLoaded&&canMt())q.docChanges().forEach(ch=>{if(ch.type!=='added')return;const m=ch.doc.data();if(m.by!==S.me&&m.at>S.loadAt){toast('🔧 תקלה חדשה: '+mtPlace(m));notify(m.urg===3?'⚠ תקלת בטיחות':m.urg===2?'תקלה חשובה':'תקלה חדשה',mtPlace(m)+' · '+(m.cat||'')+': '+String(m.desc||'').slice(0,100),'mt-'+ch.doc.id)}});S.mtLoaded=true;
-  S.mt=q.docs.map(d=>({id:d.id,...d.data()}));{const n=S.mt.filter(m=>(m.status||'open')==='open').length;$('mtBadge').textContent=n;$('mtBadge').hidden=!n||!canMt()}renderMt();renderHome()},onErr))}
+function subMt(){if(!db||S.unMt)return;S.unMt=1;S.subs.push(db.collection('maint').orderBy('at','desc').limit(300).onSnapshot(q=>{const prev=new Map((S.mt||[]).map(m=>[m.id,m]));
+  if(S.mtLoaded)q.docChanges().forEach(ch=>{const m=ch.doc.data(),id=ch.doc.id,o=prev.get(id),ow=mtOwn(m.cat),mineA=ow&&ow.u===S.me;
+    if(ch.type==='added'&&m.by!==S.me&&m.at>S.loadAt&&(canMt()||mineA)){toast('🔧 תקלה חדשה: '+mtPlace(m)+(mineA?' (באחריותך)':''));notify((m.urg===3?'⚠ תקלת בטיחות':m.urg===2?'תקלה חשובה':'תקלה חדשה')+(mineA?' באחריותך':''),mtPlace(m)+' · '+(m.cat||'')+': '+String(m.desc||'').slice(0,100),'mt-'+id)}
+    if(ch.type==='modified'&&o){const mm={...m,id};
+      if(mtMine(mm)&&m.status==='done'&&o.status!=='done'&&m.doneBy!==S.myName){toast('✅ התקלה שדיווחת סומנה כתוקנה. בדוק ואשר בלשונית תחזוקה');notify('התקלה שדיווחת תוקנה',mtPlace(m)+': '+String(m.desc||'').slice(0,80)+'. בדקו ואשרו שזה באמת תקין.','mtd-'+id+'-'+m.doneAt)}
+      if((canMt()||mineA)&&mtRej(mm)&&!mtRej(o)){toast('↩ '+(m.byName||'המדווח')+': התקלה לא תוקנה – '+mtPlace(m));notify('תקלה נפתחה מחדש',(m.byName||'המדווח')+' כתב שהתקלה לא תוקנה: '+mtPlace(m)+(mtCf(mm).why?' – '+mtCf(mm).why:''),'mtr-'+id+'-'+mtCf(mm).confAt)}}});
+  S.mtLoaded=true;
+  S.mt=q.docs.map(d=>({id:d.id,...d.data()}));{const n=S.mt.filter(m=>mtS(m)==='open').length;$('mtBadge').textContent=n;$('mtBadge').hidden=!n||!canMt()}renderMt();renderHome()},onErr))}
+function renderMtOwn(){const el=$('mtOwnP');if(!el)return;const can=(S.owner||has('mgr'))&&!S.ro;el.hidden=!can;if(!can)return;const O=S.settings?.mtOwners||{},L=roStaffList(),open=el.open;
+  el.innerHTML=`<summary><b>👷 אחראי לכל סוג תקלה</b> <span class="muted" style="font-size:.88rem">${Object.values(O).filter(x=>x&&x.u).length} מוגדרים</span></summary>
+  <p class="muted" style="font-size:.9rem;margin:8px 0">כל תקלה חדשה מסוג זה תופיע עם שם האחראי, והוא יקבל עליה התראה. כדי שיוכל גם לסמן "בטיפול" ו"תוקן" צריך לתת לו את ההרשאה "תחזוקה" במסך הצוות.</p>
+  <div style="display:grid;gap:6px">${mtCats().map(c=>`<label class="row" style="justify-content:space-between;gap:8px"><span>${esc(c)}</span><select data-mtown="${esc(c)}" style="max-width:55%"><option value="">— ללא —</option>${L.map(([u,n])=>`<option value="${u}" ${O[c]?.u===u?'selected':''}>${esc(n)}</option>`).join('')}</select></label>`).join('')}</div>`;el.open=open}
+document.addEventListener('change',async e=>{const c=e.target.dataset?.mtown;if(c==null)return;const u=e.target.value,n=roStaffList().find(x=>x[0]===u)?.[1]||'';
+  try{await db.doc('settings/app').set({mtOwners:{[c]:u?{u,n}:null}},{merge:true});toast(u?`${c}: ${n} אחראי`:`${c}: ללא אחראי`)}catch(err){fail(err)}});
 function mtPlace(m){return m.room==='common'?'שטח משותף':m.room==='other'?(m.place||'אחר'):'חדר '+m.room+(m.place?' · '+m.place:'')}
 function renderMt(){if(S.tab!=='maint')return;subFix();renderFixLink();if(!$('mtRoom').options.length)fillMtRooms();
-  const cnt=k=>S.mt.filter(m=>(m.status||'open')===k).length;
+  const cnt=k=>S.mt.filter(m=>mtS(m)===k).length;
   document.querySelectorAll('[data-act="mtF"]').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.f===S.mtF);b.textContent=MT_ST[b.dataset.f][0].replace('פתוחה','פתוחות').replace('תוקנה','תוקנו')+' '+cnt(b.dataset.f)});
-  renderMtMap();mtSeen();
-  const L=S.mt.filter(m=>(m.status||'open')===S.mtF&&(!S.mtRm||m.room===S.mtRm)).sort((a,b)=>(b.urg||1)-(a.urg||1)||b.at-a.at);
-  $('mtList').innerHTML=L.length?`<div class="list">`+L.map(m=>{const st=m.status||'open';
+  renderMtMap();mtSeen();renderMtOwn();
+  {const W=mtWait();$('mtWaitP').innerHTML=W.length?`<div class="notice">✅ ${W.length===1?'תקלה שדיווחת סומנה כתוקנה':W.length+' תקלות שדיווחת סומנו כתוקנות'} – בדקו ואשרו בלשונית "תוקנו".</div>`:''}
+  const L=S.mt.filter(m=>mtS(m)===S.mtF&&(!S.mtRm||m.room===S.mtRm)).sort((a,b)=>(b.urg||1)-(a.urg||1)||b.at-a.at);
+  $('mtList').innerHTML=L.length?`<div class="list">`+L.map(m=>{const st=mtS(m);
     return `<div class="item" style="align-items:flex-start;flex-wrap:wrap">${m.photo?`<img src="${esc(m.photo)}" alt="" data-act="mtImg" data-id="${m.id}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:zoom-in">`:''}
       <div style="flex:1;min-width:0;display:grid;gap:3px"><b>${esc(mtPlace(m))} · <span class="muted" style="font-weight:600">${esc(m.cat||'')}</span>${m.urg>1?` <span class="chip urg${m.urg}">${m.urg===3?'⚠ ':''}${URG[m.urg]}</span>`:''}</b>
       <span style="overflow-wrap:anywhere">${esc(m.desc||'')}</span>
       <span class="meta">דווח ע"י ${esc(m.byName||'')} · ${when(m.at)}${m.progAt?` · בטיפול ${esc(m.progBy||'')} ${when(m.progAt)}`:''}${m.doneAt?` · תוקן ${when(m.doneAt)}${m.doneBy?' ע"י '+esc(m.doneBy):''}`:''}</span>
-      <div class="steps"><span class="on">דווח</span>›<span class="${m.progAt||m.doneAt?'on':''}">בטיפול</span>›<span class="${m.doneAt?'on':''}">תוקן</span>${m.doneAt?`<b style="color:var(--ok)">נסגרה תוך ${dur(m.doneAt-m.at)}</b>`:''}</div>
+      <div class="steps"><span class="on">דווח</span>›<span class="${m.progAt||m.doneAt?'on':''}">בטיפול</span>›<span class="${m.doneAt&&!mtRej(m)?'on':''}">תוקן</span>${m.doneAt&&!mtRej(m)?`<b style="color:var(--ok)">נסגרה תוך ${dur(m.doneAt-m.at)}</b>`:''}</div>
+      ${(o=>o?`<span class="meta">👷 אחראי: ${esc(o.n||'')}${o.u===S.me?' (את/ה)':''}</span>`:'')(mtOwn(m.cat))}
+      ${mtRej(m)?`<span class="notice" style="padding:6px 10px">↩ ${esc(m.byName||'המדווח')} בדק וכתב שהתקלה <b>לא תוקנה</b>${mtCf(m).why?': '+esc(mtCf(m).why):''} (${when(mtCf(m).confAt)})</span>`:mtOk(m)?`<span class="meta" style="color:var(--ok)">✔ ${esc(m.byName||'המדווח')} אישר שתוקן (${when(mtCf(m).confAt)})</span>`:m.status==='done'&&m.by&&m.by!=='student'?`<span class="meta">⏳ ממתין לאישור המדווח</span>`:''}
+      ${mtMine(m)&&m.status==='done'&&!mtOk(m)&&!mtRej(m)&&!S.ro?`<div class="row" style="gap:6px"><button class="btn small primary" type="button" data-act="mtCf" data-id="${m.id}" data-v="ok">✔ בדקתי – תקין</button><button class="btn small" type="button" data-act="mtCf" data-id="${m.id}" data-v="no">✗ עדיין לא תקין</button></div>`:''}
       ${m.seen?`<span class="meta">👁 ראו: ${esc(Object.values(m.seen).map(x=>x.n).filter(Boolean).join(', '))} (${Object.keys(m.seen).length})</span>`:''}</div>
       <span class="row" style="gap:6px">${canMt()&&!S.ro?(st==='open'?`<button class="btn small" data-act="mtSet" data-id="${m.id}" data-s="prog">בטיפול</button><button class="btn small primary" data-act="mtSet" data-id="${m.id}" data-s="done">תוקן ✓</button>`:st==='prog'?`<button class="btn small primary" data-act="mtSet" data-id="${m.id}" data-s="done">תוקן ✓</button>`:`<button class="btn small" data-act="mtSet" data-id="${m.id}" data-s="open">פתח מחדש</button>`):`<span class="chip ${MT_ST[st][1]}">${MT_ST[st][0]}</span>`}${S.owner?`<button class="btn small" data-act="mtDel" data-id="${m.id}">מחק</button>`:''}</span></div>`}).join('')+`</div>`
     :`<div class="empty">${S.mtF==='open'?'אין תקלות פתוחות 👍':S.mtF==='prog'?'אין תקלות בטיפול.':'עוד אין תקלות שתוקנו.'}</div>`}
@@ -2893,14 +2922,17 @@ async function hrPage(tok){const v=document.createElement('main');v.id='paView';
      <label class="hr-l">מתי לצאת<input id="hrFrom" type="datetime-local" required></label>
      <label class="hr-l">מתי יחזור<input id="hrTo" type="datetime-local" required></label>
      <label class="hr-l">סיבה<select id="hrR"><option>שבת בבית</option><option>אירוע משפחתי</option><option>תור לרופא / טיפול</option><option>אחר</option></select></label>
-     <label class="hr-l">איך יצא<select id="hrHow"><option>ההורים אוספים</option><option>תחבורה ציבורית</option><option>הסעה אחרת</option></select></label>
+     <label class="hr-l">איך יצא<select id="hrHow"><option>ההורים אוספים</option><option value="הסעה אחרת" data-esc="1">מישהו אחר אוסף (מלווה)</option><option>תחבורה ציבורית</option><option>הסעה אחרת</option></select></label>
+     <div id="hrEsc" hidden style="display:grid;gap:8px"><label class="hr-l">שם המלווה<input id="hrEsN" maxlength="40" autocomplete="off"></label><label class="hr-l">טלפון המלווה<input id="hrEsP" type="tel" inputmode="tel" maxlength="20" autocomplete="off"></label></div>
      <label class="hr-l">הערה (לא חובה)<textarea id="hrNote" maxlength="280" rows="2"></textarea></label>
      <div id="hrErr" class="notice" hidden></div>
      <button class="btn primary" type="submit" id="hrSend">שליחת הבקשה למנהל הפנימייה</button></form><div id="hrHist" style="display:grid;gap:8px"></div>`);
+    const isEsc=()=>!!$('hrHow').selectedOptions[0]?.dataset.esc;$('hrHow').onchange=()=>{$('hrEsc').hidden=!isEsc()};
     $('hrF').onsubmit=async e=>{e.preventDefault();const err=m=>{$('hrErr').textContent=m;$('hrErr').hidden=false};const f=new Date($('hrFrom').value).getTime(),to=new Date($('hrTo').value).getTime();
       if(!(f>0&&to>0))return err('נא למלא מתי לצאת ומתי לחזור');if(to<=f)return err('שעת החזרה צריכה להיות אחרי שעת היציאה');if(f<Date.now()-2*36e5)return err('שעת היציאה כבר עברה');
       if(String($('hrP').value).replace(/\D/g,'').length<9)return err('נא לכתוב מספר טלפון מלא');
-      const d={tok,sid:t.sid,first:t.first||'',pName:$('hrN').value.trim().slice(0,50),rel:(v.querySelector('[name=hrRel]:checked')||{}).value||'',phone:$('hrP').value.trim().slice(0,20),from:f,to,reason:$('hrR').value,how:$('hrHow').value,note:$('hrNote').value.trim().slice(0,280),at:Date.now(),status:'pending'};
+      const esc2=isEsc()?{n:$('hrEsN').value.trim().slice(0,40),p:$('hrEsP').value.trim().slice(0,20)}:null;if(esc2&&!esc2.n)return err('נא לכתוב את שם המלווה');if(esc2&&esc2.p.replace(/\D/g,'').length<9)return err('נא לכתוב טלפון מלא של המלווה');
+      const d={tok,sid:t.sid,first:t.first||'',pName:$('hrN').value.trim().slice(0,50),rel:(v.querySelector('[name=hrRel]:checked')||{}).value||'',phone:$('hrP').value.trim().slice(0,20),from:f,to,reason:$('hrR').value,how:$('hrHow').value,note:((esc2?`מלווה: ${esc2.n}, ${esc2.p}`:'')+(esc2&&$('hrNote').value.trim()?' · ':'')+$('hrNote').value.trim()).slice(0,280),at:Date.now(),status:'pending'};
       $('hrSend').disabled=true;try{const id=rid();await db.doc('hreq/'+id).set(d);mine.push(id);try{localStorage.setItem(K,JSON.stringify(mine.slice(-10)))}catch{}
         box(`<h1 style="text-align:center">✓ הבקשה נשלחה</h1><p>הבקשה של ${esc(t.first||'')} הגיעה למנהל הפנימייה. אחרי ההחלטה נעדכן אתכם. אפשר לחזור לקישור הזה כדי לראות אם הבקשה אושרה.</p><button class="btn" type="button" id="hrAgain">בקשה נוספת</button><div id="hrHist" style="display:grid;gap:8px"></div>`);$('hrAgain').onclick=form;hist()}
       catch(x){$('hrSend').disabled=false;err('לא הצלחנו לשלוח. בדקו את החיבור לאינטרנט ונסו שוב, או התקשרו לצוות הפנימייה.')}};
@@ -3635,7 +3667,7 @@ function renderPeriod(){const P=$('hmPerP');if(!P)return;P.hidden=!S.mgr;if(!S.m
 S.tv=false;
 function tvOpen(on){S.tv=on;setTimeout(applyNight,0);const el=$('tv');el.hidden=!on;document.body.style.overflow=on?'hidden':'';if(on){try{document.documentElement.requestFullscreen?.()}catch{}renderTV();S.tvInt=setInterval(renderTV,15000)}else{clearInterval(S.tvInt);try{document.fullscreenElement&&document.exitFullscreen()}catch{}}}
 function renderTV(){if(!S.tv)return;const el=$('tv'),n=new Date(),today=ymd(n),hb=heb(today),st=allSorted(),inn=st.filter(s=>!isOut(s.id)),late=lateOuts(st),out=st.length-inn.length;
-  const rc=roundStat('count'),rm=roundStat('morn'),mtO=(S.mt||[]).filter(m=>(m.status||'open')!=='done'),mtB=mtO.filter(m=>m.urg===3).length;
+  const rc=roundStat('count'),rm=roundStat('morn'),mtO=(S.mt||[]).filter(m=>mtS(m)!=='done'),mtB=mtO.filter(m=>m.urg===3).length;
   const absent=inn.filter(s=>S.marks.get(s.id)?.s==='a'),noUp=inn.filter(s=>S.wake.get(s.id)?.s==='no');
   const card=(num,l,cls,sub)=>`<div class="c ${cls||''}"><span class="n">${num}</span><span class="l">${l}</span>${sub||''}</div>`;
   const bar=(d,t)=>`<div class="bar3"><i style="width:${t?d/t*100:0}%"></i></div>`;
@@ -3661,7 +3693,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.tv)tvOpen(false)}
 function nowActs(){const A=[],n=Date.now(),d=new Date(),today=ymd(d),m0=d.getHours()*60+d.getMinutes();
   try{[['השכמה','morn','morning'],['נוכחות ערב','count','count'],['כיבוי אורות','lights','count']].forEach(([l,k,p])=>{if(!has(p)&&!S.mgr)return;const r=roundStat(k);if(!r.isToday||!r.act||r.complete||!r.tot)return;const left=r.dlTs-n,sub=`${r.done}/${r.tot} סומנו`+(r.req?` · ${r.req} שאלות פתוחות`:'');
     if(r.over)A.push([0,'⏰',l+' – עבר זמן הסגירה',sub,k]);else if(left<75*6e4)A.push([1,'▶️',l+' – עכשיו',sub+' · נסגר ב-'+r.dl,k])})}catch(e){}
-  if(canMt()){const b=(S.mt||[]).filter(m=>(m.status||'open')==='open'&&m.urg===3).length;if(b)A.push([0,'⚠️',b===1?'תקלת בטיחות פתוחה':b+' תקלות בטיחות פתוחות','דורש טיפול מיידי','maint'])}
+  {const mine=(S.mt||[]).filter(m=>mtS(m)!=='done'&&mtOwn(m.cat)?.u===S.me);if(mine.length&&!canMt())A.push([1,'👷',mine.length===1?'תקלה פתוחה באחריותך':mine.length+' תקלות פתוחות באחריותך',mtPlace(mine[0])+' · '+(mine[0].cat||''),'maint'])}
+  {const W=mtWait();if(W.length)A.push([2,'✅',W.length===1?'אשרו שהתקלה שדיווחתם תוקנה':'אשרו '+W.length+' תקלות שדיווחתם',mtPlace(W[0]),'maint'])}
+  if(canMt()){const b=(S.mt||[]).filter(m=>mtS(m)==='open'&&m.urg===3).length;if(b)A.push([0,'⚠️',b===1?'תקלת בטיחות פתוחה':b+' תקלות בטיחות פתוחות','דורש טיפול מיידי','maint'])}
   if((S.mgr||S.owner)&&!S.ro){const p=gPend();if(p.length)A.push([1,'🛏',p.length===1?'אקסטרן מבקש להישאר לישון – ממתין לאישורך':p.length+' אקסטרנים ממתינים לאישור לינה',p.slice(0,3).map(g=>g.name).join(', '),'out'])}
   if(hrCan()){const p=hrPend();if(p.length)A.push([1,'🏠',p.length===1?'בקשת יציאה מההורים ממתינה לאישור':p.length+' בקשות יציאה מההורים ממתינות',p.slice(0,3).map(x=>S.students.get(x.sid)?.name||x.first).join(', '),'out'])}
   if(has('out')||S.mgr){const ok=(S.pa||[]).filter(x=>x.status==='ok'&&!x.used&&S.students.has(x.sid)&&!isOut(x.sid)&&n-x.at<2*864e5);if(ok.length)A.push([2,'✅',ok.length===1?'הגיע אישור הורים ליציאה':ok.length+' אישורי הורים ליציאה הגיעו',ok.slice(0,3).map(x=>S.students.get(x.sid).name).join(', ')+' – אפשר לרשום יציאה','out'])}
@@ -3691,7 +3725,7 @@ function renderHome(){
     tile('morn','השכמה היום',`${up}/${exp}`,[late?`<b>${late}</b> קמו מאוחר`:'',no?`<b>${no}</b> לא קמו`:'',pa?`<b>${pa}</b> לא נכחו בלילה`:''].filter(Boolean).join(' · ')||'עדיין אין חריגים',no>0)}
   if(has('out')){const outs=st.filter(s=>isOut(s.id)),late=outs.filter(s=>{const b=S.status.get(s.id)?.backBy;return b&&b<Date.now()});
     {const hn=outs.filter(s=>atHome(S.status.get(s.id))).length;{const gn=guestList([nightKey()]).length,vn=visitorsNow().length;S.gTile=[gn?`🛏 <b>${gn}</b> אורחים הלילה`:'',vn?`👋 <b>${vn}</b> מבקרים`:''].filter(Boolean).join(' · ')}tile('out','מחוץ לפנימייה',outs.length,[S.gTile,hn?`🏠 <b>${hn}</b> בבית`:'',late.length?`<b>${late.length}</b> באיחור בחזרה`:'אין איחורים בחזרה'].filter(Boolean).join(' · '),late.length>0)}}
-  if(canMt()){const o=S.mt.filter(m=>(m.status||'open')!=='done'),u=o.filter(m=>m.urg>=2).length;tile('maint','תקלות תחזוקה',o.length,o.length?(u?`<b>${u}</b> חשובות/בטיחות · `:'')+`${o.filter(m=>m.status==='prog').length} בטיפול`:'אין תקלות פתוחות',u>0)}
+  if(canMt()){const o=S.mt.filter(m=>mtS(m)!=='done'),u=o.filter(m=>m.urg>=2).length;tile('maint','תקלות תחזוקה',o.length,o.length?(u?`<b>${u}</b> חשובות/בטיחות · `:'')+`${o.filter(m=>m.status==='prog').length} בטיפול`:'אין תקלות פתוחות',u>0)}
   if(has('mgr')){const open=S.notes.filter(n=>isBeh(n)&&!n.handled&&S.students.has(n.sid)).length;tile('mgr','התראות התנהגות',open,open?'ממתינות לטיפול':'אין התראות פתוחות',open>0)}
   $('hmTiles').innerHTML=tiles.join('');
   if(db&&(has('learn')||has('count')))subLn();
@@ -3912,7 +3946,7 @@ function subscribeAll(){
   if(has('notes')||has('personal')||S.mgr)S.subs.push(db.collection('pcontact').orderBy('at','desc').limit(500).onSnapshot(q=>{S.pc=q.docs.map(d=>({id:d.id,...d.data()}));renderFu();if(S.sel)renderShX()},()=>{}));
   S.subs.push(db.doc('settings/meet').onSnapshot(d=>{S.meet=d.exists?d.data():{};if(S.tab==='meet')renderMeet();if(S.sel)renderSheet()},()=>{}));
   S.subs.push(db.doc('settings/cal').onSnapshot(d=>{S.calOv=d.exists?(d.data().ev||{}):{};applyCal();renderCal();renderCalNotes();renderHome();if(S.tab==='shab')renderShab?.()},()=>{}));
-  S.subs.push(db.doc('settings/app').onSnapshot(d=>{S.settings=d.exists?d.data():null;S.wakeTarget=S.settings?.wakeTarget||'07:00';renderMorn()},onErr));
+  S.subs.push(db.doc('settings/app').onSnapshot(d=>{S.settings=d.exists?d.data():null;S.wakeTarget=S.settings?.wakeTarget||'07:00';renderMorn();if(S.tab==='maint')renderMt()},onErr));
   if(has('personal'))S.subs.push(db.collection('profiles').onSnapshot(snap=>{S.profiles=new Map(snap.docs.filter(d=>d.id[0]!=='_').map(d=>[d.id,d.data()]));renderSheet()},onErr));
   else S.profiles=new Map();
   S.photos=new Map();
