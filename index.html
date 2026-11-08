@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-09-60";
+const APP_VERSION = "2026-11-09-61";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -650,6 +650,11 @@ body:has(#login:not([hidden])) header{display:none}
 @media (max-width:720px){#countList .item,#mornList .item,#lList .item{padding:8px 10px;row-gap:6px}#countList .item .seg button,#mornList .item .seg button,#lList .item .seg button{min-height:40px;padding:6px 4px}.room-h{padding:4px 2px}}
 @media (max-width:720px){#topSum{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}#topSum::-webkit-scrollbar{display:none}#topSum .pill{flex:none}}
 details.legend-d>summary{cursor:pointer;color:var(--muted);font-size:.85rem;list-style:none}details.legend-d>summary::-webkit-details-marker{display:none}details.legend-d[open]>summary{margin-bottom:6px}
+.sheet-bg{z-index:35}
+html.xbig body{font-size:20px}html.xbig .seg button,html.xbig .btn{font-size:1.08rem}
+html.dense .item{padding:6px 10px!important}html.dense #countList .item .seg button,html.dense #mornList .item .seg button,html.dense #lList .item .seg button{min-height:36px!important;padding:4px!important}html.dense .panel{padding:12px}html.dense section[id^="tab-"]{gap:10px!important}
+html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-bottom:16px}
+.pf-row{display:grid;gap:6px}.pf-row>b{font-size:.95rem}.pf-row>.muted{font-size:.85rem}.pf-seg{display:flex;flex-wrap:wrap;gap:6px}.pf-seg button{flex:1 1 auto;min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:600 .92rem var(--f-body);padding:6px 10px;cursor:pointer}.pf-seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
 </style>
 </head>
 <body>
@@ -667,6 +672,7 @@ details.legend-d>summary{cursor:pointer;color:var(--muted);font-size:.85rem;list
       <button class="btn small" id="acctBtn" data-act="acct" hidden aria-expanded="false" aria-controls="acctPanel"></button>
     </div>
     <div id="acctPanel" class="panel" hidden>
+      <button class="btn" type="button" data-act="prefs" style="width:100%;margin-bottom:10px">⚙ ההגדרות שלי – מראה ותפעול</button>
       <form id="pwForm" style="display:grid;gap:8px">
         <h2>שינוי סיסמה</h2>
         <input type="password" id="pwOld" placeholder="סיסמה נוכחית" autocomplete="current-password" required dir="ltr" aria-label="סיסמה נוכחית">
@@ -715,7 +721,7 @@ details.legend-d>summary{cursor:pointer;color:var(--muted);font-size:.85rem;list
     <button type="button" id="t-staff" data-tab="staff" data-perm="owner" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="lbl">צוות</span></button>
   </div>
   <div style="padding:0 0 10px"><a class="btn small apk-dl" style="display:block" href="pnimiya.apk" download="pnimiya.apk" hidden style="text-align:center;text-decoration:none">📲 הורדת האפליקציה לאנדרואיד</a></div>
-  <div class="view-opts"><button class="btn small tgl" type="button" data-act="view" id="vView">🌓 תצוגה: אוטומטית</button><button class="btn small tgl" type="button" data-act="theme" id="vTheme" hidden>🌙 מצב כהה</button><button class="btn small tgl" type="button" data-act="bigText" id="vBig">A+ טקסט גדול</button><button class="btn small tgl" type="button" data-act="nightMode" id="vNight" hidden>🔦 סיור לילה: אוטומטי</button></div>
+  <div class="view-opts"><button class="btn small" type="button" data-act="prefs" style="flex-basis:100%;justify-content:center">⚙ ההגדרות שלי – מראה ותפעול</button><button class="btn small tgl" type="button" data-act="view" id="vView">🌓 תצוגה: אוטומטית</button><button class="btn small tgl" type="button" data-act="theme" id="vTheme" hidden>🌙 מצב כהה</button><button class="btn small tgl" type="button" data-act="bigText" id="vBig">A+ טקסט גדול</button><button class="btn small tgl" type="button" data-act="nightMode" id="vNight" hidden>🔦 סיור לילה: אוטומטי</button></div>
   <div class="drawer-foot"><span class="muted" id="drawerUser"></span><span class="row" style="gap:6px"><button class="btn small" type="button" data-act="tour">🧭 סיור</button><button class="btn small" type="button" data-act="stMine">הכרטיס שלי</button><button class="btn small" type="button" data-act="logout">יציאה</button></span></div>
 </nav>
 <main><div class="wrap">
@@ -1159,6 +1165,12 @@ details.legend-d>summary{cursor:pointer;color:var(--muted);font-size:.85rem;list
     <div id="lrAfter"></div>
   </form>
 </div>
+<div id="prefBg" class="sheet-bg" hidden>
+  <div class="sheet" id="prefSheet" role="dialog" aria-modal="true" aria-labelledby="prefT" style="display:grid;gap:14px">
+    <div class="sheet-top"><h2 id="prefT" style="font-size:1.2rem">⚙ ההגדרות שלי</h2><button class="btn small" type="button" data-act="prefClose">סגור</button></div>
+    <div id="prefBody" style="display:grid;gap:14px"></div>
+  </div>
+</div>
 <div id="calBg" class="sheet-bg" hidden>
   <form class="sheet" id="calForm" role="dialog" aria-modal="true" aria-labelledby="calEdT" style="display:grid;gap:12px">
     <div class="sheet-top"><h2 id="calEdT" style="font-size:1.2rem">אירוע בלוח השנה</h2><button class="btn small" type="button" data-act="calClose">סגור</button></div>
@@ -1390,7 +1402,7 @@ function roundStat(k){const date=k==='morn'?S.mornDate:S.night,key=RK[k][1],T=tp
   const dlTs=new Date(date+'T'+dl).getTime()+(k!=='morn'&&toMin(dl)<360?864e5:0);
   const isToday=date===(k==='morn'?ymd(new Date()):nightKey()),over=act&&isToday&&(done<tot||req>0)&&Date.now()>dlTs;
   return {dlTs,date,key,dl,act,done,tot,req,isToday,over,complete:done>=tot&&!req,grades:T.grades}}
-function roundHead(el,title,k){const r=roundStat(k),canSet=S.owner||has('mgr');{S.rdC=S.rdC||{};const key=k+'|'+r.date,full=r.act&&r.tot>0&&r.done>=r.tot;if(S.rdC[key]===false&&full){confetti();toast('🎉 כל הכבוד! '+title+' הושלמה')}S.rdC[key]=full}
+function roundHead(el,title,k){const r=roundStat(k),canSet=S.owner||has('mgr');{S.rdC=S.rdC||{};const key=k+'|'+r.date,full=r.act&&r.tot>0&&r.done>=r.tot;if(S.rdC[key]===false&&full&&pfGet().cheer!==0){confetti();toast('🎉 כל הכבוד! '+title+' הושלמה')}S.rdC[key]=full}
   $(el).innerHTML=r.act?`<div class="r1"><b>${title}</b><span class="dl ${r.over?'over':''}">${r.over?'⏰ הזמן עבר · ':'● פתוח עד '}${k==='lights'&&lightsTimes().length?r.dl+' (לפי כיתה)':canSet?`<input type="time" data-dl="${r.key}" value="${r.dl}" aria-label="שעת סגירה">`:r.dl}</span></div>
    <div class="r1" style="font-size:.9rem"><span>${nf.format(new Date(r.date+'T12:00'))}${r.grades.length?' · כיתות '+r.grades.join(', '):''}${roundDuty(k,r.date).length?' · תורן: '+esc(dutyNames(roundDuty(k,r.date))):''}</span><span>סומנו ${r.done} מתוך ${r.tot}${r.req?` · <b>חסרות ${r.req} תשובות חובה</b>`:''}</span></div><div class="bar2"><i style="width:${r.tot?r.done/r.tot*100:0}%"></i></div>`
    :`<div class="r1"><b>${title}</b><span class="dl">${wkHome(r.date,k!=='morn')?'🏠 סוף שבוע – התלמידים בבית':'אין סבב מתוכנן ביום '+DAYN[new Date(r.date+'T12:00').getDay()]}</span></div><div style="font-size:.9rem">${nf.format(new Date(r.date+'T12:00'))} · אפשר לסמן בכל זאת</div>`;
@@ -1786,7 +1798,7 @@ function menu(open){if(open&&document.body.classList.contains('desk'))return;S.m
   if(open){($('drawer').querySelector('[aria-selected="true"]:not([hidden])')||$('drawer').querySelector('.drawer-list button:not([hidden])'))?.focus()}else $('menuBtn').focus({preventScroll:true})}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.menuOpen)menu(false)});
 function applyPerms(){
-  const ok=S.permReady&&(S.owner||PERMS.some(([k])=>has(k)));S.access=ok;if(ok&&!S.goDone){S.goDone=1;try{const u=new URL(location.href),g=u.searchParams.get('go');if(g&&/^[a-z]+$/.test(g)){u.searchParams.delete('go');history.replaceState(null,'',u.pathname+u.search+u.hash);setTimeout(()=>{const b=$('t-'+g);if(b&&!b.hidden)b.click()},500)}}catch(e){}}$('menuBtn').hidden=!ok;$('cpBtn').hidden=!ok;deskNav();setTimeout(()=>{navMerge();dgrpSync()},0);if(!ok&&S.menuOpen)menu(false);$('drawerUser').textContent=S.myName||'';if(!$('drawerLogo').src)$('drawerLogo').src=document.querySelector('.lg-logo').src;
+  const ok=S.permReady&&(S.owner||PERMS.some(([k])=>has(k)));S.access=ok;if(ok&&!S.goDone){S.goDone=1;pfApply();try{const u=new URL(location.href),g0=u.searchParams.get('go'),ps=pfGet().start,g=g0||(ps&&ps!=='home'?ps:null);if(g&&/^[a-z]+$/.test(g)){if(g0){u.searchParams.delete('go');history.replaceState(null,'',u.pathname+u.search+u.hash)}setTimeout(()=>{const b=$('t-'+g);if(b&&!b.hidden)b.click()},500)}}catch(e){}}$('menuBtn').hidden=!ok;$('cpBtn').hidden=!ok;deskNav();setTimeout(()=>{navMerge();dgrpSync()},0);if(!ok&&S.menuOpen)menu(false);$('drawerUser').textContent=S.myName||'';if(!$('drawerLogo').src)$('drawerLogo').src=document.querySelector('.lg-logo').src;
   document.querySelectorAll('[data-perm]').forEach(el=>el.hidden=!ok||!has(el.dataset.perm));
   S.mgr=ok&&has('mgr');setTimeout(renderBnav,0);
   $('topSum').hidden=!ok;
@@ -2006,8 +2018,8 @@ document.addEventListener('click',async e=>{
     case'shT':shTab(b.dataset.t);document.querySelector('#sheetBg .sheet')?.scrollTo({top:0});break;
     case'nightMode':{const o=['auto','off','on'],c=nightPref();try{localStorage.setItem('pn-night',o[(o.indexOf(c)+1)%3])}catch{}applyNight();toast(({auto:'סיור לילה: יופעל לבד משעת כיבוי האורות עד 06:00',off:'סיור לילה כבוי',on:'סיור לילה פעיל תמיד'})[nightPref()]);break}
     case'theme':setTheme(S.theme==='dark'?'light':'dark');break;
-    case'view':{const o=['auto','light','dark'],nx=o[(o.indexOf(viewMode())+1)%3];try{localStorage.setItem('pn-night',nx==='auto'?'auto':'off')}catch{}setTheme(nx);applyNight();viewBtn();toast(({auto:'תצוגה אוטומטית: לפי הגדרת הטלפון, ומעומעמת לסיור לילה מכיבוי אורות עד 06:00',light:'תצוגה בהירה',dark:'תצוגה כהה'})[nx]);break}
-    case'bigText':setBig(!document.documentElement.classList.contains('big'));break;
+    case'view':{const o=['auto','light','dark'],nx=o[(o.indexOf(viewMode())+1)%3];{const P=pfGet();P.theme=nx;P.night=nx==='auto'?'auto':'off';try{localStorage.setItem(pfKey(),JSON.stringify(P))}catch{}}try{localStorage.setItem('pn-night',nx==='auto'?'auto':'off')}catch{}setTheme(nx);applyNight();viewBtn();toast(({auto:'תצוגה אוטומטית: לפי הגדרת הטלפון, ומעומעמת לסיור לילה מכיבוי אורות עד 06:00',light:'תצוגה בהירה',dark:'תצוגה כהה'})[nx]);break}
+    case'bigText':pfSet('text',pfGet().text==='n'?'l':'n');break;
     case'seOpen':seOpen();break;
     case'praise':{const sid=S.sel;if(!sid)break;b.disabled=true;try{const r=db.collection('notes').doc();await OW(r.set({sid,kind:'שבח',pts:1,text:'שבח: '+b.dataset.c,at:Date.now(),by:S.me,byName:S.myName}));toast('+1 נקודה ל'+(S.students.get(sid)?.name||''),()=>OW(r.delete()))}catch(e){fail(e)}b.disabled=false;break}
     case'insPrev':S.insWeek=addD(S.insWeek,-7);subIns();break;
@@ -2151,6 +2163,11 @@ document.addEventListener('click',async e=>{
     case'go':$('t-'+b.dataset.to)?.click();break;
     case'calDay':if(has('mgr')&&!S.ro)calOpen(b.dataset.d);break;
     case'calAdd':calOpen(null);break;
+    case'prefs':{menu(false);$('acctPanel').hidden=true;$('prefBg').hidden=false;renderPrefs();break}
+    case'prefClose':$('prefBg').hidden=true;break;
+    case'pfSet':{const k=b.dataset.k,v=b.dataset.v;pfSet(k,['dense','buzz','cheer','bnav'].includes(k)?+v:v);break}
+    case'pfReset':{try{localStorage.removeItem(pfKey())}catch{}try{localStorage.setItem('pn-theme','auto');localStorage.setItem('pn-night','auto');localStorage.setItem('pn-big','')}catch{}pfApply();renderPrefs();toast('ההגדרות אופסו');break}
+    case'pfHome':{$('prefBg').hidden=true;$('t-home').click();setTimeout(()=>{const P=$('hmCustP');if(P&&P.hidden)document.querySelector('[data-act="hmCust"]')?.click()},300);break}
     case'calClose':$('calBg').hidden=true;S.calEd=null;break;
     case'calDel':if(armed(b,'בטוח? למחוק'))calSave(true);break;
     case'smPer':S.smN=+b.dataset.d;renderSM();break;
@@ -2629,12 +2646,12 @@ document.addEventListener('submit',async e=>{if(e.target.id!=='bForm')return;e.p
   try{await OW(db.doc('settings/board').set({items:[...(S.board||[]),it].slice(-20)}));S.bOpen=false;toast('ההודעה פורסמה לכל הצוות')}catch(err){fail(err)}});
 
 /* ---------- feedback: vibration, row flash, "all done" ---------- */
-const canBuzz=()=>!!navigator.vibrate&&(!navigator.userActivation||navigator.userActivation.isActive);
+const canBuzz=()=>pfGet().buzz!==0&&!!navigator.vibrate&&(!navigator.userActivation||navigator.userActivation.isActive);
 const buzz=()=>{try{if(canBuzz())navigator.vibrate(18)}catch{}};
 function flashRow(id){requestAnimationFrame(()=>document.querySelectorAll(`.item [data-id="${id}"].name`).forEach(n=>{const it=n.closest('.item');it.classList.remove('flash');void it.offsetWidth;it.classList.add('flash')}))}
 const doneState={};
 function markDone(el,done){const p=$(el);if(!p)return;p.classList.toggle('done',done);const k=el+(el==='cProg'?S.night:S.mornDate);
-  if(done&&doneState[k]===false){const c=document.createElement('div');c.className='cheer';c.textContent='🎉 כולם סומנו!';document.body.appendChild(c);setTimeout(()=>c.remove(),1900);try{if(canBuzz())navigator.vibrate([30,60,30])}catch{}}
+  if(done&&doneState[k]===false&&pfGet().cheer!==0){const c=document.createElement('div');c.className='cheer';c.textContent='🎉 כולם סומנו!';document.body.appendChild(c);setTimeout(()=>c.remove(),1900);try{if(canBuzz())navigator.vibrate([30,60,30])}catch{}}
   doneState[k]=done}
 
 /* ---------- student card summary (this month) ---------- */
@@ -4005,6 +4022,32 @@ async function checkUpdate(){if(PA||FIXQ||HR)return;try{const t=await (await fet
 function setTheme(v){S.theme=v;if(v==='dark'||v==='light')document.documentElement.dataset.theme=v;else delete document.documentElement.dataset.theme;
   try{localStorage.setItem('pn-theme',v)}catch{}const isD=v==='dark'||(v!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);$('vTheme').setAttribute('aria-pressed',isD);$('vTheme').textContent=isD?'☀️ מצב בהיר':'🌙 מצב כהה'}
 function setBig(on){document.documentElement.classList.toggle('big',on);try{localStorage.setItem('pn-big',on?'1':'')}catch{}$('vBig').setAttribute('aria-pressed',on)}
+/* ---------- personal settings (per user, on this device) ---------- */
+const PF_DEF={theme:'auto',night:'auto',text:'n',dense:0,start:'home',buzz:1,cheer:1,bnav:1};
+function pfKey(){return 'pn-pf-'+(S.me||'x')}
+function pfGet(){let o={};try{o=JSON.parse(localStorage.getItem(pfKey())||'null')||{}}catch{}if(o.theme==null){try{o.theme=localStorage.getItem('pn-theme')||'auto';o.night=localStorage.getItem('pn-night')||'auto';o.text=localStorage.getItem('pn-big')?'l':'n'}catch{}}return {...PF_DEF,...o}}
+function pfSet(k,v){const o=pfGet();o[k]=v;try{localStorage.setItem(pfKey(),JSON.stringify(o))}catch{}pfApply();renderPrefs()}
+function pfApply(){const o=pfGet(),H=document.documentElement;
+  try{localStorage.setItem('pn-night',o.night)}catch{}setTheme(o.theme);
+  H.classList.toggle('big',o.text==='l');H.classList.toggle('xbig',o.text==='x');try{localStorage.setItem('pn-big',o.text==='l'?'1':'')}catch{}$('vBig')?.setAttribute('aria-pressed',o.text!=='n');
+  H.classList.toggle('dense',!!o.dense);H.classList.toggle('nobnav',!o.bnav);applyNight()}
+const PF_START=[['home','מסך הבית'],['count','נוכחות ערב'],['lights','כיבוי אורות'],['morn','השכמה'],['out','יציאות'],['stu','תלמידים'],['maint','תחזוקה']];
+function renderPrefs(){const el=$('prefBody');if(!el||$('prefBg').hidden)return;const o=pfGet();
+  const seg=(k,opts)=>`<div class="pf-seg" role="group">${opts.map(([v,l])=>`<button type="button" data-act="pfSet" data-k="${k}" data-v="${v}" aria-pressed="${String(o[k])===String(v)}">${l}</button>`).join('')}</div>`;
+  const row=(t,sub,h)=>`<div class="pf-row"><b>${t}</b>${sub?`<span class="muted">${sub}</span>`:''}${h}</div>`;
+  const st=PF_START.filter(([t])=>{const b=$('t-'+t);return b&&!b.hidden});
+  const nperm=canNotify()?Notification.permission:'na';
+  el.innerHTML=row('🌓 מראה','',seg('theme',[['auto','אוטומטי (לפי הטלפון)'],['light','☀️ תמיד בהיר'],['dark','🌙 תמיד כהה']]))
+   +row('🔦 מצב סיור לילה','מסך עמום וחם שלא מסנוור בחדרים – משעת כיבוי האורות עד 06:00',seg('night',[['auto','אוטומטי'],['off','כבוי'],['on','תמיד']]))
+   +row('🔠 גודל טקסט','',seg('text',[['n','רגיל'],['l','גדול'],['x','גדול מאוד']]))
+   +row('📋 צפיפות רשימות','"דחוסה" מכניסה יותר תלמידים למסך אחד',seg('dense',[[0,'רגילה'],[1,'דחוסה']]))
+   +row('🚪 מסך פתיחה','איזה מסך ייפתח כשנכנסים לאפליקציה',seg('start',st))
+   +row('📳 רטט בלחיצה','',seg('buzz',[[1,'פעיל'],[0,'כבוי']]))
+   +row('🎉 חגיגה בסיום סבב','קונפטי והודעה כשכל התלמידים סומנו',seg('cheer',[[1,'פעיל'],[0,'כבוי']]))
+   +row('⬇ סרגל ניווט תחתון','',seg('bnav',[[1,'מוצג'],[0,'מוסתר']]))
+   +row('🔔 התראות',nperm==='granted'?'✓ ההתראות פעילות במכשיר הזה':nperm==='denied'?'ההתראות נחסמו בהגדרות הדפדפן/הטלפון. כדי להפעיל צריך לאשר שם.':nperm==='na'?'המכשיר הזה לא תומך בהתראות':'עדיין לא הופעלו',nperm==='default'?'<div><button class="btn small primary" type="button" data-act="notifOn">הפעלת התראות</button></div>':'')
+   +row('🏠 מסך הבית','בחירה אילו חלוניות יוצגו',`<div><button class="btn small" type="button" data-act="pfHome">⚙ התאמת מסך הבית</button></div>`)
+   +`<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:10px"><span class="muted" style="font-size:.82rem">ההגדרות נשמרות לך, במכשיר הזה.</span><button class="btn small" type="button" data-act="pfReset">איפוס לברירת מחדל</button></div>`}
 const BN=['home','count','morn','out'];
 function renderBnav(){const n=$('bnav');const tabs=BN.filter(t=>{const b=$('t-'+t);return b&&!b.hidden});
   n.hidden=!S.access||tabs.length<2;document.body.classList.toggle('has-bnav',!n.hidden);if(n.hidden)return;
