@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-09-62";
+const APP_VERSION = "2026-11-15-63";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -2559,6 +2559,8 @@ const INS=[['order','סדר כללי'],['beds','מיטות מסודרות'],['fl
 const weekOf=k=>{const d=new Date(k+'T12:00');d.setDate(d.getDate()-d.getDay());return ymd(d)};
 S.insWeek=weekOf(ymd(new Date()));S.ins=new Map();
 const STAFF_ROOMS=new Set(['114','115']),NOT_ROOMS=new Set(['105','106','107','108','109']);
+/* service rooms – for maintenance and the boarding-school map (not bedrooms) */
+const SVC_ROOMS=[['105','מועדון'],['106','חדר חשמל'],['106/1','מחסן'],['106/2','חדר כביסה'],['107','שירותים'],['108','מקלחות'],['125','מרכז למידה']],SVC=new Map(SVC_ROOMS);
 function roomsList(){const r=new Set();for(let i=101;i<=115;i++)if(!NOT_ROOMS.has(String(i)))r.add(String(i));for(const s of S.students.values())if(s.room)r.add(String(s.room));return [...r].sort((a,b)=>a.localeCompare(b,'he',{numeric:true}))}
 function subIns(){if(!db||!has('rooms'))return;if(S.unIns&&S.insSubWeek===S.insWeek){renderIns();return}if(S.unIns)S.unIns();S.insSubWeek=S.insWeek;
   S.unIns=db.collection('inspections').where('week','==',S.insWeek).onSnapshot(q=>{S.ins=new Map(q.docs.map(d=>[d.data().room,d.data()]));renderIns()},onErr);renderIns()}
@@ -2741,10 +2743,10 @@ const URG={1:'שוטף',2:'חשוב',3:'בטיחות'};
 const dur=ms=>{const m=Math.max(1,Math.round(ms/6e4));return m<60?m+' דקות':m<1440?Math.floor(m/60)+' שעות'+(m%60?' ו-'+m%60+' דק׳':''):Math.round(m/1440)+' ימים'};
 function mtSeen(){if(!db||S.ro||S.tab!=='maint')return;S.mt.filter(m=>mtS(m)!=='done'&&!(m.seen&&m.seen[S.me])).forEach(m=>{db.doc('maint/'+m.id).update({['seen.'+S.me]:{at:Date.now(),n:S.myName||''}}).catch(()=>{})})}
 function renderMtMap(){const el=$('mtMap');if(!el)return;const open=S.mt.filter(m=>mtS(m)!=='done');
-  el.innerHTML=mtRooms().map(([r,l])=>{const L=open.filter(m=>m.room===r),u=Math.max(0,...L.map(m=>m.urg||1));return `<button type="button" class="rm ${L.length?'u'+u:''}" data-act="mtRm" data-r="${esc(r)}" aria-pressed="${S.mtRm===r}" title="${esc(l)}">${r==='common'?'משותף':r==='other'?'אחר':r}${STAFF_ROOMS.has(r)?'<br><small class="muted">מדריכים</small>':''}${L.length?`<span class="dot">${L.length}</span>`:''}</button>`}).join('');
+  el.innerHTML=mtRooms().map(([r,l])=>{const L=open.filter(m=>m.room===r),u=Math.max(0,...L.map(m=>m.urg||1));return `<button type="button" class="rm ${L.length?'u'+u:''}" data-act="mtRm" data-r="${esc(r)}" aria-pressed="${S.mtRm===r}" title="${esc(l)}">${r==='common'?'משותף':r==='other'?'אחר':r}${STAFF_ROOMS.has(r)?'<br><small class="muted">מדריכים</small>':SVC.has(r)?`<br><small class="muted">${esc(SVC.get(r))}</small>`:''}${L.length?`<span class="dot">${L.length}</span>`:''}</button>`}).join('');
   const D=S.mt.filter(m=>m.doneAt&&m.at&&Date.now()-m.doneAt<30*864e5),avg=D.length?D.reduce((a,m)=>a+(m.doneAt-m.at),0)/D.length:0;
   $('mtStat').textContent=`${open.length} פתוחות`+(D.length?` · זמן טיפול ממוצע: ${dur(avg)}`:'')}
-function mtRooms(){const r=roomsList().map(x=>[x,'חדר '+x+(STAFF_ROOMS.has(x)?' (מדריכים)':'')]);return [...r,['common','שטח משותף'],['other','אחר']]}
+function mtRooms(){const r=roomsList().filter(x=>!SVC.has(x)).map(x=>[x,'חדר '+x+(STAFF_ROOMS.has(x)?' (מדריכים)':'')]);return [...r,...SVC_ROOMS.map(([x,n])=>[x,n+' ('+x+')']),['common','שטח משותף'],['other','אחר']]}
 function fillMtRooms(pre){const s=$('mtRoom'),v=pre||s.value;s.innerHTML=mtRooms().map(([v2,l])=>`<option value="${esc(v2)}">${esc(l)}</option>`).join('');if(v)s.value=v}
 function subMt(){if(!db||S.unMt)return;S.unMt=1;S.subs.push(db.collection('maint').orderBy('at','desc').limit(300).onSnapshot(q=>{const prev=new Map((S.mt||[]).map(m=>[m.id,m]));
   if(S.mtLoaded)q.docChanges().forEach(ch=>{const m=ch.doc.data(),id=ch.doc.id,o=prev.get(id),ow=mtOwn(m.cat),mineA=ow&&ow.u===S.me;
@@ -2760,7 +2762,7 @@ function renderMtOwn(){const el=$('mtOwnP');if(!el)return;const can=(S.owner||ha
   <div style="display:grid;gap:6px">${mtCats().map(c=>`<label class="row" style="justify-content:space-between;gap:8px"><span>${esc(c)}</span><select data-mtown="${esc(c)}" style="max-width:55%"><option value="">— ללא —</option>${L.map(([u,n])=>`<option value="${u}" ${O[c]?.u===u?'selected':''}>${esc(n)}</option>`).join('')}</select></label>`).join('')}</div>`;el.open=open}
 document.addEventListener('change',async e=>{const c=e.target.dataset?.mtown;if(c==null)return;const u=e.target.value,n=roStaffList().find(x=>x[0]===u)?.[1]||'';
   try{await db.doc('settings/app').set({mtOwners:{[c]:u?{u,n}:null}},{merge:true});toast(u?`${c}: ${n} אחראי`:`${c}: ללא אחראי`)}catch(err){fail(err)}});
-function mtPlace(m){return m.room==='common'?'שטח משותף':m.room==='other'?(m.place||'אחר'):'חדר '+m.room+(m.place?' · '+m.place:'')}
+function mtPlace(m){return m.room==='common'?'שטח משותף':m.room==='other'?(m.place||'אחר'):(SVC.has(m.room)?SVC.get(m.room)+' ('+m.room+')':'חדר '+m.room)+(m.place?' · '+m.place:'')}
 function renderMt(){if(S.tab!=='maint')return;subFix();renderFixLink();if(!$('mtRoom').options.length)fillMtRooms();
   const cnt=k=>S.mt.filter(m=>mtS(m)===k).length;
   document.querySelectorAll('[data-act="mtF"]').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.f===S.mtF);b.textContent=MT_ST[b.dataset.f][0].replace('פתוחה','פתוחות').replace('תוקנה','תוקנו')+' '+cnt(b.dataset.f)});
