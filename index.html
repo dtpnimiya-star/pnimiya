@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-16-66";
+const APP_VERSION = "2026-11-16-67";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -189,7 +189,7 @@ header{border-top:4px solid var(--brand);box-shadow:inset 0 -3px 0 0 color-mix(i
 .imp{color:var(--bad);font-weight:700}
 .io{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .io .g{border-radius:12px;padding:10px;display:grid;gap:6px;align-content:start;border:1px solid transparent}
-.io .g.in{background:var(--ok-bg)}.io .g.ou{background:var(--ap-bg)}.io .g.lt{background:var(--bad-bg);border-color:var(--bad)}
+.io .g.in{background:var(--ok-bg)}.io .g.ys{background:var(--soft)}.io.y4{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:560px){.io.y4{grid-template-columns:repeat(2,minmax(0,1fr))}}.io .g.ou{background:var(--ap-bg)}.io .g.lt{background:var(--bad-bg);border-color:var(--bad)}
 .io .g .n{font:400 1.6rem var(--f-display);line-height:1}.io .g.in .n{color:var(--ok)}.io .g.ou .n{color:var(--ap)}.io .g.lt .n{color:var(--bad)}
 .io .g .l{font-size:.85rem;font-weight:600}
 .io .avs{display:flex;flex-wrap:wrap;gap:3px}.io .avs button{border:0;background:none;padding:0;cursor:pointer}
@@ -841,7 +841,7 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
 
   <!-- יציאות -->
   <section id="tab-out" hidden style="display:grid;gap:16px">
-    <div class="panel"><h2>מי בפנימייה ומי בחוץ</h2><div class="io" id="ioBoard"></div></div>
+    <div class="panel"><h2>מי בפנימייה ומי בחוץ</h2><div class="io" id="ioBoard"></div><div class="muted" id="ioYesh" style="font-size:.85rem;margin-top:8px"></div></div>
     <div class="panel" id="gstP" hidden></div>
     <form id="outForm" class="panel writer">
       <h2>רישום יציאה</h2>
@@ -1524,9 +1524,12 @@ async function gAdd(b){const e=$('gExt').value,x=S.ext.find(y=>y.id===e),name=(x
   if(S.gK==='sleep'){d.ok=!!(S.mgr||S.owner);d.room=$('gRoom').value;if(!d.room){toast('בחרו באיזה חדר הוא ישן');return}const n=+$('gN').value||1,k0=nightKey();d.nights=[...Array(n)].map((_,i)=>addD(k0,i))}else{d.who=($('gWho').value||'').trim().slice(0,60);d.left=false}
   b.disabled=true;try{await OW(db.collection('guests').add(d));S.gOpen=false;renderGst(true);toast(S.gK==='sleep'?(d.ok?`${name} נרשם – יופיע בסבבים בחדר ${d.room}`:`${name} נשלח לאישור המנהל`):`${name} נרשם כמבקר`)}catch(err){fail(err)}b.disabled=false}
 function renderIO(){const el=$('ioBoard');if(!el)return;const st=sorted(),late=lateOuts(st),lateS=new Set(late.map(s=>s.id));
-  const ins=st.filter(s=>!isOut(s.id)),ou=st.filter(s=>isOut(s.id)&&!lateS.has(s.id));
+  const Y=yeshNow(),ys=Y?st.filter(s=>whereNow(s.id)==='yesh'):[],ins=st.filter(s=>whereNow(s.id)==='in'),ou=st.filter(s=>isOut(s.id)&&!lateS.has(s.id));
   const g=(cls,label,L,max)=>`<div class="g ${cls}"><span class="n">${L.length}</span><span class="l">${label}</span><div class="avs">${L.slice(0,max).map(s=>`<button type="button" data-act="open" data-id="${s.id}" title="${esc(s.name)}">${av(s)}</button>`).join('')}${L.length>max?`<span class="more">+${L.length-max}</span>`:''}</div></div>`;
-  el.innerHTML=g('in','בפנימייה',ins,11)+g('ou','בחוץ / בבית',ou,11)+g('lt','לא חזרו בזמן',late,11)}
+  el.className='io'+(Y?' y4':'');el.innerHTML=(Y?g('ys','בישיבה',ys,11):'')+g('in',Y?'בפנימייה עכשיו':'בפנימייה',ins,11)+g('ou','בחוץ / בבית',ou,11)+g('lt','לא חזרו בזמן',late,11);
+  const yn=$('ioYesh');if(yn){const can=(S.owner||has('mgr'))&&!S.ro;yn.innerHTML=`🏫 בימים א׳–ה׳ התלמידים בישיבה מ-<b>${yFrom()}</b> (ההסעה בבוקר) עד <b>${yTo()}</b> (ההסעה לפנימייה). מי שסומן "חולה" או "לא קם" בהשכמה נחשב בפנימייה.${can?` <details style="display:inline"><summary style="display:inline;cursor:pointer;color:var(--accent)">שינוי שעות</summary><span class="row" style="gap:6px;margin-top:6px">מ-<input type="time" data-ysh="yeshFrom" value="${yFrom()}" style="width:auto"> עד <input type="time" data-ysh="yeshTo" value="${yTo()}" style="width:auto"></span></details>`:''}`}}
+document.addEventListener('change',async e=>{const k=e.target.dataset?.ysh;if(!k||!e.target.value)return;try{await db.doc('settings/app').set({[k]:e.target.value},{merge:true});toast('נשמר')}catch(err){fail(err)}});
+setInterval(()=>{const y=yeshNow();if(y!==S.yNow){S.yNow=y;try{renderIO();renderHome()}catch{}}},60000);
 function moveList(list,showName){
   if(!list.length)return `<div class="empty">אין רישומים עדיין.</div>`;
   return `<div class="list log">`+list.map(m=>{const s=S.students.get(m.sid);
@@ -1558,7 +1561,7 @@ function renderSheet(){
   if(!s){closeSheet();return}
   $('shName').textContent=s.name;
   const t=S.status.get(s.id),m=S.marks.get(s.id);
-  $('shStatus').innerHTML=`<div class="row"><span class="pill">${gradeLabel(s.grade)}</span>${s.room?`<span class="pill">חדר ${esc(s.room)}</span>`:''}${isOut(s.id)?`<span class="pill warn">${atHome(t)?'🏠 בבית':'בחוץ'} · ${esc(t.reason||'')}${t.long?' · עד '+fmtShort(t.to):t.backBy?' · חזרה '+when(t.backBy):''}</span>${has('out')&&!S.ro?`<button class="btn small" type="button" data-act="seOpen">✏️ ערוך ${t.long?'היעדרות':'יציאה'}</button><button class="btn small" type="button" data-act="back" data-id="${s.id}">חזר</button>`:''}`:'<span class="pill ok">בפנימייה</span>'}${m&&!isOut(s.id)?`<span class="pill ${m.s==='p'?'ok':'bad'}">נוכחות הערב: ${m.s==='p'?'נוכח':'חסר'}</span>`:''}</div>`;
+  $('shStatus').innerHTML=`<div class="row"><span class="pill">${gradeLabel(s.grade)}</span>${s.room?`<span class="pill">חדר ${esc(s.room)}</span>`:''}${isOut(s.id)?`<span class="pill warn">${atHome(t)?'🏠 בבית':'בחוץ'} · ${esc(t.reason||'')}${t.long?' · עד '+fmtShort(t.to):t.backBy?' · חזרה '+when(t.backBy):''}</span>${has('out')&&!S.ro?`<button class="btn small" type="button" data-act="seOpen">✏️ ערוך ${t.long?'היעדרות':'יציאה'}</button><button class="btn small" type="button" data-act="back" data-id="${s.id}">חזר</button>`:''}`:whereNow(s.id)==='yesh'?'<span class="pill">🏫 בישיבה</span>':'<span class="pill ok">בפנימייה</span>'}${m&&!isOut(s.id)?`<span class="pill ${m.s==='p'?'ok':'bad'}">נוכחות הערב: ${m.s==='p'?'נוכח':'חסר'}</span>`:''}</div>`;
   const ns=S.notes.filter(x=>x.sid===s.id);
   $('shNotes').innerHTML=ns.length?`<div class="list">`+ns.map(n=>`<div class="note"><div class="row" style="justify-content:space-between"><span class="row" style="gap:6px"><span class="chip ${n.kind==='שבח'?'ok':''}" style="${n.kind==='שבח'?'':'background:var(--soft);color:var(--ink)'}">${esc(n.kind)}</span>${isBeh(n)?sevChip(n.sev)+(n.handled?'<span class="chip ok">טופל</span>':''):''} <span class="time">${when(n.at)} · ${esc(byName(n.by))}</span></span>${S.ro?'':`<button class="btn small" data-act="delNote" data-id="${n.id}">מחק</button>`}</div><p>${esc(n.text)}</p></div>`).join('')+`</div>`:`<div class="empty">אין הערות על ${esc(s.name)}.</div>`;
   $('shMoves').innerHTML=moveList(S.moves.filter(x=>x.sid===s.id).slice(0,10),false);
@@ -1790,7 +1793,7 @@ async function wake(id,v){
 function subWake(){
   if(S.unWake)S.unWake();if(!db)return;
   subPrevNight();
-  S.unWake=db.collection('morning/'+S.mornDate+'/marks').onSnapshot(snap=>{S.wake=new Map(snap.docs.filter(d=>d.id[0]!=='_').map(d=>[d.id,d.data()]));resolveNames(snap.docs.map(d=>d.data()));renderMorn();renderHome()},onErr);
+  S.unWake=db.collection('morning/'+S.mornDate+'/marks').onSnapshot(snap=>{S.wake=new Map(snap.docs.filter(d=>d.id[0]!=='_').map(d=>[d.id,d.data()]));resolveNames(snap.docs.map(d=>d.data()));renderMorn();renderHome();renderIO()},onErr);
 }
 document.addEventListener('change',async e=>{
   const el=e.target;if(!db)return;
@@ -2319,6 +2322,12 @@ const HL=['','א','ב','ג','ד','ה','ו','ז','ח','ט','י','יא','יב','י
 const hNum=n=>{const s=HL[n];return s.length>1?s.slice(0,-1)+'״'+s.slice(-1):s+'׳'};
 const addD=(k,n)=>{const d=new Date(k+'T12:00');d.setDate(d.getDate()+n);return ymd(d)};
 function heb(k){for(let i=HMONTHS.length-1;i>=0;i--){const [m,st,len]=HMONTHS[i];if(k>=st){const n=Math.round((new Date(k+'T12:00')-new Date(st+'T12:00'))/864e5)+1;return n<=len?{i,m,day:n}:null}}return null}
+/* daily routine: Sun–Thu the students are at the yeshiva between the morning bus and the evening bus */
+const yTm=v=>{const[a,b]=String(v||'').split(':').map(Number);return (a||0)*60+(b||0)};
+const yFrom=()=>S.settings?.yeshFrom||'07:15',yTo=()=>S.settings?.yeshTo||'19:30';
+function yeshNow(d=new Date()){const dw=d.getDay();if(dw>4)return false;const di=dayInfo(ymd(d));if(di.k==='c'||di.k==='v')return false;const m=d.getHours()*60+d.getMinutes();return m>=yTm(yFrom())&&m<yTm(yTo())}
+const stayIn=id=>S.mornDate===ymd(new Date())&&['sick','no'].includes(S.wake.get(id)?.s);
+const whereNow=id=>isOut(id)?'out':yeshNow()&&!stayIn(id)?'yesh':'in';
 function dayInfo(k){const e=CAL.get(k);if(e)return e;{const sh=(S.shab||[]).find(x=>x.date===k);if(sh)return {k:sh.kind==='home'?'s':'y',l:sh.title||(sh.kind==='home'?'שבת בבית':'שבת בפנימייה')}}return new Date(k+'T12:00').getDay()===6?{k:'s',l:''}:{k:'w',l:''}}
 const offK=new Set(['v','c']);
 const dotC=k=>`var(--cal-${k})`;
@@ -3725,9 +3734,9 @@ function renderTV(){if(!S.tv)return;const el=$('tv'),n=new Date(),today=ymd(n),h
   const lst=(title,L,empty)=>`<div class="c"><h3>${title}</h3>${L.length?`<ul>${L.join('')}</ul>`:`<span class="muted">${empty}</span>`}</div>`;
   const acT=(S.ac||[]).filter(a=>a.date===today);const bd=typeof birthdays==='function'?birthdays(3):[];
   el.innerHTML=`<div class="top"><div><h1>נוכחות פנימייה</h1><div class="dt">${hb?hNum(hb.day)+' '+hb.m+' · ':''}${nf.format(n)}</div></div><div style="text-align:center"><div class="clk">${pad(n.getHours())}:${pad(n.getMinutes())}</div>${dutyOn(today).length?`<div class="dt">🧑‍🏫 תורנים: ${esc(dutyTxt(today))}</div>`:''}</div><button class="x" type="button" data-act="tvOff">✕ יציאה</button></div>
-  ${(()=>{const d=n.getDay(),h=n.getHours();return isYesh(today)&&[5,6].includes(d)?'<div class="c" style="text-align:center;font-size:1.3rem">🕍 שבת ישיבה – כולם בפנימייה</div>':((d===5&&h>=9)||d===6)?'<div class="c" style="text-align:center;font-size:1.3rem">🏠 סוף שבוע – התלמידים בבית, חוזרים ביום ראשון</div>':''})()}
+  ${(()=>{const d=n.getDay(),h=n.getHours();return isYesh(today)&&[5,6].includes(d)?'<div class="c" style="text-align:center;font-size:1.3rem">🕍 שבת ישיבה – כולם בפנימייה</div>':((d===5&&h>=9)||d===6)?'<div class="c" style="text-align:center;font-size:1.3rem">🏠 סוף שבוע – התלמידים בבית, חוזרים ביום ראשון</div>':yeshNow(n)?`<div class="c" style="text-align:center;font-size:1.3rem">🏫 התלמידים בישיבה – ההסעה לפנימייה ב-${yTo()}</div>`:''})()}
   <div class="panel" style="background:transparent;border:0;padding:0"><div class="dayline" id="tvDay"></div></div>
-  <div class="k">${card(inn.length+'<small style="font-size:1.2rem;opacity:.7">/'+st.length+'</small>','בפנימייה','good')}${card(out,'מחוץ לפנימייה')}${card(late.length,'לא חזרו בזמן',late.length?'bad':'')}
+  <div class="k">${yeshNow(n)?card(inn.filter(s=>!stayIn(s.id)).length,'בישיבה')+card(inn.filter(s=>stayIn(s.id)).length,'בפנימייה עכשיו','good'):card(inn.length+'<small style="font-size:1.2rem;opacity:.7">/'+st.length+'</small>','בפנימייה','good')}${card(out,'מחוץ לפנימייה')}${card(late.length,'לא חזרו בזמן',late.length?'bad':'')}
    ${rc.act?card(rc.done+'/'+rc.tot,'נוכחות ערב'+(rc.isToday?'':' (ערב '+fmtShort(rc.date)+')'),rc.over?'bad':'',bar(rc.done,rc.tot)):''}${rm.act?card(rm.done+'/'+rm.tot,'השכמה',rm.over?'bad':'',bar(rm.done,rm.tot)):''}${(()=>{const rl=roundStat('lights');return rl.act&&rl.done?card(rl.done+'/'+rl.tot,'כיבוי אורות',rl.over?'bad':'',bar(rl.done,rl.tot)):''})()}${card(mtO.length,'תקלות פתוחות',mtB?'bad':'',mtB?`<span class="l">⚠ ${mtB} בטיחות</span>`:'')}</div>
   ${tvSpot()}
   <div class="g">${lst('⏰ לא חזרו בזמן',late.map(s=>{const t=S.status.get(s.id);return `<li><b>${esc(s.name)}</b><span>${hm(t.backBy)} · ${ago(t.backBy)}</span></li>`}),'כולם חזרו בזמן 👍')}
@@ -3759,7 +3768,7 @@ function renderHome(){
   const now=new Date(),h=now.getHours(),today=ymd(now),hb=heb(today),ti=dayInfo(today);
   const greet=h<5?'לילה טוב':h<12?'בוקר טוב':h<17?'צהריים טובים':h<21?'ערב טוב':'לילה טוב';
   const first=(S.myName||'').split(' ')[0];
-  const wkTxt=(()=>{const d=now.getDay(),h=now.getHours();if(isYesh(today)&&[5,6].includes(d))return '🕍 שבת ישיבה – כולם בפנימייה';if((d===5&&h>=9)||d===6)return '🏠 סוף שבוע – התלמידים בבית, חוזרים ביום ראשון';return ''})();
+  const wkTxt=(()=>{const d=now.getDay(),h=now.getHours();if(isYesh(today)&&[5,6].includes(d))return '🕍 שבת ישיבה – כולם בפנימייה';if((d===5&&h>=9)||d===6)return '🏠 סוף שבוע – התלמידים בבית, חוזרים ביום ראשון';if(yeshNow(now))return `🏫 התלמידים בישיבה – ההסעה לפנימייה ב-${yTo()}`;return ''})();
   const calTxt=offK.has(ti.k)?(ti.k==='c'?'חג':'חופשה')+(ti.l?' · '+ti.l:''):ti.k==='t'?(ti.l||'טיול'):ti.k==='l'?'תחילת לימודים 12:00':ti.l||(ti.k==='s'?'שבת':'יום לימודים');
   $('hmHero').className='home-hero hero-'+(h>=5&&h<11?'m':h>=11&&h<17?'d':h>=17&&h<21?'e':'n');
   $('hmHero').innerHTML=`${S.mgr||has('count')?'<button type="button" class="btn small" data-act="tvOn" style="position:absolute;left:0;top:0;width:auto">🖥 מסך גדול</button>':''}${S.access&&!S.ro?'<button type="button" class="btn small em-btn" data-act="emStart" style="position:absolute;left:0;top:38px;width:auto">🚨 ספירת חירום</button>':''}<h2 class="hi">${greet}${first?', '+esc(first):''}</h2>${(()=>{const D=dutyNow();if(!D.L.length)return '';const me=D.L.some(y=>y.u===S.me);return `<span class="duty">🧑‍🏫 <b>${D.on?'במשמרת עכשיו':'במשמרת הערב'}:</b> ${esc(dutyTxt(D.k))} <span class="muted">(${D.on?'עד '+shT():shF()+'–'+shT()})</span>${me?` <span class="pill ok">${D.on?'את/ה במשמרת עכשיו':'את/ה במשמרת הערב'}</span>`:dutyOn(addD(D.k,1)).some(y=>y.u===S.me)?' <span class="pill">את/ה במשמרת מחר</span>':''}</span>`})()}<span class="dt">${hb?hNum(hb.day)+' '+hb.m+' · ':''}${nf.format(now)}</span><span><span class="pill" style="background:${dotC(ti.k==='w'?'x':ti.k)};color:var(--ink)">${esc(calTxt)}</span>${wkTxt?` <span class="pill" style="background:${isYesh(today)?'var(--cal-y)':'var(--home-bg)'};color:var(--ink)">${wkTxt}</span>`:''}</span>`;
@@ -3769,7 +3778,7 @@ function renderHome(){
   const ico=t=>$('t-'+t)?.querySelector('svg')?.outerHTML.replace('class="ni"','')||'';
   const st=allSorted(),act=st.filter(s=>!isOut(s.id)),tiles=[];
   S.tv0=S.tv0||{};const tile=(to,label,n,sub,alert)=>{const m=/^(\d+)\/(\d+)$/.exec(String(n)),bump=S.tv0[to]!=null&&S.tv0[to]!==String(n);S.tv0[to]=String(n);tiles.push(`<button type="button" class="tile ${alert?'alert':''}" data-act="go" data-to="${to}"><span class="t-l">${ico(to)}${label}</span><span class="t-n ${bump?'bump':''}">${n}</span>${m&&+m[2]?`<span class="t-bar"><i style="width:${Math.min(100,+m[1]/+m[2]*100)}%"></i></span>`:''}<span class="t-s">${sub}</span></button>`)};
-  if(has('stu'))tile('stu','תלמידים',st.length,`<b>${act.length}</b> בפנימייה · <b>${st.length-act.length}</b> בחוץ`);
+  if(has('stu')){const Y=yeshNow(),pin=Y?act.filter(s=>stayIn(s.id)).length:0;tile('stu','תלמידים',st.length,Y?`🏫 <b>${act.length-pin}</b> בישיבה${pin?` · <b>${pin}</b> בפנימייה`:''} · <b>${st.length-act.length}</b> בחוץ`:`<b>${act.length}</b> בפנימייה · <b>${st.length-act.length}</b> בחוץ`)}
   if(has('count')){let p=0,a=0;act.forEach(s=>{const m=S.marks.get(s.id)?.s;if(m==='p')p++;else if(m==='a')a++});const u=act.length-p-a;
     tile('count','נוכחות ערב',`${p}/${act.length}`,a?`<b>${a}</b> חסרים · ${u} לא נבדקו`:u?`${u} לא נבדקו`:'כולם נבדקו',a>0)}
   if(has('morning')){let up=0,late=0,no=0,pa=0;const exp=act.filter(s=>!nAbsM(s.id)).length;act.forEach(s=>{const m=S.wake.get(s.id);if(m?.s==='up'){up++;if(isLate(m))late++}else if(m?.s==='no')no++;if(S.prevNight.get(s.id)?.s==='a')pa++});
