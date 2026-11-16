@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-16-65";
+const APP_VERSION = "2026-11-16-66";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1154,6 +1154,14 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
 </div></main>
 
 <div id="cpBg" class="cp-bg" hidden><div class="cp" role="dialog" aria-label="חיפוש מהיר"><input id="cpQ" type="search" placeholder="חיפוש תלמיד, חדר או מסך…" autocomplete="off" aria-label="חיפוש מהיר"><div id="cpList" class="cp-list"></div><span class="muted" style="font-size:.78rem">↑↓ לבחירה · Enter לפתיחה · Esc לסגירה</span></div></div>
+<div id="bkBg" class="sheet-bg" hidden>
+  <form class="sheet" id="bkForm" role="dialog" aria-modal="true" aria-labelledby="bkT" style="display:grid;gap:12px">
+    <div class="sheet-top"><h2 id="bkT" style="font-size:1.2rem"></h2><button class="btn small" type="button" data-act="bkClose">ביטול</button></div>
+    <div id="bkInfo" class="calnote" style="background:var(--warn-bg);display:block"></div>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="bkNow">חזר עכשיו</button><button class="btn" type="button" data-act="bkOn" id="bkOnTime"></button></div>
+    <div class="row" style="gap:8px;align-items:end;flex-wrap:wrap"><label class="muted" style="display:grid;gap:4px;font-size:.9rem">או בשעה אחרת<input type="time" id="bkTime" required></label><button class="btn" type="submit">רישום חזרה בשעה הזו</button></div>
+  </form>
+</div>
 <div id="lrBg" class="sheet-bg" hidden>
   <form class="sheet" id="lrForm" role="dialog" aria-modal="true" aria-labelledby="lrT" style="display:grid;gap:12px">
     <div class="sheet-top"><h2 id="lrT" style="font-size:1.2rem"></h2><button class="btn small" type="button" data-act="lrClose">סגור</button></div>
@@ -1522,7 +1530,7 @@ function renderIO(){const el=$('ioBoard');if(!el)return;const st=sorted(),late=l
 function moveList(list,showName){
   if(!list.length)return `<div class="empty">אין רישומים עדיין.</div>`;
   return `<div class="list log">`+list.map(m=>{const s=S.students.get(m.sid);
-    return `<div class="item"><span class="time">${when(m.at)}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere">${showName?`<b>${esc(s?.name||'תלמיד שהוסר')}</b> `:''}${m.type==='out'?'יצא':'חזר'}${m.reason?' · '+esc(m.reason):''}${m.pa?' · ✓ באישור ההורים ('+esc(m.pa)+')':''}<span class="meta">${esc(byName(m.by))}</span></span><span class="chip ${m.type==='out'?'warn':'ok'}">${m.type==='out'?'יציאה':'חזרה'}</span></div>`}).join('')+`</div>`;
+    return `<div class="item"><span class="time">${when(m.at)}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere">${showName?`<b>${esc(s?.name||'תלמיד שהוסר')}</b> `:''}${m.type==='out'?'יצא':'חזר'+(m.backAt?' ב-'+hm(m.backAt)+' (עודכן מאוחר יותר)':'')}${m.reason?' · '+esc(m.reason):''}${m.pa?' · ✓ באישור ההורים ('+esc(m.pa)+')':''}<span class="meta">${esc(byName(m.by))}</span></span><span class="chip ${m.type==='out'?'warn':'ok'}">${m.type==='out'?'יציאה':'חזרה'}</span></div>`}).join('')+`</div>`;
 }
 
 function renderStudents(){
@@ -1912,9 +1920,20 @@ async function roomAll(room){
   const refs=[];for(const s of list){const r=db.collection('nightcount/'+S.night+'/marks').doc(s.id);try{await OW(r.set({s:'p',at:Date.now(),by:S.me,byName:S.myName}));refs.push(r)}catch(e){fail(e);break}}
   if(refs.length)toast(`${refs.length} סומנו נוכחים`,async()=>{for(const r of refs)await OW(r.delete())});
 }
-async function goBack(id){const t0=S.status.get(id);
-  try{await OW(db.doc('status/'+id).set({state:'in',at:Date.now(),by:S.me,byName:S.myName}));await OW(db.collection('moves').add({sid:id,type:'back',at:Date.now(),by:S.me,byName:S.myName}));toast('נרשמה חזרה');autoLate(id);if(t0?.backBy&&!t0.long&&Date.now()-t0.backBy>5*6e4)lrOpen(id,t0)}catch(e){fail(e)}
-}
+/* return: if it looks late, first ask when he actually came back */
+function bkCntLate(id){const r=roundStat('count');return (has('count')||S.owner)&&S.night===nightKey()&&r.act&&r.isToday&&Date.now()>=r.dlTs&&S.marks.get(id)?.s!=='p'?r:null}
+async function goBack(id){const t0=S.status.get(id),late=t0?.backBy&&!t0.long&&Date.now()-t0.backBy>5*6e4,cr=bkCntLate(id);
+  if(late||cr){bkOpen(id,t0,cr);return}await goBack2(id,Date.now())}
+async function goBack2(id,T){const t0=S.status.get(id),now=Date.now(),x=T<now-6e4?{backAt:T}:{};
+  try{await OW(db.doc('status/'+id).set({state:'in',at:now,by:S.me,byName:S.myName,...x}));await OW(db.collection('moves').add({sid:id,type:'back',at:now,by:S.me,byName:S.myName,...x}));toast('נרשמה חזרה'+(x.backAt?' ב-'+hm(T):''));autoLate(id,T);if(t0?.backBy&&!t0.long&&T-t0.backBy>5*6e4)lrOpen(id,t0,T)}catch(e){fail(e)}}
+function bkOpen(id,t0,cr){const s=S.students.get(id);if(!s)return;S.bk={id};const now=new Date(),lim=t0?.backBy&&!t0.long?t0.backBy:cr?.dlTs;
+  $('bkT').textContent=`רישום חזרה – ${s.name}`;
+  $('bkInfo').innerHTML=t0?.backBy&&!t0.long?`היה אמור לחזור עד <b>${hm(t0.backBy)}</b>${t0.backBy<new Date(ymd(now)+'T00:00').getTime()?' ('+fmtShort(ymd(new Date(t0.backBy)))+')':''}. אם הוא חזר בזמן ורק עכשיו מעדכנים, כתבו את השעה שבה חזר באמת – ואז לא יירשם איחור.`:`נוכחות הערב נסגרה ב-<b>${hm(cr.dlTs)}</b>. אם הוא הגיע לפני כן ורק עכשיו מעדכנים, כתבו את השעה שבה הגיע באמת – ואז לא יירשם איחור.`;
+  $('bkTime').value=pad(now.getHours())+':'+pad(now.getMinutes());
+  $('bkOnTime').hidden=!lim;if(lim){const d=new Date(Math.min(lim,now.getTime()));$('bkOnTime').dataset.v=pad(d.getHours())+':'+pad(d.getMinutes());$('bkOnTime').textContent=`חזר בזמן (עד ${hm(lim)})`}
+  $('bkBg').hidden=false}
+function bkTs(v){const [h,m]=String(v||'').split(':').map(Number),d=new Date();if(isNaN(h))return Date.now();d.setHours(h,m||0,0,0);let t=d.getTime();if(t>Date.now()+6e4)t-=864e5;return t}
+$('bkForm').addEventListener('submit',async e=>{e.preventDefault();const B=S.bk;if(!B)return;$('bkBg').hidden=true;S.bk=null;await goBack2(B.id,bkTs($('bkTime').value))});
 const normRoom=r=>{const d=String(r||'').trim().match(/\d+/);return d?d[0]:String(r||'').trim()};
 const normName=n=>String(n||'').replace(/["'״׳`]/g,'').replace(/\s+/g,' ').trim();
 function findDup(name,exceptId){const k=normName(name);if(!k)return null;for(const s of S.students.values())if(s.id!==exceptId&&normName(s.name)===k)return s;return null}
@@ -1988,7 +2007,7 @@ document.addEventListener('click',async e=>{
   switch(b.dataset.act){
     case'mark':b.disabled=true;await mark(id,b.dataset.v);b.disabled=false;flashRow(id);break;
     case'roomAll':b.disabled=true;await roomAll(b.dataset.room);break;
-    case'back':b.disabled=true;await goBack(id);break;
+    case'back':b.disabled=true;await goBack(id);b.disabled=false;break;
     case'open':openSheet(id);break;
     case'nn':openNN(id);break;
     case'copyWelcome':try{await navigator.clipboard.writeText(S.lastWelcome||'');toast('ההודעה הועתקה')}catch{toast('לא הצלחתי להעתיק')}break;
@@ -2181,6 +2200,9 @@ document.addEventListener('click',async e=>{
     case'tourNext':S.tourI++;tourStep();break;
     case'tourEnd':tourEnd();break;
     case'lrClose':$('lrBg').hidden=true;S.lr=null;break;
+    case'bkClose':$('bkBg').hidden=true;S.bk=null;break;
+    case'bkNow':{const n=new Date();$('bkTime').value=pad(n.getHours())+':'+pad(n.getMinutes());$('bkForm').requestSubmit();break}
+    case'bkOn':$('bkTime').value=b.dataset.v;$('bkForm').requestSubmit();break;
     case'lrWa':{const id=S.lr?.docId;if(id)db.doc('lateinc/'+id).update({parentAt:Date.now(),parentBy:S.myName||''}).catch(()=>{});break}
     case'lrPrint':lrPrint(b.dataset.id);break;
     case'fuDone':{const sum=prompt('סיכום קצר של השיחה (לא חובה)','');if(sum===null)break;try{await db.doc('lateinc/'+b.dataset.id).update({'fu.done':true,'fu.sum':sum,'fu.at':Date.now(),'fu.byName':S.myName||''});toast('נשמר')}catch(e){fail(e)}break}
@@ -2719,7 +2741,7 @@ function renderStuExtra(sid,c){const el=$('shExtra');if(!el)return;const s=S.stu
   // timeline
   const T=[];(S.notes||[]).filter(n=>n.sid===sid&&(has('notes')||has('mgr'))).forEach(n=>T.push([n.at,n.kind==='שבח'?'var(--ok)':n.imp||sevOf(n)>=3?'var(--bad)':'var(--warn)',(n.imp?'⚠ ':'')+String(n.text||''),n.byName||byName(n.by)]));
   for(const a of S.clAtt.values()){const cm=(a.came||[]).includes(sid),ab=!cm&&(a.absent||[]).includes(sid);if(cm||ab)T.push([new Date(a.date+'T'+(a.from||'16:00')).getTime(),cm?'var(--accent)':'var(--warn)',(cm?'השתתף בחוג ':'לא הגיע לחוג ')+(a.emo?a.emo+' ':'')+(a.name||''),a.byName||byName(a.by)])}
-  (S.moves||[]).filter(m=>m.sid===sid).forEach(m=>T.push([m.at,m.type==='out'?'var(--ap)':'var(--ok)',(m.type==='out'?'יצא':'חזר')+(m.reason?' · '+m.reason:''),byName(m.by)]));
+  (S.moves||[]).filter(m=>m.sid===sid).forEach(m=>T.push([m.backAt||m.at,m.type==='out'?'var(--ap)':'var(--ok)',(m.type==='out'?'יצא':'חזר')+(m.reason?' · '+m.reason:''),byName(m.by)]));
   c.D.forEach((k,i)=>{const e=c.ev2[i],m=c.mo2[i];if(e?.s==='a')T.push([e.at||new Date(k+'T20:00').getTime(),e.ap?'var(--ap)':'var(--bad)','חסר בנוכחות ערב'+(e.r?' ('+e.r+')':''),e.byName||byName(e.by)]);else if(e?.late)T.push([e.lt||e.at,'var(--warn)','הגיע באיחור לפנימייה'+(e.lt?' ב-'+hm(e.lt):'')+(e.r?' ('+e.r+')':''),e.byName||byName(e.by)]);
     if(m?.s==='no')T.push([m.at||new Date(k+'T08:00').getTime(),'var(--bad)','לא קם בבוקר',byName(m.by)]);else if(isLate(m))T.push([m.t||m.at,'var(--warn)','קם מאוחר ('+(m.t?hm(m.t):'')+(m.r?' · '+m.r:'')+')',byName(m.by)])});
   T.sort((x,y)=>y[0]-x[0]);
@@ -3021,9 +3043,10 @@ function clRemind(){if(!canClA())return;subCl();const nw=new Date(),m=nw.getHour
     if(m>=en+10&&m<en+240&&mk<reg.length)notify(`לא סומנה נוכחות בחוג ${x.name}`,`החוג הסתיים ב-${x.to}. סומנו ${mk} מתוך ${reg.length}.`,'clend-'+x.id+'-'+k)});
   if(S.mgr)clStreaks().forEach(z=>notify('היעדרות חוזרת מחוג',`${S.students.get(z.sid)?.name||''} לא הגיע ${z.n} פעמים ברצף לחוג ${z.name}`,'clstr-'+z.sid+'-'+z.cid+'-'+z.n))}
 /* ---------- return after the evening count = late arrival ---------- */
-async function autoLate(id){try{if(!(has('count')||S.owner)||S.night!==nightKey())return;const s=S.students.get(id);const r=roundStat('count');if(!r.act||!r.isToday||Date.now()<r.dlTs)return;
-  if(r.grades?.length&&s&&!r.grades.includes(s.grade))return;const cur=S.marks.get(id);if(cur&&cur.s==='p')return;const rs='חזר מהבית / מיציאה',t=Date.now();
-  await OW(db.collection('nightcount/'+S.night+'/marks').doc(id).set({s:'p',late:true,lt:t,at:t,r:rs,auto:true,by:S.me,byName:S.myName||''}));toast(`סומן גם בנוכחות ערב: הגיע באיחור (${rs})`)}catch{}}
+async function autoLate(id,T=Date.now()){try{if(!(has('count')||S.owner)||S.night!==nightKey())return;const s=S.students.get(id);const r=roundStat('count');if(!r.act||!r.isToday||Date.now()<r.dlTs)return;
+  if(r.grades?.length&&s&&!r.grades.includes(s.grade))return;const cur=S.marks.get(id);if(cur&&cur.s==='p')return;const rs='חזר מהבית / מיציאה',t=T;
+  if(t<r.dlTs){await OW(db.collection('nightcount/'+S.night+'/marks').doc(id).set({s:'p',at:Date.now(),r:rs,auto:true,by:S.me,byName:S.myName||''}));toast('סומן גם בנוכחות ערב: נוכח (חזר בזמן)');return}
+  await OW(db.collection('nightcount/'+S.night+'/marks').doc(id).set({s:'p',late:true,lt:t,at:Date.now(),r:rs,auto:true,by:S.me,byName:S.myName||''}));toast(`סומן גם בנוכחות ערב: הגיע באיחור (${rs})`)}catch{}}
 /* ---------- Excel library: load in the background, not on page open ---------- */
 function xlsxLoad(){if(window.XLSX)return Promise.resolve();if(S.xlsxL)return S.xlsxL;S.xlsxL=new Promise(r=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';sc.onload=()=>r();sc.onerror=()=>{S.xlsxL=null;r()};document.head.appendChild(sc)});return S.xlsxL}
 async function autoBackup(){if(PA||!S.owner||S.tv||!document.body.classList.contains('desk'))return;if(!S.settings){S.bkAutoT=0;return}const a=bkAge();if(a!=null&&a<7)return;
@@ -3281,11 +3304,11 @@ function renderMeet(){if(S.tab!=='meet')return;renderSM();if(!S.mtDate)S.mtDate=
 document.addEventListener('change',e=>{if(e.target.id==='mtDate'&&e.target.value){S.mtDate=e.target.value;renderMeet()}});
 /* ---------- late return: closure + documentation ---------- */
 const lrDelay=x=>{const m=Math.max(0,Math.round((x.back-x.planned)/6e4));return m>=60?Math.floor(m/60)+' שע׳ '+(m%60?m%60+' דק׳':''):m+' דק׳'};
-function lrOpen(sid,t){const s=S.students.get(sid);if(!s)return;S.lr={sid,t,docId:null};const now=new Date();
+function lrOpen(sid,t,T){const s=S.students.get(sid);if(!s)return;S.lr={sid,t,docId:null};const now=new Date(),bt=new Date(T||Date.now());
   $('lrT').textContent=`${s.name} חזר באיחור`;$('lrInfo').innerHTML=`<span>היה אמור לחזור ב-${hm(t.backBy)}${t.backBy<new Date(ymd(now)+'T00:00').getTime()?' ('+fmtShort(ymd(new Date(t.backBy)))+')':''}${t.reason?' · '+esc(t.reason):''}. האיחור יתועד בתיק התלמיד.</span>`;
-  $('lrBack').value=pad(now.getHours())+':'+pad(now.getMinutes());$('lrOk').checked=true;$('lrWhy').value='';$('lrLog').value='';$('lrFu').value=addD(ymd(now),1);$('lrFuW').value=S.myName||'';$('lrAfter').innerHTML='';
+  $('lrBack').value=pad(bt.getHours())+':'+pad(bt.getMinutes());$('lrOk').checked=true;$('lrWhy').value='';$('lrLog').value='';$('lrFu').value=addD(ymd(now),1);$('lrFuW').value=S.myName||'';$('lrAfter').innerHTML='';
   $('lrForm').querySelector('[type=submit]').hidden=false;$('lrBg').hidden=false}
-$('lrForm').addEventListener('submit',async e=>{e.preventDefault();const L=S.lr;if(!L||!db)return;const s=S.students.get(L.sid),[h,m]=$('lrBack').value.split(':').map(Number),bk=new Date();bk.setHours(h,m,0,0);
+$('lrForm').addEventListener('submit',async e=>{e.preventDefault();const L=S.lr;if(!L||!db)return;const s=S.students.get(L.sid),bk=new Date(bkTs($('lrBack').value));
   const d={sid:L.sid,name:s?.name||'',reason:L.t.reason||'',outAt:L.t.at||null,planned:L.t.backBy,back:bk.getTime(),ok:$('lrOk').checked,why:$('lrWhy').value.trim(),log:$('lrLog').value.trim(),fu:{due:$('lrFu').value||'',who:$('lrFuW').value.trim(),done:false},at:Date.now(),by:S.me,byName:S.myName||''};
   try{const r=await db.collection('lateinc').add(d);L.docId=r.id}catch(err){fail(err);return}
   $('lrForm').querySelector('[type=submit]').hidden=true;
