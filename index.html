@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-16-68";
+const APP_VERSION = "2026-11-16-69";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -655,6 +655,15 @@ html.xbig body{font-size:20px}html.xbig .seg button,html.xbig .btn{font-size:1.0
 html.dense .item{padding:6px 10px!important}html.dense #countList .item .seg button,html.dense #mornList .item .seg button,html.dense #lList .item .seg button{min-height:36px!important;padding:4px!important}html.dense .panel{padding:12px}html.dense section[id^="tab-"]{gap:10px!important}
 html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-bottom:16px}
 .pf-row{display:grid;gap:6px}.pf-row>b{font-size:.95rem}.pf-row>.muted{font-size:.85rem}.pf-seg{display:flex;flex-wrap:wrap;gap:6px}.pf-seg button{flex:1 1 auto;min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:600 .92rem var(--f-body);padding:6px 10px;cursor:pointer}.pf-seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.fp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:2px solid var(--line);border-radius:10px;background:var(--soft)}
+.fp{min-width:760px}.fp svg{display:block;width:100%;height:auto}
+.fp .r{cursor:pointer}.fp .r rect,.fp .r polygon{fill:var(--surface);stroke:#3f74c9;stroke-width:3}
+.fp .r:hover rect,.fp .r:hover polygon{fill:var(--accent-bg,#e8f0ff)}
+.fp .r.u1 rect,.fp .r.u1 polygon{fill:var(--ap-bg)}.fp .r.u2 rect,.fp .r.u2 polygon{fill:var(--warn-bg)}.fp .r.u3 rect,.fp .r.u3 polygon{fill:var(--bad-bg);stroke:var(--bad)}
+.fp .r.sel rect,.fp .r.sel polygon{stroke:var(--accent);stroke-width:7}
+.fp .a rect{fill:none;stroke:#3f74c9;stroke-width:3}.fp .a.c rect{fill:var(--soft)}
+.fp text{fill:var(--ink);font:600 26px var(--f-body);text-anchor:middle;pointer-events:none}.fp text.s{font-size:19px;fill:var(--muted)}
+.fp .dot circle{fill:var(--bad)}.fp .dot text{fill:#fff;font-size:22px}
 </style>
 </head>
 <body>
@@ -1012,7 +1021,7 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
       <div class="row" style="gap:8px"><label class="btn small" for="mtPhoto">📷 צרף תמונה</label><input type="file" id="mtPhoto" accept="image/*" hidden><span class="muted" id="mtPhotoTxt" style="font-size:.88rem"></span></div>
       <div><button class="btn primary" type="submit" id="mtBtn">שלח דיווח</button></div>
     </form>
-    <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">מפת הפנימייה</h2><span class="muted" id="mtStat" style="font-size:.88rem"></span></div><div class="bld" style="margin-top:10px"><div class="roof"></div><div class="fl" id="mtMap"></div></div></div>
+    <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">מפת הפנימייה</h2><span class="muted" id="mtStat" style="font-size:.88rem"></span></div><div class="fp-wrap" style="margin-top:10px"><div id="mtPlan" class="fp"></div></div><div class="bld"><div class="fl" id="mtMap" style="border-top:2px solid var(--line);border-radius:10px;margin-top:8px"></div></div><div class="muted" style="font-size:.8rem;margin-top:4px">לחיצה על חדר מסננת את התקלות שלו. אפשר לגלול את המפה הצידה.</div></div>
     <div class="mtabs" role="group" aria-label="סינון תקלות"><button type="button" data-act="mtF" data-f="open" aria-pressed="true">פתוחות</button><button type="button" data-act="mtF" data-f="prog" aria-pressed="false">בטיפול</button><button type="button" data-act="mtF" data-f="done" aria-pressed="false">תוקנו</button></div>
     <div id="mtList"></div>
   </section>
@@ -2781,8 +2790,21 @@ const MT_ST={open:['פתוחה','bad'],prog:['בטיפול','warn'],done:['תו�
 const URG={1:'שוטף',2:'חשוב',3:'בטיחות'};
 const dur=ms=>{const m=Math.max(1,Math.round(ms/6e4));return m<60?m+' דקות':m<1440?Math.floor(m/60)+' שעות'+(m%60?' ו-'+m%60+' דק׳':''):Math.round(m/1440)+' ימים'};
 function mtSeen(){if(!db||S.ro||S.tab!=='maint')return;S.mt.filter(m=>mtS(m)!=='done'&&!(m.seen&&m.seen[S.me])).forEach(m=>{db.doc('maint/'+m.id).update({['seen.'+S.me]:{at:Date.now(),n:S.myName||''}}).catch(()=>{})})}
-function renderMtMap(){const el=$('mtMap');if(!el)return;const open=S.mt.filter(m=>mtS(m)!=='done');
-  el.innerHTML=mtRooms().map(([r,l])=>{const L=open.filter(m=>m.room===r),u=Math.max(0,...L.map(m=>m.urg||1));return `<button type="button" class="rm ${L.length?'u'+u:''}" data-act="mtRm" data-r="${esc(r)}" aria-pressed="${S.mtRm===r}" title="${esc(l)}">${r==='common'?'משותף':r==='other'?'אחר':r}${STAFF_ROOMS.has(r)?'<br><small class="muted">מדריכים</small>':SVC.has(r)?`<br><small class="muted">${esc(SVC.get(r))}</small>`:''}${L.length?`<span class="dot">${L.length}</span>`:''}</button>`}).join('');
+/* floor plan of the pnimiya (from the outline map) – x,y,w,h in plan units; 107 is L-shaped */
+const FP=[['101',174,176,88,165],['102',262,176,88,165],['103',350,176,88,165],['104',438,176,88,165],['105',614,105,264,330],['106/1',790,3,88,57],['106/2',790,60,88,45],['108',878,3,176,126],['106',878,129,88,47],
+  ['107','966,176 966,129 1054,129 1054,3 1144,3 1144,176'],['110',1144,3,88,173],['111',1232,3,88,173],['112',1320,3,88,173],['113',1408,3,88,173],['114',1496,3,88,173],['115',1584,3,88,173],['125',878,269,266,166]];
+const FPA=[['פרוזדור',0,341,614,94,1],['פרוזדור',878,176,794,93,1],['חצר',614,3,176,102],['כניסה',516,146,96,30],['משרד',1144,317,88,118],['יציאת חירום',0,341,57,90]];
+function renderPlan(open){const el=$('mtPlan');if(!el)return;const cnt=r=>{const L=open.filter(m=>m.room===r);return [L.length,Math.max(0,...L.map(m=>m.urg||1))]};
+  const lab=(r,x,y,w,h)=>{const sm=h<70,n=sm?'':SVC.get(r)||(STAFF_ROOMS.has(r)?'מדריכים':''),[c]=cnt(r),cx=sm?x+w/2+10:x+w/2,by=sm?y+h/2+8:y+h-12;
+    return `<text x="${cx}" y="${by}"${sm?' style="font-size:21px"':''}>${esc(r)}</text>${n?`<text class="s" x="${cx}" y="${by-28}">${esc(n)}</text>`:''}${c?(sm?`<g class="dot"><circle cx="${x+16}" cy="${y+h/2}" r="13"/><text x="${x+16}" y="${y+h/2+7}" style="font-size:18px">${c}</text></g>`:`<g class="dot"><circle cx="${x+w-20}" cy="${y+22}" r="16"/><text x="${x+w-20}" y="${y+30}">${c}</text></g>`):''}`};
+  let h='';FPA.forEach(([t,x,y,w,hh,c])=>{h+=`<g class="a${c?' c':''}"><rect x="${x}" y="${y}" width="${w}" height="${hh}"/>${t==='יציאת חירום'?'':`<text x="${x+w/2}" y="${y+hh-12}" class="s">${t}</text>`}</g>`});
+  FP.forEach(([r,x,y,w,hh])=>{const [c,u]=cnt(r),cls=`r${c?' u'+u:''}${S.mtRm===r?' sel':''}`,t=`חדר ${r}${SVC.has(r)?' – '+SVC.get(r):''}${c?` · ${c} תקלות פתוחות`:''}`;
+    if(typeof x==='string'){h+=`<g class="${cls}" data-act="mtRm" data-r="${r}" role="button" aria-label="${esc(t)}"><title>${esc(t)}</title><polygon points="${x}"/>${lab(r,1054,3,90,173)}</g>`}
+    else h+=`<g class="${cls}" data-act="mtRm" data-r="${r}" role="button" aria-label="${esc(t)}"><title>${esc(t)}</title><rect x="${x}" y="${y}" width="${w}" height="${hh}"/>${lab(r,x,y,w,hh)}</g>`});
+  h+=`<text class="s" x="34" y="386" transform="rotate(-90 34 386)" style="font-size:14px">יציאת חירום</text>`;
+  el.innerHTML=`<svg viewBox="-4 -2 1680 442" role="img" aria-label="מפת הפנימייה">${h}</svg>`}
+function renderMtMap(){const el=$('mtMap');if(!el)return;const open=S.mt.filter(m=>mtS(m)!=='done');renderPlan(open);const inPlan=new Set(FP.map(x=>x[0]));
+  el.innerHTML=mtRooms().filter(([r])=>!inPlan.has(r)).map(([r,l])=>{const L=open.filter(m=>m.room===r),u=Math.max(0,...L.map(m=>m.urg||1));return `<button type="button" class="rm ${L.length?'u'+u:''}" data-act="mtRm" data-r="${esc(r)}" aria-pressed="${S.mtRm===r}" title="${esc(l)}">${r==='common'?'משותף':r==='other'?'אחר':r}${STAFF_ROOMS.has(r)?'<br><small class="muted">מדריכים</small>':SVC.has(r)?`<br><small class="muted">${esc(SVC.get(r))}</small>`:''}${L.length?`<span class="dot">${L.length}</span>`:''}</button>`}).join('');
   const D=S.mt.filter(m=>m.doneAt&&m.at&&Date.now()-m.doneAt<30*864e5),avg=D.length?D.reduce((a,m)=>a+(m.doneAt-m.at),0)/D.length:0;
   $('mtStat').textContent=`${open.length} פתוחות`+(D.length?` · זמן טיפול ממוצע: ${dur(avg)}`:'')}
 function mtRooms(){const r=roomsList().filter(x=>!SVC.has(x)).map(x=>[x,'חדר '+x+(STAFF_ROOMS.has(x)?' (מדריכים)':'')]);return [...r,...SVC_ROOMS.map(([x,n])=>[x,n+' ('+x+')']),['common','שטח משותף'],['other','אחר']]}
