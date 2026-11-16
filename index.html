@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-16-70";
+const APP_VERSION = "2026-11-16-71";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -2134,6 +2134,9 @@ document.addEventListener('click',async e=>{
     case'hrDel':{if(!armed(b,'בטוח?'))break;try{await OW(db.doc('hreq/'+b.dataset.id).delete());S.hr=S.hr.filter(x=>x.id!==b.dataset.id);renderHr()}catch(e){fail(e)}break}
     case'hrMk':await hrMk(b.dataset.id);break;
     case'hrNew':{if(!armed(b,'הקישור הישן יפסיק לעבוד. להחליף?'))break;await hrMk(b.dataset.id,S.htok.get(b.dataset.id)?.id);break}
+    case'hrFam':{const sid=b.dataset.id,sids=[sid,...[...document.querySelectorAll('.hrSib:checked')].map(x=>x.value)],ad=$('hrSibAdd')?.value;if(ad&&!sids.includes(ad))sids.push(ad);
+      if(sids.length<2){toast('סמנו לפחות אח אחד נוסף');break}b.disabled=true;try{const toks=[];for(const x of sids)toks.push(await hrTok(x));S.hrFam={sid,sids,toks};renderHrLink();toast('הקישור המשפחתי מוכן')}catch(e){fail(e)}b.disabled=false;break}
+    case'hrFamCopy':{const u=b.dataset.u;try{await navigator.clipboard.writeText(u);toast('הקישור הועתק')}catch{prompt('העתיקו את הקישור:',u)}break}
     case'hrCopy':{const u=hrUrl(b.dataset.id);try{await navigator.clipboard.writeText(u);toast('הקישור הועתק')}catch{prompt('העתיקו את הקישור:',u)}break}
     case'gKind':S.gK=b.dataset.k;S.gOpen=true;renderGst(true);break;
     case'gAdd':await gAdd(b);break;
@@ -3009,16 +3012,29 @@ function renderHrLink(){const P=$('hrLinkP');if(!P)return;P.hidden=!((has('out')
   const t=S.htok.get(sid),s=S.students.get(sid);if(!t){el.innerHTML=`<button class="btn small primary" type="button" data-act="hrMk" data-id="${sid}">צור קישור ל${esc(s?.name||'')}</button>`;return}
   const ph=S.paPh[sid];if(!ph&&!S.paPhL.has(sid)){S.paPhL.add(sid);paPhones(sid).then(p=>{S.paPh[sid]=p;renderHrLink()})}
   const txt=n=>`שלום${n?' '+n:''},\nזה הקישור האישי של ${t.first||''} לבקשת יציאה מהפנימייה. בכל פעם שתרצו שהוא ייצא הביתה, מלאו את הטופס הקצר בקישור, והבקשה תגיע ישירות למנהל הפנימייה לאישור.\n${hrUrl(t.id)}\nכדאי לשמור את הקישור.\nבברכה, ${S.myName||'צוות הפנימייה'}, פנימיית דעת תבונות`;
-  el.innerHTML=`<div class="row" style="gap:6px;flex-wrap:wrap">${(ph||[]).map(([n,p])=>`<a class="btn small primary" target="_blank" rel="noopener" href="https://wa.me/${waNum(p)}?text=${encodeURIComponent(txt(n))}">💬 שלח ל${esc(n||'הורה')}</a>`).join('')}<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(txt(''))}">💬 וואטסאפ${ph?.length?' – איש קשר אחר':''}</a><button class="btn small" type="button" data-act="hrCopy" data-id="${t.id}">📋 העתק קישור</button><button class="btn small" type="button" data-act="hrNew" data-id="${sid}" title="הקישור הישן יפסיק לעבוד">🔄 החלף קישור</button></div>`}
+  el.innerHTML=`<div class="row" style="gap:6px;flex-wrap:wrap">${(ph||[]).map(([n,p])=>`<a class="btn small primary" target="_blank" rel="noopener" href="https://wa.me/${waNum(p)}?text=${encodeURIComponent(txt(n))}">💬 שלח ל${esc(n||'הורה')}</a>`).join('')}<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(txt(''))}">💬 וואטסאפ${ph?.length?' – איש קשר אחר':''}</a><button class="btn small" type="button" data-act="hrCopy" data-id="${t.id}">📋 העתק קישור</button><button class="btn small" type="button" data-act="hrNew" data-id="${sid}" title="הקישור הישן יפסיק לעבוד">🔄 החלף קישור</button></div>`+hrFamHtml(sid)}
+async function hrTok(sid){const t=S.htok.get(sid);if(t)return t.id;const s=S.students.get(sid);if(!s)return null;const id=rid();await OW(db.doc('htok/'+id).set({sid,first:s.firstName||String(s.name||'').split(' ')[0],grade:s.grade||'',at:Date.now(),by:S.me}));S.htok.set(sid,{id,sid,first:s.firstName||String(s.name||'').split(' ')[0]});return id}
+const lastOf=s=>String(s?.lastName||String(s?.name||'').trim().split(/\s+/).slice(-1)[0]||'');
+function hrFamHtml(sid){const s=S.students.get(sid),ln=lastOf(s),sib=allSorted().filter(x=>x.id!==sid&&ln&&lastOf(x)===ln);
+  const F=S.hrFam&&S.hrFam.sid===sid?S.hrFam:null;
+  let h=`<details style="margin-top:8px"${F||sib.length?' open':''}><summary style="cursor:pointer;font-weight:600">👨‍👩‍👦 קישור אחד לאחים (משפחה עם כמה תלמידים)</summary><div style="display:grid;gap:6px;margin-top:6px"><span class="muted" style="font-size:.85rem">ההורים ימלאו טופס אחד ויסמנו עבור איזה מהילדים הבקשה. לכל ילד תיפתח בקשה נפרדת לאישור.</span>
+    <label class="row" style="gap:6px"><input type="checkbox" checked disabled> ${esc(s.name)}</label>`+sib.map(x=>`<label class="row" style="gap:6px"><input type="checkbox" class="hrSib" value="${x.id}" checked> ${esc(x.name)}${x.grade?' · '+esc(x.grade):''}</label>`).join('')+
+    `<label class="row" style="gap:6px;font-size:.9rem">אח נוסף: <select id="hrSibAdd" style="width:auto"><option value="">בחרו…</option>${allSorted().filter(x=>x.id!==sid&&!sib.some(y=>y.id===x.id)).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select></label>
+    <div><button class="btn small primary" type="button" data-act="hrFam" data-id="${sid}">צור קישור משפחתי</button></div>`;
+  if(F){const names=F.sids.map(i=>S.students.get(i)?.firstName||String(S.students.get(i)?.name||'').split(' ')[0]),nm=names.length>1?names.slice(0,-1).join(', ')+' ו'+names.slice(-1):names[0],url=SITE_URL+'?hr='+F.toks.join('.'),ph=S.paPh[sid]||[];
+    const txt=n=>`שלום${n?' '+n:''},\nזה הקישור המשפחתי של ${nm} לבקשת יציאה מהפנימייה. בכל פעם שתרצו שאחד מהם (או כולם) ייצא הביתה, מלאו את הטופס הקצר וסמנו עבור מי הבקשה. הבקשה תגיע ישירות למנהל הפנימייה לאישור.\n${url}\nכדאי לשמור את הקישור.\nבברכה, ${S.myName||'צוות הפנימייה'}, פנימיית דעת תבונות`;
+    h+=`<div class="row" style="gap:6px;flex-wrap:wrap">${ph.map(([n,p])=>`<a class="btn small primary" target="_blank" rel="noopener" href="https://wa.me/${waNum(p)}?text=${encodeURIComponent(txt(n))}">💬 שלח ל${esc(n||'הורה')}</a>`).join('')}<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(txt(''))}">💬 וואטסאפ${ph.length?' – איש קשר אחר':''}</a><button class="btn small" type="button" data-act="hrFamCopy" data-u="${esc(url)}">📋 העתק קישור משפחתי</button></div>`}
+  return h+`</div></details>`}
 async function hrMk(sid,old){const s=S.students.get(sid);if(!s)return;const id=rid();try{if(old)await OW(db.doc('htok/'+old).delete());await OW(db.doc('htok/'+id).set({sid,first:s.firstName||String(s.name||'').split(' ')[0],grade:s.grade||'',at:Date.now(),by:S.me}));S.htok.set(sid,{id,sid,first:s.firstName||String(s.name||'').split(' ')[0]});renderHrLink();toast(old?'נוצר קישור חדש – הישן כבר לא עובד':'הקישור נוצר')}catch(e){fail(e)}}
 async function hrPage(tok){const v=document.createElement('main');v.id='paView';document.body.appendChild(v);const logo=document.querySelector('.lg-logo')?.src||'';
   const box=h=>{v.innerHTML=`<div class="pa-card" style="text-align:right">${logo?`<img src="${logo}" alt="" class="pa-logo">`:''}<div class="muted" style="font-size:.9rem;text-align:center">ישיבה לצעירים דעת תבונות · פנימייה</div>${h}</div>`};
-  box('<p style="text-align:center">טוען…</p>');let t=null;try{const d=await db.doc('htok/'+tok).get();t=d.exists?d.data():null}catch{}
+  box('<p style="text-align:center">טוען…</p>');const TT=[];for(const k of String(tok).split('.').filter(Boolean).slice(0,6)){try{const d=await db.doc('htok/'+k).get();if(d.exists)TT.push({tok:k,...d.data()})}catch{}}
+  let t=TT[0]||null;const fam=TT.length>1;
   if(!t){box('<h1 style="text-align:center">הקישור אינו פעיל</h1><p>ייתכן שהקישור הוחלף. אפשר לבקש קישור חדש מצוות הפנימייה.</p>');return}
   const K='pn-hr-'+tok;let mine=[];try{mine=JSON.parse(localStorage.getItem(K)||'[]')}catch{}
-  const hist=async()=>{const el=$('hrHist');if(!el||!mine.length)return;const R=[];for(const id of mine.slice(-5).reverse()){try{const d=await db.doc('hreq/'+id).get();if(d.exists)R.push(d.data())}catch{}}
-    el.innerHTML=R.length?`<h2 style="font-size:1.05rem;margin:6px 0 0">הבקשות ששלחתם</h2>`+R.map(x=>`<div class="pa-info" style="text-align:right"><div><b>${x.status==='ok'?'✓ אושרה':x.status==='no'?'✗ לא אושרה':'⏳ ממתינה לאישור'}</b></div><div>יציאה: ${esc(paWhen(x.from))}</div><div>חזרה: ${esc(paWhen(x.to))}</div></div>`).join(''):''};
-  const form=()=>{box(`<h1 style="text-align:center">בקשת יציאה הביתה</h1><div class="pa-info" style="text-align:center"><b>${esc(t.first||'')}</b>${t.grade?' · כיתה '+esc(t.grade):''}</div>
+  const hist=async()=>{const el=$('hrHist');if(!el||!mine.length)return;const R=[];for(const id of mine.slice(-6).reverse()){try{const d=await db.doc('hreq/'+id).get();if(d.exists)R.push(d.data())}catch{}}
+    el.innerHTML=R.length?`<h2 style="font-size:1.05rem;margin:6px 0 0">הבקשות ששלחתם</h2>`+R.map(x=>`<div class="pa-info" style="text-align:right"><div><b>${fam?esc(x.first||'')+' – ':''}${x.status==='ok'?'✓ אושרה':x.status==='no'?'✗ לא אושרה':'⏳ ממתינה לאישור'}</b></div><div>יציאה: ${esc(paWhen(x.from))}</div><div>חזרה: ${esc(paWhen(x.to))}</div></div>`).join(''):''};
+  const form=()=>{box(`<h1 style="text-align:center">בקשת יציאה הביתה</h1>${fam?`<div class="pa-info" style="text-align:right;display:grid;gap:6px"><b>עבור מי הבקשה?</b>${TT.map(x=>`<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" class="hrKid" value="${esc(x.tok)}" checked> ${esc(x.first||'')}${x.grade?' · כיתה '+esc(x.grade):''}</label>`).join('')}</div>`:`<div class="pa-info" style="text-align:center"><b>${esc(t.first||'')}</b>${t.grade?' · כיתה '+esc(t.grade):''}</div>`}
     <form id="hrF" style="display:grid;gap:10px">
      <label class="hr-l">השם שלך<input id="hrN" required maxlength="50" autocomplete="name"></label>
      <div class="hr-seg" role="radiogroup" aria-label="קרבה">${['אבא','אמא','אחר'].map((r,i)=>`<label><input type="radio" name="hrRel" value="${r}" ${i?'':'checked'}><span>${r}</span></label>`).join('')}</div>
@@ -3036,9 +3052,10 @@ async function hrPage(tok){const v=document.createElement('main');v.id='paView';
       if(!(f>0&&to>0))return err('נא למלא מתי לצאת ומתי לחזור');if(to<=f)return err('שעת החזרה צריכה להיות אחרי שעת היציאה');if(f<Date.now()-2*36e5)return err('שעת היציאה כבר עברה');
       if(String($('hrP').value).replace(/\D/g,'').length<9)return err('נא לכתוב מספר טלפון מלא');
       const esc2=isEsc()?{n:$('hrEsN').value.trim().slice(0,40),p:$('hrEsP').value.trim().slice(0,20)}:null;if(esc2&&!esc2.n)return err('נא לכתוב את שם המלווה');if(esc2&&esc2.p.replace(/\D/g,'').length<9)return err('נא לכתוב טלפון מלא של המלווה');
-      const d={tok,sid:t.sid,first:t.first||'',pName:$('hrN').value.trim().slice(0,50),rel:(v.querySelector('[name=hrRel]:checked')||{}).value||'',phone:$('hrP').value.trim().slice(0,20),from:f,to,reason:$('hrR').value,how:$('hrHow').value,note:((esc2?`מלווה: ${esc2.n}, ${esc2.p}`:'')+(esc2&&$('hrNote').value.trim()?' · ':'')+$('hrNote').value.trim()).slice(0,280),at:Date.now(),status:'pending'};
-      $('hrSend').disabled=true;try{const id=rid();await db.doc('hreq/'+id).set(d);mine.push(id);try{localStorage.setItem(K,JSON.stringify(mine.slice(-10)))}catch{}
-        box(`<h1 style="text-align:center">✓ הבקשה נשלחה</h1><p>הבקשה של ${esc(t.first||'')} הגיעה למנהל הפנימייה. אחרי ההחלטה נעדכן אתכם. אפשר לחזור לקישור הזה כדי לראות אם הבקשה אושרה.</p><button class="btn" type="button" id="hrAgain">בקשה נוספת</button><div id="hrHist" style="display:grid;gap:8px"></div>`);$('hrAgain').onclick=form;hist()}
+      const kids=fam?TT.filter(x=>[...v.querySelectorAll('.hrKid:checked')].some(c=>c.value===x.tok)):[{...t,tok}];if(!kids.length)return err('סמנו עבור מי מהילדים הבקשה');
+      const d={tok:kids[0].tok,sid:kids[0].sid,first:kids[0].first||'',pName:$('hrN').value.trim().slice(0,50),rel:(v.querySelector('[name=hrRel]:checked')||{}).value||'',phone:$('hrP').value.trim().slice(0,20),from:f,to,reason:$('hrR').value,how:$('hrHow').value,note:((esc2?`מלווה: ${esc2.n}, ${esc2.p}`:'')+(esc2&&$('hrNote').value.trim()?' · ':'')+$('hrNote').value.trim()).slice(0,280),at:Date.now(),status:'pending'};
+      $('hrSend').disabled=true;try{for(const k of kids){const id=rid();await db.doc('hreq/'+id).set({...d,tok:k.tok,sid:k.sid,first:k.first||''});mine.push(id)}try{localStorage.setItem(K,JSON.stringify(mine.slice(-10)))}catch{}
+        box(`<h1 style="text-align:center">✓ הבקשה נשלחה</h1><p>הבקשה של ${esc(kids.map(k=>k.first||'').join(' ו'))} הגיעה למנהל הפנימייה. אחרי ההחלטה נעדכן אתכם. אפשר לחזור לקישור הזה כדי לראות אם הבקשה אושרה.</p><button class="btn" type="button" id="hrAgain">בקשה נוספת</button><div id="hrHist" style="display:grid;gap:8px"></div>`);$('hrAgain').onclick=form;hist()}
       catch(x){$('hrSend').disabled=false;err('לא הצלחנו לשלוח. בדקו את החיבור לאינטרנט ונסו שוב, או התקשרו לצוות הפנימייה.')}};
     hist()};
   form()}
