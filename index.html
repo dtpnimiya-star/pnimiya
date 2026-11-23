@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-23-74";
+const APP_VERSION = "2026-11-23-75";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -719,6 +719,7 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
     <button type="button" id="t-roster" data-tab="roster" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="9" cy="15" r="1.6"/><path d="M13 14.5h4M13 17h3"/></svg><span class="lbl">שיבוץ מדריכים</span></button>
     <button type="button" id="t-pw" data-tab="pw" data-perm="personal" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8 11h8M8 14h5"/></svg><span class="lbl">עדכון שבועי להורים</span></button>
     <button type="button" id="t-meet" data-tab="meet" data-perm="mgr" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20c0-3 3-5 6-5s6 2 6 5M12 20c0-3 2-5 4-5s6 2 6 5"/></svg><span class="lbl">ישיבת צוות</span></button>
+    <button type="button" id="t-drill" data-tab="drill" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg><span class="lbl">תרגילי חירום</span></button>
     <button type="button" id="t-beds" data-tab="beds" data-perm="stu" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7M3 14h18M3 18v2M21 18v2"/><rect x="6" y="6" width="5" height="3" rx="1"/></svg><span class="lbl">חדרים ומיטות</span></button>
     <button type="button" id="t-cal" data-tab="cal" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg><span class="lbl">לוח שנה</span></button>
     <button type="button" id="t-rooms" data-tab="rooms" data-perm="rooms" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17"/><path d="M2 21h20M12 12h.01M16 7h3a1 1 0 0 1 1 1v13"/></svg><span class="lbl">בדיקת חדרים</span></button>
@@ -966,6 +967,13 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
     <div class="panel"><h2>5. לוגיסטיקה לשבוע הבא <small class="muted">· 5 דק׳</small></h2><div id="mtLog"></div></div>
     <div class="panel"><h2>6. סיכום <small class="muted">· 5 דק׳</small></h2><div id="mtSum"></div></div>
     <datalist id="mtWho"></datalist>
+  </section>
+  <section id="tab-drill" hidden style="display:grid;gap:14px">
+    <div class="panel" id="drNow"></div>
+    <div id="drStat"></div>
+    <div class="panel" id="drPlan"></div>
+    <div class="panel" id="drHist"></div>
+    <div class="panel" id="drInfo"></div>
   </section>
   <section id="tab-beds" hidden style="display:grid;gap:14px">
     <div class="calnote" id="bedHelp"></div>
@@ -1853,7 +1861,7 @@ function applyPerms(){
   $('topSum').hidden=!ok;
   const na=$('noAccess');na.hidden=ok;
   if(!ok){
-    ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','clubs','shab','act','lights','roster','beds','meet','pw','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
+    ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','clubs','shab','act','lights','roster','beds','meet','drill','pw','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
     const m={removed:['אין לך גישה','החשבון הזה לא רשום כאיש צוות. פנו למנהל הפנימייה.'],
       disabled:['הגישה שלך הושבתה','מנהל הפנימייה השבית את הגישה שלך. לפרטים, פנו אליו.'],
       none:['אין לך עדיין הרשאות','מנהל הפנימייה עוד לא הגדיר מה מותר לך לעשות. פנו אליו.'],
@@ -1892,7 +1900,7 @@ document.addEventListener('change',async e=>{
     else if(el.dataset.sact==='perm'){const s=S.staff.find(x=>x.id===id);const perms={...(s?.perms||{}),[el.dataset.k]:el.checked};await db.doc('staff/'+id).update({perms});toast('ההרשאות עודכנו')}
   }catch(err){fail(err)}
 });
-function renderAll(){netState();renderBeds();renderEm();renderRoster();renderAc();renderLights();renderIns();renderMt();renderLearn();renderShab();renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes();renderSched();renderHome()}
+function renderAll(){netState();renderBeds();renderEm();renderDrill();renderRoster();renderAc();renderLights();renderIns();renderMt();renderLearn();renderShab();renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes();renderSched();renderHome()}
 
 /* ---------- sheet ---------- */
 function setRoomSel(sel,v){if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o)}sel.value=v}
@@ -2037,7 +2045,7 @@ document.addEventListener('click',async e=>{
   if(e.target===$('nnBg')){closeNN();return}
   if(!b)return;
   if(b.dataset.tab){S.tab=b.dataset.tab;document.body.dataset.page=S.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
-    ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','clubs','shab','act','lights','roster','beds','meet','pw','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='beds')renderBeds();if(S.tab==='out')renderGst(true);if(S.tab==='meet')renderMeet();if(S.tab==='pw')renderPW();if(S.tab==='roster')renderRoster();if(S.tab==='lights')renderLights();if(S.tab==='act'){subAc();renderAc()}if(S.tab==='home')renderHome();if(S.tab==='rooms')subIns();if(S.tab==='maint'){subMt();renderMt()}if(S.tab==='learn'){subLn();renderLearn()}if(S.tab==='clubs'){subCl();if(has('learn')||has('count'))subLn();renderClubs(true)}if(S.tab==='shab'){subShab();renderShab()}if(S.tab==='staff')loadAudit();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
+    ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','clubs','shab','act','lights','roster','beds','meet','drill','pw','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='beds')renderBeds();if(S.tab==='out')renderGst(true);if(S.tab==='meet')renderMeet();if(S.tab==='drill')renderDrill();if(S.tab==='pw')renderPW();if(S.tab==='roster')renderRoster();if(S.tab==='lights')renderLights();if(S.tab==='act'){subAc();renderAc()}if(S.tab==='home')renderHome();if(S.tab==='rooms')subIns();if(S.tab==='maint'){subMt();renderMt()}if(S.tab==='learn'){subLn();renderLearn()}if(S.tab==='clubs'){subCl();if(has('learn')||has('count'))subLn();renderClubs(true)}if(S.tab==='shab'){subShab();renderShab()}if(S.tab==='staff')loadAudit();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
     try{localStorage.setItem('pn-tab',S.tab)}catch{}navMerge();renderBnav();dgrpSync();window.scrollTo(0,0);return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
   if(!db&&!['close','open','nnClose','nnCat','absLen','onlyOpen','onlyOpenM','mtab','insSel','theme','bigText','go','menuOpen','bRead','bShowAll','mtF','mtImg','lnT','lnGrade','lnClr','shNew','shCancel'].includes(b.dataset.act))return;
@@ -2218,7 +2226,18 @@ document.addEventListener('click',async e=>{
     case'emStart':{if(S.em){renderEm();break}if(!armed(b,'לחץ שוב להפעלה'))break;const reason=prompt('סיבה (לא חובה): אזעקה / תרגיל / פינוי / אחר','')||'';try{await OW(db.collection('emergency').add({active:true,reason,marks:{},at:Date.now(),by:S.me,byName:S.myName}));buzz()}catch(e){fail(e)}break}
     case'emMark':{const E=S.em;if(!E)break;const id=b.dataset.id,v=E.marks?.[id]?.s===b.dataset.v?firebase.firestore.FieldValue.delete():{s:b.dataset.v,at:Date.now(),by:S.me,n:S.myName||''};buzz();try{await OW(db.doc('emergency/'+E.id).update({['marks.'+id]:v}))}catch(e){fail(e)}break}
     case'emF':S.emF=b.dataset.f||'';renderEm();break;
-    case'emEnd':{const E=S.em;if(!E||!armed(b,'בטוח? לסיים'))break;const st=emAll().filter(s=>!isOut(s.id)),M=E.marks||{};try{await OW(db.doc('emergency/'+E.id).update({active:false,endAt:Date.now(),endBy:S.myName||'',sum:{total:st.length,safe:st.filter(s=>M[s.id]?.s==='safe').length,ok:st.filter(s=>M[s.id]?.s==='ok').length,miss:st.filter(s=>M[s.id]?.s==='miss').map(s=>s.name),un:st.filter(s=>!M[s.id]).map(s=>s.name)}}));toast('ספירת החירום הסתיימה ונשמרה')}catch(e){fail(e)}break}
+    case'drStart':drStart(b);break;
+    case'drOpen':renderEm();break;
+    case'drAdd':drAdd();break;
+    case'drNew':S.drNew=S.drNew?0:1;renderDrill();break;
+    case'drSave':drSaveL(id);break;
+    case'drDel':if(armed(b,'בטוח? למחוק'))drDel(id);break;
+    case'drPr':drPrint(id);break;
+    case'drXls':drXls();break;
+    case'drAll':drPrint('');break;
+    case'drInfoE':S.drInfoE=!S.drInfoE;renderDrill();break;
+    case'drInfoS':drInfoSave();break;
+    case'emEnd':{const E=S.em;if(!E||!armed(b,'בטוח? לסיים'))break;const st=emAll().filter(s=>!isOut(s.id)),M=E.marks||{};try{await OW(db.doc('emergency/'+E.id).update({active:false,endAt:Date.now(),endBy:S.myName||'',sum:{total:st.length,safe:st.filter(s=>M[s.id]?.s==='safe').length,ok:st.filter(s=>M[s.id]?.s==='ok').length,miss:st.filter(s=>M[s.id]?.s==='miss').map(s=>s.name),un:st.filter(s=>!M[s.id]).map(s=>s.name)}}));toast('ספירת החירום הסתיימה ונשמרה');drLink(E.id)}catch(e){fail(e)}break}
     case'logAdd':{const t=$('logT').value.trim();if(!t){toast('כתבו משהו');break}try{await OW(db.collection('shiftlog').add({k:b.dataset.k,text:t,at:Date.now(),by:S.me,byName:S.myName}));$('logT').value='';toast(b.dataset.k==='meet'?'הנושא יעלה בישיבת הצוות הקרובה':'נוסף ליומן המשמרת')}catch(e){fail(e)}break}
     case'logDel':if(armed(b,'בטוח?')){try{await OW(db.doc('shiftlog/'+b.dataset.id).delete())}catch(e){fail(e)}}break;
     case'mvCancel':S.mvSel=null;renderBeds();break;
@@ -3523,7 +3542,7 @@ document.addEventListener('change',e=>{const id=e.target.dataset?.hmc;if(!id)ret
 {const m=$('hmMore');try{if(localStorage.getItem('pn-more')==='1')m.open=true}catch{}m.addEventListener('toggle',()=>{try{localStorage.setItem('pn-more',m.open?'1':'0')}catch{}})}
 applyHm();
 /* ---------- grouped side menu ---------- */
-const DGRP=[['main','',['home','count','lights','morn','out','stu']],['kids','תלמידים והורים',['pw','beds','rooms','learn','clubs','act','shab']],['plan','תכנון',['cal','sched','roster','maint']],['admin','ניהול',['mgr','meet','rep','staff']]];
+const DGRP=[['main','',['home','count','lights','morn','out','stu']],['kids','תלמידים והורים',['pw','beds','rooms','learn','clubs','act','shab']],['plan','תכנון',['cal','sched','roster','maint','drill']],['admin','ניהול',['mgr','meet','rep','staff']]];
 (function(){const list=document.querySelector('.drawer-list');if(!list)return;let closed=new Set(['plan']);try{const v=localStorage.getItem('pn-dgrp');if(v)closed=new Set(JSON.parse(v))}catch{}
   DGRP.forEach(([k,l,tabs])=>{const g=document.createElement('div');g.className='dgrp'+(closed.has(k)?' closed':'');g.dataset.g=k;
     g.innerHTML=(l?`<div class="dgrp-h" role="button" tabindex="0" aria-expanded="${!closed.has(k)}"><span>${l}</span><span class="ch" aria-hidden="true">▾</span></div>`:'')+'<div class="dgrp-b"></div>';
@@ -3584,13 +3603,79 @@ addEventListener('resize',()=>{if($('tourCard'))tourStep()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('tourCard'))tourEnd();if(!$('calBg').hidden){$('calBg').hidden=true;S.calEd=null}}});
 /* ---------- emergency headcount ---------- */
 S.em=null;
+/* emergency drills (settings/drills: d.<id>={type,st:'plan'|'run'|'done',date,time,note,eid,startAt,endAt,sum,good,bad,mins,cnt}) */
+const DR_T={missile:['🚀','ירי טילים',['עם האזעקה כולם נכנסים מיד למרחב המוגן הקרוב (ממ"ד / מקלט), בלי לאסוף חפצים.','המדריך בודק שהדלת והחלון של המרחב המוגן סגורים.','ספירה שמית במרחב המוגן – מסמנים כל תלמיד באפליקציה.','ממתינים במרחב המוגן לפי הנחיות פיקוד העורף.','יוצאים רק אחרי הודעה מסודרת.']],
+ quake:['🌍','רעידת אדמה',['בזמן הרעד: אם אפשר לצאת מהר ובבטחה – יוצאים לשטח פתוח, רחוק ממבנים.','אם אי אפשר – לממ"ד; אם אין – לחדר המדרגות; ואם גם זה לא – מתחת לרהיט כבד.','לא משתמשים במעלית, מתרחקים מחלונות וארונות.','אחרי הרעד: יציאה מסודרת לנקודת הכינוס.','ספירה שמית בנקודת הכינוס – מסמנים כל תלמיד באפליקציה.']],
+ fire:['🔥','שריפה / פינוי',['מי שמגלה – מזעיק את כולם ומודיע לתורן.','יציאה מיידית בדרכי המילוט, בלי לאסוף חפצים ובלי מעלית.','סוגרים דלתות אחריכם.','מתכנסים בנקודת הכינוס.','ספירה שמית – מסמנים כל תלמיד באפליקציה. באירוע אמת: כבאות 102.']],
+ other:['⚠️','אחר',['מודיעים לכל הצוות.','מרכזים את התלמידים במקום שנקבע.','ספירה שמית – מסמנים כל תלמיד באפליקציה.']]};
+const canDr=()=>!S.ro&&(S.owner||has('mgr'));
+const drList=()=>Object.entries(S.drD?.d||{}).map(([id,x])=>({id,...x}));
+const drOfEm=E=>E?drList().find(x=>x.eid===E.id)||(/^תרגיל/.test(E.reason||'')?{type:Object.keys(DR_T).find(k=>(E.reason||'').includes(DR_T[k][1]))||'other'}:null):null;
+const drEl=t=>{const m=Math.floor((Date.now()-t)/6e4);return 'עברו '+(m<1?'פחות מדקה':m+' דק׳')};
+const drDur=x=>x.endAt&&x.startAt?Math.max(1,Math.round((x.endAt-x.startAt)/6e4)):(+x.mins||0);
+const drDate=x=>x.date||(x.startAt?ymd(new Date(x.startAt)):'');
+setInterval(()=>{const e=$('emEl');if(e&&S.em)e.textContent=drEl(S.em.at)},15e3);
+async function drSet(id,v){await OW(db.doc('settings/drills').set({d:{[id]:v}},{merge:true}))}
+async function drStart(b){if(!canDr())return;if(S.em){toast('יש כבר ספירה פעילה');renderEm();return}const type=b.dataset.t||'other',pid=b.dataset.id||'';
+  if(!armed(b,'לחץ שוב להתחלת התרגיל'))return;const id=pid||'d'+Date.now().toString(36),now=Date.now();
+  try{const r=await OW(db.collection('emergency').add({active:true,reason:'תרגיל – '+DR_T[type][1],marks:{},at:now,by:S.me,byName:S.myName}));
+    await drSet(id,{type,st:'run',eid:r.id,startAt:now,date:ymd(new Date(now)),time:hm(now),at:Date.now(),by:S.me,byName:S.myName||''});buzz()}catch(e){fail(e)}}
+async function drLink(eid){const x=drList().find(y=>y.eid===eid);if(!x||!canDr())return;try{const d=await db.doc('emergency/'+eid).get();const E=d.data()||{};if(E.active)return;await drSet(x.id,{st:'done',endAt:E.endAt||Date.now(),endBy:E.endBy||'',sum:E.sum||null})}catch(e){}}
+function drSync(){if(!canDr())return;drList().filter(x=>x.st==='run'&&x.eid&&S.em?.id!==x.eid).forEach(x=>{S.drSy=S.drSy||{};if(S.drSy[x.eid])return;S.drSy[x.eid]=1;drLink(x.eid)})}
+async function drAdd(){const type=$('drT').value,date=$('drD').value,time=$('drH').value,st=$('drS').value,note=$('drN').value.trim();if(!date){toast('בחרו תאריך');return}
+  const v={type,st,date,time,note,at:Date.now(),by:S.me,byName:S.myName||''};if(st==='done'){v.mins=+$('drM').value||0;v.cnt=+$('drC').value||0}
+  try{await drSet('d'+Date.now().toString(36),v);S.drNew=0;toast(st==='plan'?'התרגיל נוסף לתכנון':'התרגיל נרשם');renderDrill()}catch(e){fail(e)}}
+async function drSaveL(id){const g=$('drG-'+id),w=$('drB-'+id);try{await drSet(id,{good:g?g.value.trim():'',bad:w?w.value.trim():'',lAt:Date.now(),lBy:S.myName||''});toast('הלקחים נשמרו')}catch(e){fail(e)}}
+async function drDel(id){try{await OW(db.doc('settings/drills').update({['d.'+id]:firebase.firestore.FieldValue.delete()}))}catch(e){fail(e)}}
+async function drInfoSave(){try{await OW(db.doc('settings/drills').set({info:$('drIn').value.trim(),infoAt:Date.now(),infoBy:S.myName||''},{merge:true}));S.drInfoE=false;toast('נשמר');renderDrill()}catch(e){fail(e)}}
+function drRes(x){const m=x.sum;if(!m)return x.cnt?`<span class="pill">${x.cnt} משתתפים</span>`:'';const fnd=(m.safe||0)+(m.ok||0),miss=(m.miss||[]).length,un=(m.un||[]).length;
+  return `<span class="pill ${miss||un?'bad':'ok'}">${fnd}/${m.total} נמצאו</span>${m.safe?`<span class="pill">${m.safe} במרחב מוגן</span>`:''}${miss?`<span class="pill bad">${miss} לא נמצאו</span>`:''}${un?`<span class="pill">${un} לא נבדקו</span>`:''}`}
+function renderDrill(){if(S.tab!=='drill'||!$('drNow'))return;drSync();const ed=canDr(),L=drList(),today=ymd(new Date());
+  const run=S.em?drOfEm(S.em):null;
+  $('drNow').innerHTML=S.em?`<h2>🚨 ${run?'תרגיל פעיל עכשיו':'ספירת חירום פעילה'}</h2><div class="row" style="gap:8px"><span>${run?esc(DR_T[run.type]?.[1]||''):esc(S.em.reason||'')} · התחיל ${hm(S.em.at)} · ${drEl(S.em.at)}</span><button class="btn primary small" type="button" data-act="drOpen">פתח את הספירה</button></div>`
+    :`<h2>▶ התחלת תרגיל עכשיו</h2><span class="muted" style="font-size:.88rem">לחיצה כפולה מפעילה ספירה שמית לכל הצוות (כמו ספירת חירום), עם הכיתוב "תרגיל". בסיום הספירה הזמנים והתוצאות נשמרים כאן אוטומטית.</span>
+     ${ed?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">${Object.entries(DR_T).map(([k,t])=>`<button class="btn" type="button" data-act="drStart" data-t="${k}" style="font-size:1.05rem;padding:14px">${t[0]} ${t[1]}</button>`).join('')}</div>`:'<span class="muted">רק מנהל יכול להתחיל תרגיל.</span>'}`;
+  const done=L.filter(x=>x.st==='done').sort((a,b)=>(drDate(b)+(b.time||'')).localeCompare(drDate(a)+(a.time||''))),yr=new Date().getMonth()>=8?new Date().getFullYear():new Date().getFullYear()-1,y0=yr+'-09-01';
+  $('drStat').innerHTML=`<div class="panel"><h2>📊 מצב התרגילים השנה</h2><div class="list">${Object.entries(DR_T).filter(([k])=>k!=='other'||done.some(x=>x.type==='other')).map(([k,t])=>{const D=done.filter(x=>x.type===k),last=D[0],n=D.filter(x=>drDate(x)>=y0).length,old=!last||(Date.now()-new Date(drDate(last)).getTime())>120*864e5;
+    return `<div class="item"><span class="name" style="flex:1">${t[0]} ${t[1]}<span class="meta">${n} השנה · ${last?'אחרון: '+fmtShort(drDate(last)):'עוד לא בוצע'}</span></span>${old&&k!=='other'?'<span class="chip a">כדאי לתכנן</span>':'<span class="chip p">✓</span>'}</div>`}).join('')}</div></div>`;
+  const plan=L.filter(x=>x.st==='plan').sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+  $('drPlan').innerHTML=`<div class="row" style="justify-content:space-between"><h2>📅 תרגילים מתוכננים</h2>${ed?`<button class="btn small" type="button" data-act="drNew">${S.drNew?'סגור':'+ תכנון / רישום תרגיל'}</button>`:''}</div>
+   ${S.drNew&&ed?`<div class="panel" style="background:var(--soft);display:grid;gap:8px"><div class="grid2"><label>סוג<select id="drT">${Object.entries(DR_T).map(([k,t])=>`<option value="${k}">${t[0]} ${t[1]}</option>`).join('')}</select></label><label>מצב<select id="drS"><option value="plan">מתוכנן</option><option value="done">כבר בוצע (רישום ידני)</option></select></label><label>תאריך<input type="date" id="drD" value="${today}"></label><label>שעה<input type="time" id="drH"></label></div>
+     <div class="grid2" id="drDone" hidden><label>משך (דקות)<input type="number" id="drM" min="0" inputmode="numeric"></label><label>מספר משתתפים<input type="number" id="drC" min="0" inputmode="numeric"></label></div>
+     <input id="drN" placeholder="הערה (למשל: עם הודעה מראש / בלי הודעה, מי מוביל)"><div class="row"><button class="btn primary small" type="button" data-act="drAdd">שמירה</button></div></div>`:''}
+   ${plan.length?`<div class="list">${plan.map(x=>{const t=DR_T[x.type]||DR_T.other;return `<div class="item"><span class="name" style="flex:1">${t[0]} ${t[1]}<span class="meta">${x.date===today?'<b>היום</b>':esc(fmtShort(x.date))}${x.time?' · '+esc(x.time):''}${x.note?' · '+esc(x.note):''}</span></span>${ed&&!S.em?`<button class="btn small primary" type="button" data-act="drStart" data-t="${x.type}" data-id="${x.id}">▶ התחל</button>`:''}${ed?`<button class="btn small" type="button" data-act="drDel" data-id="${x.id}">בטל</button>`:''}</div>`}).join('')}</div>`:'<span class="muted">אין תרגילים מתוכננים.</span>'}`;
+  const runL=L.filter(x=>x.st==='run');
+  $('drHist').innerHTML=`<div class="row" style="justify-content:space-between"><h2>📋 תרגילים שבוצעו</h2>${done.length?`<span class="row" style="gap:6px"><button class="btn small" type="button" data-act="drAll">🖨 דוח</button><button class="btn small" type="button" data-act="drXls">⬇ Excel</button></span>`:''}</div>
+   ${runL.filter(x=>S.em?.id!==x.eid).length?'<span class="muted">מעדכן תוצאות של תרגיל שהסתיים…</span>':''}
+   ${done.length?done.map(x=>{const t=DR_T[x.type]||DR_T.other,m=x.sum,mn=drDur(x),nm=[...(m?.miss||[])],un=[...(m?.un||[])];
+     return `<div class="panel" style="background:var(--soft);display:grid;gap:6px;margin-top:8px"><div class="row" style="justify-content:space-between"><b>${t[0]} ${t[1]}</b><span class="muted">${esc(fmtShort(drDate(x)))}${x.startAt?' · '+hm(x.startAt)+(x.endAt?'–'+hm(x.endAt):''):x.time?' · '+esc(x.time):''}${mn?' · '+mn+' דק׳':''}</span></div>
+      <div class="cnt">${drRes(x)}</div>${nm.length?`<div class="meta">✗ לא נמצאו: ${esc(nm.join(', '))}</div>`:''}${un.length?`<div class="meta">לא נבדקו: ${esc(un.join(', '))}</div>`:''}${x.note?`<div class="meta">${esc(x.note)}</div>`:''}
+      ${ed?`<label class="meta">✔ מה עבד טוב<textarea id="drG-${x.id}" rows="2">${esc(x.good||'')}</textarea></label><label class="meta">✎ מה צריך לשפר<textarea id="drB-${x.id}" rows="2">${esc(x.bad||'')}</textarea></label>`:(x.good||x.bad?`<div class="meta">${x.good?'✔ '+esc(x.good):''}${x.bad?'<br>✎ '+esc(x.bad):''}</div>`:'')}
+      <div class="row" style="gap:6px">${ed?`<button class="btn small primary" type="button" data-act="drSave" data-id="${x.id}">שמור לקחים</button>`:''}<button class="btn small" type="button" data-act="drPr" data-id="${x.id}">🖨 הדפסה</button>${S.owner?`<button class="btn small" type="button" data-act="drDel" data-id="${x.id}">מחק</button>`:''}</div></div>`}).join(''):'<span class="muted">עוד לא נרשמו תרגילים. כשתתחילו תרגיל למעלה, הוא יירשם כאן לבד.</span>'}`;
+  const inf=S.drD?.info||'';
+  $('drInfo').innerHTML=`<div class="row" style="justify-content:space-between"><h2>🛡 מרחבים מוגנים ונקודות כינוס</h2>${ed?`<button class="btn small" type="button" data-act="drInfoE">${S.drInfoE?'ביטול':'✏️ עריכה'}</button>`:''}</div>
+   ${S.drInfoE&&ed?`<textarea id="drIn" rows="5" placeholder="למשל: קומה א – ממ״ד ליד חדר 110. נקודת כינוס – מגרש הכדורסל. אחראי ספירה – המדריך התורן.">${esc(inf)}</textarea><div class="row"><button class="btn primary small" type="button" data-act="drInfoS">שמירה</button></div>`:inf?`<div style="white-space:pre-wrap">${esc(inf)}</div>`:'<span class="muted">עוד לא נכתב. כדאי לרשום כאן לאן כל חדר הולך, ומי אחראי על הספירה.</span>'}
+   <details style="margin-top:8px"><summary>מה עושים בכל סוג תרגיל</summary>${Object.values(DR_T).filter(t=>t[1]!=='אחר').map(t=>`<p style="margin:8px 0 2px"><b>${t[0]} ${t[1]}</b></p><ol style="margin:0;padding-inline-start:20px">${t[2].map(z=>'<li>'+esc(z)+'</li>').join('')}</ol>`).join('')}<p class="muted" style="font-size:.85rem">ההנחיות המחייבות הן של פיקוד העורף ושל קב״ט המוסד.</p></details>`;
+  const s2=$('drS');if(s2)s2.onchange=()=>{$('drDone').hidden=s2.value!=='done'}}
+function drPrint(id){const L=drList().filter(x=>x.st==='done'&&(!id||x.id===id)).sort((a,b)=>drDate(a).localeCompare(drDate(b)));if(!L.length)return;
+  const body=`<h1>${id?'דוח תרגיל חירום':'דוח תרגילי חירום'}</h1><div class="mut">הופק ${esc(when(Date.now()))} ע"י ${esc(S.myName||'')}</div>
+   ${L.map(x=>{const t=DR_T[x.type]||DR_T.other,m=x.sum,mn=drDur(x);return `<h2>${t[0]} ${esc(t[1])} – ${esc(fmtShort(drDate(x)))}.${drDate(x).slice(0,4)}</h2>
+    <p>${x.startAt?'התחלה '+hm(x.startAt)+(x.endAt?' · סיום '+hm(x.endAt):''):x.time?'שעה '+esc(x.time):''}${mn?' · משך <b>'+mn+' דק׳</b>':''}${x.byName?' · הפעיל: '+esc(x.byName):''}</p>
+    ${m?`<p>נבדקו <b>${m.total}</b> תלמידים: <b>${m.safe||0}</b> במרחב מוגן · <b>${m.ok||0}</b> נמצאו במקום אחר · <b>${(m.miss||[]).length}</b> לא נמצאו · <b>${(m.un||[]).length}</b> לא נבדקו</p>${(m.miss||[]).length?`<p>לא נמצאו: ${esc(m.miss.join(', '))}</p>`:''}${(m.un||[]).length?`<p>לא נבדקו: ${esc(m.un.join(', '))}</p>`:''}`:x.cnt?`<p>משתתפים: ${x.cnt}</p>`:''}
+    ${x.note?`<p class="mut">${esc(x.note)}</p>`:''}<p><b>מה עבד טוב:</b> ${esc(x.good||'—')}</p><p><b>מה צריך לשפר:</b> ${esc(x.bad||'—')}</p>`}).join('')}`;
+  printHtml(id?'דוח תרגיל':'דוח תרגילי חירום',body,['מנהל הפנימייה','קב"ט / אחראי בטיחות'])}
+async function drXls(){const L=drList().filter(x=>x.st==='done').sort((a,b)=>drDate(a).localeCompare(drDate(b)));if(!L.length)return;await xlsxLoad();
+  const rows=[['תאריך','סוג','התחלה','סיום','משך (דק׳)','נבדקו','במרחב מוגן','נמצאו במקום אחר','לא נמצאו','לא נבדקו','הערה','מה עבד טוב','מה לשפר']];
+  L.forEach(x=>{const m=x.sum||{};rows.push([drDate(x),(DR_T[x.type]||DR_T.other)[1],x.startAt?hm(x.startAt):x.time||'',x.endAt?hm(x.endAt):'',drDur(x)||'',m.total??(x.cnt||''),m.safe??'',m.ok??'',(m.miss||[]).join(', '),(m.un||[]).join(', '),x.note||'',x.good||'',x.bad||''])});
+  const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};XLSX.utils.book_append_sheet(wb,sheet(rows,[11,14,8,8,9,8,10,12,24,24,24,30,30]),'תרגילים');XLSX.writeFile(wb,`תרגילי חירום ${ymd(new Date())}.xlsx`)}
 function subEm(){if(!db||S.unEm)return;S.unEm=1;S.subs.push(db.collection('emergency').where('active','==',true).onSnapshot(q=>{const d=q.docs[0];const prev=S.em;S.em=d?{id:d.id,...d.data()}:null;
   if(S.em&&(!prev||prev.id!==S.em.id)&&S.em.by!==S.me)notify('🚨 ספירת חירום',`${S.em.byName||''} הפעיל ספירת חירום${S.em.reason?' – '+S.em.reason:''}`,'em-'+S.em.id);renderEm()},()=>{}))}
 const EM_S=[['safe','✓ במרחב מוגן','p'],['ok','✓ נמצא – אחר','m'],['miss','✗ לא נמצא','a']];
 function renderEm(){const bg=$('emBg');if(!bg)return;const E=S.em;bg.hidden=!E;document.body.style.overflow=E||S.tv?'hidden':'';if(!E)return;
   const st=emAll().filter(s=>!isOut(s.id)),M=E.marks||{},c=k=>st.filter(s=>M[s.id]?.s===k).length,un=st.filter(s=>!M[s.id]),miss=st.filter(s=>M[s.id]?.s==='miss');
   const f=S.emF||'',L=st.filter(s=>!f||(f==='un'?!M[s.id]:M[s.id]?.s===f)).filter(qMatch(S.emQ||''));
-  $('em').innerHTML=`<div class="row" style="justify-content:space-between"><h2>🚨 ספירת חירום פעילה</h2><span class="muted">${when(E.at)} · ${esc(E.byName||'')}${E.reason?' · '+esc(E.reason):''}</span></div>
+  const dr=drOfEm(E),dt=dr?DR_T[dr.type]||DR_T.other:null;
+  $('em').innerHTML=`${dr?`<div class="calnote" style="background:var(--soft);display:block"><b>${dt[0]} תרגיל ${esc(dt[1])}</b> · התחיל ${hm(E.at)} · <span id="emEl">${drEl(E.at)}</span><details style="margin-top:4px"><summary>מה עושים</summary><ol style="margin:6px 0;padding-inline-start:20px">${dt[2].map(x=>'<li>'+esc(x)+'</li>').join('')}</ol></details></div>`:''}<div class="row" style="justify-content:space-between"><h2>🚨 ${dr?'ספירה בתרגיל':'ספירת חירום פעילה'}</h2><span class="muted">${when(E.at)} · ${esc(E.byName||'')}${E.reason?' · '+esc(E.reason):''}</span></div>
    <div class="cnt"><button class="pill ok" data-act="emF" data-f="safe" style="border:0;cursor:pointer">${c('safe')} במרחב מוגן</button><button class="pill ap" data-act="emF" data-f="ok" style="border:0;cursor:pointer">${c('ok')} נמצאו במקום אחר</button><button class="pill bad" data-act="emF" data-f="miss" style="border:0;cursor:pointer">${miss.length} לא נמצאו</button><button class="pill" data-act="emF" data-f="un" style="border:0;cursor:pointer">${un.length} עוד לא נבדקו</button>${f?'<button class="pill" data-act="emF" data-f="" style="border:0;cursor:pointer">✕ הכל</button>':''}<span class="pill">${st.length} בפנימייה</span></div>
    <div class="bar" role="img" aria-label="התקדמות"><i style="width:${st.length?(st.length-un.length)/st.length*100:0}%;background:var(--ok)"></i></div>
    ${miss.length?`<div class="late-p"><h2>✗ לא נמצאו (${miss.length})</h2><span>${esc(miss.map(s=>s.name+(s.room?' ('+s.room+')':'')).join(', '))}</span></div>`:''}
@@ -4124,6 +4209,7 @@ function subscribeAll(){
   S.subs.push(db.doc('settings/board').onSnapshot(d=>{S.board=d.exists?(d.data().items||[]):[];renderHome()},()=>{}));
   if(has('out')||has('count')||S.mgr)S.subs.push(db.collection('lateinc').orderBy('at','desc').limit(300).onSnapshot(q=>{S.lateinc=q.docs.map(d=>({id:d.id,...d.data()}));renderFu();if(S.sel)renderShX()},()=>{}));
   if(has('notes')||has('personal')||S.mgr)S.subs.push(db.collection('pcontact').orderBy('at','desc').limit(500).onSnapshot(q=>{S.pc=q.docs.map(d=>({id:d.id,...d.data()}));renderFu();if(S.sel)renderShX()},()=>{}));
+  S.subs.push(db.doc('settings/drills').onSnapshot(d=>{S.drD=d.exists?d.data():{};renderDrill();renderEm()},()=>{}));
   S.subs.push(db.doc('settings/meet').onSnapshot(d=>{S.meet=d.exists?d.data():{};if(S.tab==='meet')renderMeet();if(S.sel)renderSheet()},()=>{}));
   S.subs.push(db.doc('settings/cal').onSnapshot(d=>{S.calOv=d.exists?(d.data().ev||{}):{};applyCal();renderCal();renderCalNotes();renderHome();if(S.tab==='shab')renderShab?.()},()=>{}));
   S.subs.push(db.doc('settings/app').onSnapshot(d=>{S.settings=d.exists?d.data():null;S.wakeTarget=S.settings?.wakeTarget||'07:00';renderMorn();if(S.tab==='maint')renderMt()},onErr));
