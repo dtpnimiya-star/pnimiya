@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-23-73";
+const APP_VERSION = "2026-11-23-74";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -664,6 +664,7 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
 .fp .a rect{fill:none;stroke:#3f74c9;stroke-width:3}.fp .a.c rect{fill:var(--soft)}
 .fp text{fill:var(--ink);font:600 26px var(--f-body);text-anchor:middle;pointer-events:none}.fp text.s{font-size:19px;fill:var(--muted)}
 .fp .dot circle{fill:var(--bad)}.fp .dot text{fill:#fff;font-size:22px}
+#mtForm.editing{outline:3px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -1009,7 +1010,7 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
     <details class="panel" id="mtOwnP" hidden></details>
     <div id="mtWaitP"></div>
     <form id="mtForm" class="panel">
-      <h2>🔧 דיווח תקלה</h2>
+      <h2 id="mtFormT">🔧 דיווח תקלה</h2>
       <div class="grid2">
         <select id="mtRoom" aria-label="מיקום"></select>
         <input id="mtPlace" placeholder="מיקום אחר (לא חובה)" aria-label="מיקום אחר">
@@ -1020,7 +1021,7 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
       </div>
       <textarea id="mtDesc" required rows="2" placeholder="מה התקלה? למשל: נורה שרופה מעל המיטה הימנית"></textarea>
       <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><label class="btn small" for="mtCam">📷 צילום במצלמה</label><input type="file" id="mtCam" accept="image/*" capture="environment" hidden><label class="btn small" for="mtPhoto">🖼 תמונה מהגלריה</label><input type="file" id="mtPhoto" accept="image/*" hidden><span id="mtPhotoTxt" class="row" style="gap:6px;align-items:center"></span></div>
-      <div><button class="btn primary" type="submit" id="mtBtn">שלח דיווח</button></div>
+      <div class="row" style="gap:8px"><button class="btn primary" type="submit" id="mtBtn">שלח דיווח</button><button class="btn" type="button" data-act="mtEdX" id="mtEdX" hidden>ביטול עריכה</button></div>
     </form>
     <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">מפת הפנימייה</h2><span class="muted" id="mtStat" style="font-size:.88rem"></span></div><div class="fp-wrap" style="margin-top:10px"><div id="mtPlan" class="fp"></div></div><div class="bld"><div class="fl" id="mtMap" style="border-top:2px solid var(--line);border-radius:10px;margin-top:8px"></div></div><div class="muted" style="font-size:.8rem;margin-top:4px">לחיצה על חדר מסננת את התקלות שלו. אפשר לגלול את המפה הצידה.</div></div>
     <div class="mtabs" role="group" aria-label="סינון תקלות"><button type="button" data-act="mtF" data-f="open" aria-pressed="true">פתוחות</button><button type="button" data-act="mtF" data-f="prog" aria-pressed="false">בטיפול</button><button type="button" data-act="mtF" data-f="done" aria-pressed="false">תוקנו</button></div>
@@ -2050,6 +2051,8 @@ document.addEventListener('click',async e=>{
     case'copyWelcome':try{await navigator.clipboard.writeText(S.lastWelcome||'');toast('ההודעה הועתקה')}catch{toast('לא הצלחתי להעתיק')}break;
     case'mtF':S.mtF=b.dataset.f;renderMt();break;
     case'mtPhX':S.mtPhoto=null;mtPhotoShow();break;
+    case'mtEd':mtEdit(id);break;
+    case'mtEdX':mtEdEnd();break;
     case'mtRepP':mtReport('print');break;
     case'mtRepX':mtReport('xlsx');break;
     case'mtSet':{const s=b.dataset.s,u={status:s};if(s==='prog'){u.progAt=Date.now();u.progBy=S.myName}if(s==='done'){u.doneAt=Date.now();u.doneBy=S.myName}if(s==='open'){u.doneAt=null}
@@ -2841,6 +2844,10 @@ function renderMtMap(){const el=$('mtMap');if(!el)return;const open=S.mt.filter(
   const D=S.mt.filter(m=>m.doneAt&&m.at&&Date.now()-m.doneAt<30*864e5),avg=D.length?D.reduce((a,m)=>a+(m.doneAt-m.at),0)/D.length:0;
   $('mtStat').textContent=`${open.length} פתוחות`+(D.length?` · זמן טיפול ממוצע: ${dur(avg)}`:'')}
 function mtRooms(){const r=roomsList().filter(x=>!SVC.has(x)).map(x=>[x,'חדר '+x+(STAFF_ROOMS.has(x)?' (מדריכים)':'')]);return [...r,...SVC_ROOMS.map(([x,n])=>[x,n+' ('+x+')']),['common','שטח משותף'],['other','אחר']]}
+const mtCanEd=m=>!S.ro&&(canMt()||S.owner||has('mgr'));
+function mtEdit(id){const m=S.mt.find(x=>x.id===id);if(!m)return;S.mtEd=id;fillMtRooms(m.room);$('mtRoom').value=m.room;$('mtPlace').value=m.place||'';$('mtCat').value=m.cat||$('mtCat').value;$('mtUrg').value=String(m.urg||1);$('mtDesc').value=m.desc||'';
+  S.mtPhoto=m.photo||null;mtPhotoShow();$('mtFormT').textContent='✏️ עריכת תקלה – '+mtPlace(m);$('mtBtn').textContent='שמירת שינויים';$('mtEdX').hidden=false;$('mtForm').classList.add('editing');$('mtForm').scrollIntoView({behavior:'smooth',block:'start'});$('mtDesc').focus()}
+function mtEdEnd(){S.mtEd=null;$('mtFormT').textContent='🔧 דיווח תקלה';$('mtBtn').textContent='שלח דיווח';$('mtEdX').hidden=true;$('mtForm').classList.remove('editing');$('mtDesc').value='';$('mtPlace').value='';S.mtPhoto=null;mtPhotoShow()}
 function fillMtRooms(pre){const s=$('mtRoom'),v=pre||s.value;s.innerHTML=mtRooms().map(([v2,l])=>`<option value="${esc(v2)}">${esc(l)}</option>`).join('');if(v)s.value=v}
 function subMt(){if(!db||S.unMt)return;S.unMt=1;S.subs.push(db.collection('maint').orderBy('at','desc').limit(300).onSnapshot(q=>{const prev=new Map((S.mt||[]).map(m=>[m.id,m]));
   if(S.mtLoaded)q.docChanges().forEach(ch=>{const m=ch.doc.data(),id=ch.doc.id,o=prev.get(id),ow=mtOwn(m.cat),mineA=ow&&ow.u===S.me;
@@ -2885,15 +2892,19 @@ function renderMt(){if(S.tab!=='maint')return;subFix();renderFixLink();if(!$('mt
       <span style="overflow-wrap:anywhere">${esc(m.desc||'')}</span>
       <span class="meta">דווח ע"י ${esc(m.byName||'')} · ${when(m.at)}${m.progAt?` · בטיפול ${esc(m.progBy||'')} ${when(m.progAt)}`:''}${m.doneAt?` · תוקן ${when(m.doneAt)}${m.doneBy?' ע"י '+esc(m.doneBy):''}`:''}</span>
       <div class="steps"><span class="on">דווח</span>›<span class="${m.progAt||m.doneAt?'on':''}">בטיפול</span>›<span class="${m.doneAt&&!mtRej(m)?'on':''}">תוקן</span>${m.doneAt&&!mtRej(m)?`<b style="color:var(--ok)">נסגרה תוך ${dur(m.doneAt-m.at)}</b>`:''}</div>
+      ${m.editAt?`<span class="meta">✏️ נערך ${when(m.editAt)}${m.editBy?' ע"י '+esc(m.editBy):''}</span>`:''}
       ${(o=>o?`<span class="meta">👷 אחראי: ${esc(o.n||'')}${o.u===S.me?' (את/ה)':''}</span>`:'')(mtOwn(m.cat))}
       ${mtRej(m)?`<span class="notice" style="padding:6px 10px">↩ ${esc(m.byName||'המדווח')} בדק וכתב שהתקלה <b>לא תוקנה</b>${mtCf(m).why?': '+esc(mtCf(m).why):''} (${when(mtCf(m).confAt)})</span>`:mtOk(m)?`<span class="meta" style="color:var(--ok)">✔ ${esc(m.byName||'המדווח')} אישר שתוקן (${when(mtCf(m).confAt)})</span>`:m.status==='done'&&m.by&&m.by!=='student'?`<span class="meta">⏳ ממתין לאישור המדווח</span>`:''}
       ${mtMine(m)&&m.status==='done'&&!mtOk(m)&&!mtRej(m)&&!S.ro?`<div class="row" style="gap:6px"><button class="btn small primary" type="button" data-act="mtCf" data-id="${m.id}" data-v="ok">✔ בדקתי – תקין</button><button class="btn small" type="button" data-act="mtCf" data-id="${m.id}" data-v="no">✗ עדיין לא תקין</button></div>`:''}
       ${m.seen?`<span class="meta">👁 ראו: ${esc(Object.values(m.seen).map(x=>x.n).filter(Boolean).join(', '))} (${Object.keys(m.seen).length})</span>`:''}</div>
-      <span class="row" style="gap:6px">${canMt()&&!S.ro?(st==='open'?`<button class="btn small" data-act="mtSet" data-id="${m.id}" data-s="prog">בטיפול</button><button class="btn small primary" data-act="mtSet" data-id="${m.id}" data-s="done">תוקן ✓</button>`:st==='prog'?`<button class="btn small primary" data-act="mtSet" data-id="${m.id}" data-s="done">תוקן ✓</button>`:`<button class="btn small" data-act="mtSet" data-id="${m.id}" data-s="open">פתח מחדש</button>`):`<span class="chip ${MT_ST[st][1]}">${MT_ST[st][0]}</span>`}${S.owner?`<button class="btn small" data-act="mtDel" data-id="${m.id}">מחק</button>`:''}</span></div>`}).join('')+`</div>`
+      <span class="row" style="gap:6px">${canMt()&&!S.ro?(st==='open'?`<button class="btn small" data-act="mtSet" data-id="${m.id}" data-s="prog">בטיפול</button><button class="btn small primary" data-act="mtSet" data-id="${m.id}" data-s="done">תוקן ✓</button>`:st==='prog'?`<button class="btn small primary" data-act="mtSet" data-id="${m.id}" data-s="done">תוקן ✓</button>`:`<button class="btn small" data-act="mtSet" data-id="${m.id}" data-s="open">פתח מחדש</button>`):`<span class="chip ${MT_ST[st][1]}">${MT_ST[st][0]}</span>`}${st!=='done'&&mtCanEd(m)?`<button class="btn small" data-act="mtEd" data-id="${m.id}">✏️ ערוך</button>`:''}${S.owner?`<button class="btn small" data-act="mtDel" data-id="${m.id}">מחק</button>`:''}</span></div>`}).join('')+`</div>`
     :`<div class="empty">${S.mtF==='open'?'אין תקלות פתוחות 👍':S.mtF==='prog'?'אין תקלות בטיפול.':'עוד אין תקלות שתוקנו.'}</div>`}
 function mtPhotoShow(){$('mtPhotoTxt').innerHTML=S.mtPhoto?`<img src="${esc(S.mtPhoto)}" alt="התמונה שצורפה" style="width:48px;height:48px;object-fit:cover;border-radius:8px"><button class="btn small" type="button" data-act="mtPhX">✕ הסר</button>`:''}
 ['mtPhoto','mtCam'].forEach(i=>$(i).addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{S.mtPhoto=await resizePhoto(f);mtPhotoShow()}catch{toast('לא הצלחתי לקרוא את התמונה')}e.target.value=''}));
 $('mtForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const desc=$('mtDesc').value.trim();if(!desc)return;
+  if(S.mtEd){const m=S.mt.find(x=>x.id===S.mtEd);if(!m){mtEdEnd();return}const u={room:$('mtRoom').value,place:$('mtPlace').value.trim(),cat:$('mtCat').value,urg:+$('mtUrg').value,desc,editAt:Date.now(),editBy:S.myName||''};
+    if((S.mtPhoto||null)!==(m.photo||null))u.photo=S.mtPhoto?S.mtPhoto:firebase.firestore.FieldValue.delete();
+    $('mtBtn').disabled=true;try{await OW(db.doc('maint/'+m.id).update(u));toast('התקלה עודכנה');mtEdEnd()}catch(err){fail(err)}$('mtBtn').disabled=false;return}
   const d={room:$('mtRoom').value,place:$('mtPlace').value.trim(),cat:$('mtCat').value,urg:+$('mtUrg').value,desc,status:'open',at:Date.now(),by:S.me,byName:S.myName};if(S.mtPhoto)d.photo=S.mtPhoto;
   $('mtBtn').disabled=true;try{await OW(db.collection('maint').add(d));$('mtDesc').value='';$('mtPlace').value='';S.mtPhoto=null;mtPhotoShow();toast('התקלה דווחה')}catch(err){fail(err)}$('mtBtn').disabled=false});
 function goMaint(room){$('t-maint').click();fillMtRooms(room);$('mtCat').value='ריהוט ומיטות';$('mtDesc').focus();$('mtForm').scrollIntoView({behavior:'smooth'})}
