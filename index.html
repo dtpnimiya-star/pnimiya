@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-16-72";
+const APP_VERSION = "2026-11-23-73";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1019,12 +1019,20 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
         <select id="mtUrg" aria-label="דחיפות"><option value="1">🔵 שוטף</option><option value="2">🟡 חשוב</option><option value="3">🔴 בטיחות – מיידי</option></select>
       </div>
       <textarea id="mtDesc" required rows="2" placeholder="מה התקלה? למשל: נורה שרופה מעל המיטה הימנית"></textarea>
-      <div class="row" style="gap:8px"><label class="btn small" for="mtPhoto">📷 צרף תמונה</label><input type="file" id="mtPhoto" accept="image/*" hidden><span class="muted" id="mtPhotoTxt" style="font-size:.88rem"></span></div>
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><label class="btn small" for="mtCam">📷 צילום במצלמה</label><input type="file" id="mtCam" accept="image/*" capture="environment" hidden><label class="btn small" for="mtPhoto">🖼 תמונה מהגלריה</label><input type="file" id="mtPhoto" accept="image/*" hidden><span id="mtPhotoTxt" class="row" style="gap:6px;align-items:center"></span></div>
       <div><button class="btn primary" type="submit" id="mtBtn">שלח דיווח</button></div>
     </form>
     <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">מפת הפנימייה</h2><span class="muted" id="mtStat" style="font-size:.88rem"></span></div><div class="fp-wrap" style="margin-top:10px"><div id="mtPlan" class="fp"></div></div><div class="bld"><div class="fl" id="mtMap" style="border-top:2px solid var(--line);border-radius:10px;margin-top:8px"></div></div><div class="muted" style="font-size:.8rem;margin-top:4px">לחיצה על חדר מסננת את התקלות שלו. אפשר לגלול את המפה הצידה.</div></div>
     <div class="mtabs" role="group" aria-label="סינון תקלות"><button type="button" data-act="mtF" data-f="open" aria-pressed="true">פתוחות</button><button type="button" data-act="mtF" data-f="prog" aria-pressed="false">בטיפול</button><button type="button" data-act="mtF" data-f="done" aria-pressed="false">תוקנו</button></div>
     <div id="mtList"></div>
+    <details class="panel" id="mtRepP"><summary><b>📄 דוח תחזוקה – הדפסה / PDF / Excel</b></summary>
+      <div style="display:grid;gap:10px;margin-top:10px">
+        <div class="grid2"><label style="display:grid;gap:4px">אילו תקלות<select id="mtRepW"><option value="open">פתוחות ובטיפול (כרגע)</option><option value="7">כל התקלות – 7 ימים אחרונים</option><option value="30" selected>כל התקלות – 30 ימים אחרונים</option><option value="m">החודש הנוכחי</option><option value="all">הכל</option></select></label>
+        <label style="display:grid;gap:4px">חדר / מקום<select id="mtRepR"><option value="">כל הפנימייה</option></select></label></div>
+        <label class="row" style="gap:6px"><input type="checkbox" id="mtRepPh" checked> לכלול תמונות בדוח המודפס</label>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="mtRepP">🖨 הדפסה / שמירה כ-PDF</button><button class="btn" type="button" data-act="mtRepX">📊 הורדה כ-Excel</button></div>
+      </div>
+    </details>
   </section>
 
   <!-- מרכז למידה -->
@@ -2041,6 +2049,9 @@ document.addEventListener('click',async e=>{
     case'nn':openNN(id);break;
     case'copyWelcome':try{await navigator.clipboard.writeText(S.lastWelcome||'');toast('ההודעה הועתקה')}catch{toast('לא הצלחתי להעתיק')}break;
     case'mtF':S.mtF=b.dataset.f;renderMt();break;
+    case'mtPhX':S.mtPhoto=null;mtPhotoShow();break;
+    case'mtRepP':mtReport('print');break;
+    case'mtRepX':mtReport('xlsx');break;
     case'mtSet':{const s=b.dataset.s,u={status:s};if(s==='prog'){u.progAt=Date.now();u.progBy=S.myName}if(s==='done'){u.doneAt=Date.now();u.doneBy=S.myName}if(s==='open'){u.doneAt=null}
       try{await OW(db.doc('maint/'+id).update(u));toast(s==='done'?'סומן כתוקן ✓':s==='prog'?'סומן בטיפול':'נפתח מחדש')}catch(e){fail(e)}break}
     case'mtCf':{const m=S.mt.find(x=>x.id===id);if(!m)break;const v=b.dataset.v;let why='';if(v==='no'){why=(prompt('מה עדיין לא תקין? (לא חובה)')||'').trim().slice(0,120)}
@@ -2845,11 +2856,27 @@ function renderMtOwn(){const el=$('mtOwnP');if(!el)return;const can=(S.owner||ha
   <div style="display:grid;gap:6px">${mtCats().map(c=>`<label class="row" style="justify-content:space-between;gap:8px"><span>${esc(c)}</span><select data-mtown="${esc(c)}" style="max-width:55%"><option value="">— ללא —</option>${L.map(([u,n])=>`<option value="${u}" ${O[c]?.u===u?'selected':''}>${esc(n)}</option>`).join('')}</select></label>`).join('')}</div>`;el.open=open}
 document.addEventListener('change',async e=>{const c=e.target.dataset?.mtown;if(c==null)return;const u=e.target.value,n=roStaffList().find(x=>x[0]===u)?.[1]||'';
   try{await db.doc('settings/app').set({mtOwners:{[c]:u?{u,n}:null}},{merge:true});toast(u?`${c}: ${n} אחראי`:`${c}: ללא אחראי`)}catch(err){fail(err)}});
+function mtRepList(){const w=$('mtRepW').value,rm=$('mtRepR').value,now=new Date();let L=S.mt.slice();
+  if(w==='open')L=L.filter(m=>mtS(m)!=='done');else if(w==='m'){const k=ymd(now).slice(0,7);L=L.filter(m=>ymd(new Date(m.at)).slice(0,7)===k||(m.doneAt&&ymd(new Date(m.doneAt)).slice(0,7)===k)||mtS(m)!=='done')}else if(w!=='all'){const t=Date.now()-(+w)*864e5;L=L.filter(m=>m.at>=t||(m.doneAt||0)>=t||mtS(m)!=='done')}
+  if(rm)L=L.filter(m=>m.room===rm);return L.sort((a,b)=>({open:0,prog:1,done:2}[mtS(a)]-{open:0,prog:1,done:2}[mtS(b)])||(b.urg||1)-(a.urg||1)||b.at-a.at)}
+function mtRepTitle(){const o=$('mtRepW').selectedOptions[0].text,r=$('mtRepR').value;return o+(r?' · '+$('mtRepR').selectedOptions[0].text:'')}
+async function mtReport(kind){const L=mtRepList();if(!L.length){toast('אין תקלות להצגה בטווח שבחרתם');return}const dt=t=>t?new Date(t).toLocaleDateString('he-IL',{day:'numeric',month:'numeric'})+' '+hm(t):'',per=m=>m.doneAt?dur(m.doneAt-m.at):'';
+  const C={open:0,prog:0,done:0};L.forEach(m=>C[mtS(m)]++);const byCat={};L.forEach(m=>{byCat[m.cat||'אחר']=(byCat[m.cat||'אחר']||0)+1});const fx=L.filter(m=>m.doneAt),avg=fx.length?dur(fx.reduce((a,m)=>a+(m.doneAt-m.at),0)/fx.length):'';
+  if(kind==='xlsx'){await xlsxLoad();const rows=[['תאריך דיווח','מיקום','סוג','דחיפות','תיאור','סטטוס','דיווח','אחראי','התחיל טיפול','תוקן','תוקן ע"י','זמן טיפול','אישור המדווח']];
+    L.forEach(m=>rows.push([dt(m.at),mtPlace(m),m.cat||'',URG[m.urg||1],m.desc||'',MT_ST[mtS(m)][0],m.byName||'',mtOwn(m.cat)?.n||'',dt(m.progAt),dt(m.doneAt),m.doneBy||'',per(m),mtOk(m)?'אושר':mtRej(m)?'לא תוקן לדבריו':m.status==='done'&&m.by&&m.by!=='student'?'ממתין':'']));
+    const sum=[['דוח תחזוקה',mtRepTitle()],['הופק',dt(Date.now())],[],['פתוחות',C.open],['בטיפול',C.prog],['תוקנו',C.done],['זמן טיפול ממוצע',avg],[],['לפי סוג','מספר'],...Object.entries(byCat).sort((a,b)=>b[1]-a[1])];
+    const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};XLSX.utils.book_append_sheet(wb,sheet(sum,[22,30]),'סיכום');XLSX.utils.book_append_sheet(wb,sheet(rows,[14,18,16,8,40,8,14,14,14,14,12,10,12]),'תקלות');XLSX.writeFile(wb,`דוח תחזוקה ${ymd(new Date())}.xlsx`);return}
+  const ph=$('mtRepPh').checked;
+  const body=`<h1>דוח תחזוקה</h1><div class="mut">${esc(mtRepTitle())} · הופק ${esc(dt(Date.now()))} ע"י ${esc(S.myName||'')}</div>
+   <p><b>${L.length}</b> תקלות: <b>${C.open}</b> פתוחות · <b>${C.prog}</b> בטיפול · <b>${C.done}</b> תוקנו${avg?` · זמן טיפול ממוצע: <b>${avg}</b>`:''}</p>
+   <p class="mut">לפי סוג: ${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>esc(k)+' '+v).join(' · ')}</p>
+   <table><thead><tr><th>#</th><th>דווח</th><th>מיקום</th><th>סוג</th><th>תיאור</th><th>דחיפות</th><th>סטטוס</th><th>טיפול</th>${ph?'<th>תמונה</th>':''}</tr></thead><tbody>${L.map((m,i)=>`<tr><td>${i+1}</td><td>${esc(dt(m.at))}<br><span class="mut">${esc(m.byName||'')}</span></td><td>${esc(mtPlace(m))}</td><td>${esc(m.cat||'')}</td><td>${esc(m.desc||'')}</td><td>${URG[m.urg||1]}</td><td><b>${MT_ST[mtS(m)][0]}</b>${mtRej(m)?'<br>(המדווח: לא תוקן)':mtOk(m)?'<br>✔ אושר':''}</td><td>${mtOwn(m.cat)?'אחראי: '+esc(mtOwn(m.cat).n)+'<br>':''}${m.doneAt?'תוקן '+esc(dt(m.doneAt))+(m.doneBy?' – '+esc(m.doneBy):'')+'<br>תוך '+esc(per(m)):m.progAt?'בטיפול מ-'+esc(dt(m.progAt)):''}</td>${ph?`<td>${m.photo?`<img src="${esc(m.photo)}" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:6px">`:''}</td>`:''}</tr>`).join('')}</tbody></table>`;
+  printHtml('דוח תחזוקה',body,['מנהל הפנימייה','אחראי תחזוקה'])}
 function mtPlace(m){return m.room==='common'?'שטח משותף':m.room==='other'?(m.place||'אחר'):(SVC.has(m.room)?SVC.get(m.room)+' ('+m.room+')':'חדר '+m.room)+(m.place?' · '+m.place:'')}
 function renderMt(){if(S.tab!=='maint')return;subFix();renderFixLink();if(!$('mtRoom').options.length)fillMtRooms();
   const cnt=k=>S.mt.filter(m=>mtS(m)===k).length;
   document.querySelectorAll('[data-act="mtF"]').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.f===S.mtF);b.textContent=MT_ST[b.dataset.f][0].replace('פתוחה','פתוחות').replace('תוקנה','תוקנו')+' '+cnt(b.dataset.f)});
-  renderMtMap();mtSeen();renderMtOwn();
+  renderMtMap();mtSeen();renderMtOwn();{const sel=$('mtRepR');if(sel&&sel.options.length<2)sel.innerHTML='<option value="">כל הפנימייה</option>'+mtRooms().map(([r,l])=>`<option value="${esc(r)}">${esc(l)}</option>`).join('')}
   {const W=mtWait();$('mtWaitP').innerHTML=W.length?`<div class="notice">✅ ${W.length===1?'תקלה שדיווחת סומנה כתוקנה':W.length+' תקלות שדיווחת סומנו כתוקנות'} – בדקו ואשרו בלשונית "תוקנו".</div>`:''}
   const L=S.mt.filter(m=>mtS(m)===S.mtF&&(!S.mtRm||m.room===S.mtRm)).sort((a,b)=>(b.urg||1)-(a.urg||1)||b.at-a.at);
   $('mtList').innerHTML=L.length?`<div class="list">`+L.map(m=>{const st=mtS(m);
@@ -2864,10 +2891,11 @@ function renderMt(){if(S.tab!=='maint')return;subFix();renderFixLink();if(!$('mt
       ${m.seen?`<span class="meta">👁 ראו: ${esc(Object.values(m.seen).map(x=>x.n).filter(Boolean).join(', '))} (${Object.keys(m.seen).length})</span>`:''}</div>
       <span class="row" style="gap:6px">${canMt()&&!S.ro?(st==='open'?`<button class="btn small" data-act="mtSet" data-id="${m.id}" data-s="prog">בטיפול</button><button class="btn small primary" data-act="mtSet" data-id="${m.id}" data-s="done">תוקן ✓</button>`:st==='prog'?`<button class="btn small primary" data-act="mtSet" data-id="${m.id}" data-s="done">תוקן ✓</button>`:`<button class="btn small" data-act="mtSet" data-id="${m.id}" data-s="open">פתח מחדש</button>`):`<span class="chip ${MT_ST[st][1]}">${MT_ST[st][0]}</span>`}${S.owner?`<button class="btn small" data-act="mtDel" data-id="${m.id}">מחק</button>`:''}</span></div>`}).join('')+`</div>`
     :`<div class="empty">${S.mtF==='open'?'אין תקלות פתוחות 👍':S.mtF==='prog'?'אין תקלות בטיפול.':'עוד אין תקלות שתוקנו.'}</div>`}
-$('mtPhoto').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{S.mtPhoto=await resizePhoto(f);$('mtPhotoTxt').textContent='✓ תמונה צורפה'}catch{toast('לא הצלחתי לקרוא את התמונה')}});
+function mtPhotoShow(){$('mtPhotoTxt').innerHTML=S.mtPhoto?`<img src="${esc(S.mtPhoto)}" alt="התמונה שצורפה" style="width:48px;height:48px;object-fit:cover;border-radius:8px"><button class="btn small" type="button" data-act="mtPhX">✕ הסר</button>`:''}
+['mtPhoto','mtCam'].forEach(i=>$(i).addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{S.mtPhoto=await resizePhoto(f);mtPhotoShow()}catch{toast('לא הצלחתי לקרוא את התמונה')}e.target.value=''}));
 $('mtForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const desc=$('mtDesc').value.trim();if(!desc)return;
   const d={room:$('mtRoom').value,place:$('mtPlace').value.trim(),cat:$('mtCat').value,urg:+$('mtUrg').value,desc,status:'open',at:Date.now(),by:S.me,byName:S.myName};if(S.mtPhoto)d.photo=S.mtPhoto;
-  $('mtBtn').disabled=true;try{await OW(db.collection('maint').add(d));$('mtDesc').value='';$('mtPlace').value='';$('mtPhoto').value='';S.mtPhoto=null;$('mtPhotoTxt').textContent='';toast('התקלה דווחה')}catch(err){fail(err)}$('mtBtn').disabled=false});
+  $('mtBtn').disabled=true;try{await OW(db.collection('maint').add(d));$('mtDesc').value='';$('mtPlace').value='';S.mtPhoto=null;mtPhotoShow();toast('התקלה דווחה')}catch(err){fail(err)}$('mtBtn').disabled=false});
 function goMaint(room){$('t-maint').click();fillMtRooms(room);$('mtCat').value='ריהוט ומיטות';$('mtDesc').focus();$('mtForm').scrollIntoView({behavior:'smooth'})}
 
 /* ---------- clubs (חוגים) ---------- */
@@ -3171,10 +3199,10 @@ async function fixPage(key){const v=document.createElement('main');v.id='paView'
     <label class="muted" style="display:grid;gap:4px">סוג התקלה<select id="fxCat">${cats.map(c=>`<option>${esc(c)}</option>`).join('')}</select></label>
     <label class="muted" style="display:grid;gap:4px">מה קרה?<textarea id="fxDesc" rows="3" maxlength="500" required></textarea></label>
     <label class="muted" style="display:grid;gap:4px">כמה דחוף?<select id="fxUrg"><option value="1">🔵 רגיל</option><option value="2">🟡 חשוב</option><option value="3">🔴 מסוכן – צריך טיפול מיידי</option></select></label>
-    <label class="btn" style="cursor:pointer;text-align:center">📷 צירוף תמונה (לא חובה)<input type="file" id="fxPhoto" accept="image/*" hidden></label><span id="fxPh" class="muted" style="font-size:.85rem;text-align:center"></span>
+    <div class="pa-btns"><label class="btn" style="cursor:pointer;text-align:center">📷 צילום<input type="file" id="fxCam" accept="image/*" capture="environment" hidden></label><label class="btn" style="cursor:pointer;text-align:center">🖼 מהגלריה<input type="file" id="fxPhoto" accept="image/*" hidden></label></div><span id="fxPh" class="muted" style="font-size:.85rem;text-align:center"></span>
     <div class="pa-btns"><button class="btn primary" type="button" id="fxSend">שלח דיווח</button></div>
     <span class="muted" style="font-size:.82rem;text-align:center">בתקלה מסוכנת (חשמל, מים, אש) – פנו מיד גם למדריך התורן.</span>`);
-    $('fxPhoto').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{photo=await resizePhoto(f);$('fxPh').textContent='✓ תמונה צורפה'}catch{$('fxPh').textContent='לא הצלחתי לקרוא את התמונה'}};
+    $('fxCam').onchange=$('fxPhoto').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{photo=await resizePhoto(f);$('fxPh').textContent='✓ תמונה צורפה'}catch{$('fxPh').textContent='לא הצלחתי לקרוא את התמונה'}};
     $('fxSend').onclick=async()=>{const name=$('fxName').value.trim().slice(0,40),desc=$('fxDesc').value.trim().slice(0,500);if(!name){$('fxName').focus();return}if(!desc){$('fxDesc').focus();return}
       const d={room:$('fxRoom').value,place:$('fxPlace').value.trim().slice(0,60),cat:$('fxCat').value,urg:+$('fxUrg').value,desc,status:'open',at:Date.now(),by:'student',byName:'תלמיד: '+name,src:'stu',key};if(photo&&photo.length<380000)d.photo=photo;
       $('fxSend').disabled=true;try{await db.collection('maint').add(d);box(`<h1 style="text-align:center">✓ תודה!</h1><p style="text-align:center">הדיווח התקבל והצוות יטפל בו.</p><div class="pa-btns"><button class="btn" type="button" id="fxMore">דיווח על תקלה נוספת</button></div>`);photo=null;$('fxMore').onclick=form}
