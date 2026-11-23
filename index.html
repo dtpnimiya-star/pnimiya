@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-23-75";
+const APP_VERSION = "2026-11-23-76";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -664,6 +664,7 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
 .fp .a rect{fill:none;stroke:#3f74c9;stroke-width:3}.fp .a.c rect{fill:var(--soft)}
 .fp text{fill:var(--ink);font:600 26px var(--f-body);text-anchor:middle;pointer-events:none}.fp text.s{font-size:19px;fill:var(--muted)}
 .fp .dot circle{fill:var(--bad)}.fp .dot text{fill:#fff;font-size:22px}
+#tab-bud .bdbar{height:8px;border-radius:999px;background:var(--soft);overflow:hidden;margin-top:6px}#tab-bud .bdbar i{display:block;height:100%;border-radius:999px}
 #mtForm.editing{outline:3px solid var(--accent);outline-offset:2px}
 </style>
 </head>
@@ -720,6 +721,7 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
     <button type="button" id="t-pw" data-tab="pw" data-perm="personal" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8 11h8M8 14h5"/></svg><span class="lbl">עדכון שבועי להורים</span></button>
     <button type="button" id="t-meet" data-tab="meet" data-perm="mgr" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20c0-3 3-5 6-5s6 2 6 5M12 20c0-3 2-5 4-5s6 2 6 5"/></svg><span class="lbl">ישיבת צוות</span></button>
     <button type="button" id="t-drill" data-tab="drill" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg><span class="lbl">תרגילי חירום</span></button>
+    <button type="button" id="t-bud" data-tab="bud" data-perm="bud" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2M7 6V4h10v2"/></svg><span class="lbl">תקציב</span></button>
     <button type="button" id="t-beds" data-tab="beds" data-perm="stu" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7M3 14h18M3 18v2M21 18v2"/><rect x="6" y="6" width="5" height="3" rx="1"/></svg><span class="lbl">חדרים ומיטות</span></button>
     <button type="button" id="t-cal" data-tab="cal" data-perm="any" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg><span class="lbl">לוח שנה</span></button>
     <button type="button" id="t-rooms" data-tab="rooms" data-perm="rooms" aria-selected="false" hidden><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17"/><path d="M2 21h20M12 12h.01M16 7h3a1 1 0 0 1 1 1v13"/></svg><span class="lbl">בדיקת חדרים</span></button>
@@ -967,6 +969,21 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
     <div class="panel"><h2>5. לוגיסטיקה לשבוע הבא <small class="muted">· 5 דק׳</small></h2><div id="mtLog"></div></div>
     <div class="panel"><h2>6. סיכום <small class="muted">· 5 דק׳</small></h2><div id="mtSum"></div></div>
     <datalist id="mtWho"></datalist>
+  </section>
+  <section id="tab-bud" hidden style="display:grid;gap:14px">
+    <div id="bdTop"></div>
+    <div class="panel" id="bdPend" hidden></div>
+    <form class="panel" id="bdForm" style="display:grid;gap:8px" autocomplete="off">
+      <h2 id="bdFormT">🧾 רישום הוצאה</h2>
+      <div class="seg" id="bdKind" hidden><button type="button" data-act="bdK" data-k="out" aria-pressed="true">הוצאה</button><button type="button" data-act="bdK" data-k="in" aria-pressed="false">הפקדה לקופה הקטנה</button></div>
+      <div class="grid2"><label>סכום (₪)<input id="bdAmt" type="number" min="0" step="0.01" inputmode="decimal" required></label><label>תאריך<input id="bdDate" type="date" required></label></div>
+      <div class="grid2"><label id="bdCatL">סעיף<select id="bdCat"></select></label><label id="bdBoxL" hidden>שולם מ<select id="bdBox"><option value="petty">הקופה הקטנה</option><option value="main">תקציב (ישירות)</option></select></label></div>
+      <input id="bdDesc" placeholder="על מה? למשל: כיבוד לערב כיתה י, ספק ___">
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center" id="bdPhRow"><label class="btn small" for="bdCam">📷 צילום קבלה</label><input type="file" id="bdCam" accept="image/*" capture="environment" hidden><label class="btn small" for="bdPh">🖼 מהגלריה</label><input type="file" id="bdPh" accept="image/*" hidden><span id="bdPhT" class="row" style="gap:6px;align-items:center"></span></div>
+      <div class="row"><button class="btn primary" type="submit" id="bdBtn">שמירה</button></div>
+    </form>
+    <div class="panel" id="bdCats" hidden></div>
+    <div class="panel" id="bdList"></div>
   </section>
   <section id="tab-drill" hidden style="display:grid;gap:14px">
     <div class="panel" id="drNow"></div>
@@ -1846,10 +1863,10 @@ document.addEventListener('change',async e=>{
 });
 
 /* ---------- staff & permissions ---------- */
-const PERMS=[['count','נוכחות ערב'],['morning','השכמת בוקר'],['out','יציאות וחזרות'],['notes','הערות על תלמידים'],['students','ניהול רשימת התלמידים'],['personal','צפייה בפרטים אישיים ואנשי קשר'],['reports','הפקת דוחות'],['mgr','לוח מנהל והתראות התנהגות'],['rooms','בדיקת חדרים'],['maint','טיפול בתקלות תחזוקה'],['learn','מרכז למידה']];
+const PERMS=[['count','נוכחות ערב'],['morning','השכמת בוקר'],['out','יציאות וחזרות'],['notes','הערות על תלמידים'],['students','ניהול רשימת התלמידים'],['personal','צפייה בפרטים אישיים ואנשי קשר'],['reports','הפקת דוחות'],['mgr','לוח מנהל והתראות התנהגות'],['rooms','בדיקת חדרים'],['maint','טיפול בתקלות תחזוקה'],['learn','מרכז למידה'],['petty','קופה קטנה – רישום הוצאות'],['budget','ניהול התקציב המלא']];
 const ROLES={'עו"ס':['notes','personal','reports','mgr','learn'],'מדריך':['count','morning','out','notes','personal','rooms','learn'],'רכז':['count','morning','out','notes','students','personal','reports','rooms','maint','learn'],'סגן מנהל':['count','morning','out','notes','students','personal','reports','mgr','rooms','maint','learn'],'איש תחזוקה':['maint','rooms']};
 const presetPerms=r=>Object.fromEntries(PERMS.map(([k])=>[k,(ROLES[r]||[]).includes(k)]));
-function has(p){if(p==='any')return true;if(p==='owner')return !!S.owner;if(p==='stu')return has('notes')||has('students');return !!(S.perm&&S.perm[p])}
+function has(p){if(p==='any')return true;if(p==='owner')return !!S.owner;if(p==='stu')return has('notes')||has('students');if(p==='bud')return has('budget')||has('petty');return !!(S.perm&&S.perm[p])}
 function menu(open){if(open&&document.body.classList.contains('desk'))return;S.menuOpen=open;const d=$('drawer');d.classList.toggle('open',open);d.setAttribute('aria-hidden',String(!open));$('drawerBg').hidden=!open;
   $('menuBtn').setAttribute('aria-expanded',String(open));document.body.style.overflow=open?'hidden':'';
   if(open){($('drawer').querySelector('[aria-selected="true"]:not([hidden])')||$('drawer').querySelector('.drawer-list button:not([hidden])'))?.focus()}else $('menuBtn').focus({preventScroll:true})}
@@ -1861,7 +1878,7 @@ function applyPerms(){
   $('topSum').hidden=!ok;
   const na=$('noAccess');na.hidden=ok;
   if(!ok){
-    ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','clubs','shab','act','lights','roster','beds','meet','drill','pw','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
+    ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','clubs','shab','act','lights','roster','beds','meet','drill','bud','pw','rep','staff'].forEach(t=>$('tab-'+t).hidden=true);
     const m={removed:['אין לך גישה','החשבון הזה לא רשום כאיש צוות. פנו למנהל הפנימייה.'],
       disabled:['הגישה שלך הושבתה','מנהל הפנימייה השבית את הגישה שלך. לפרטים, פנו אליו.'],
       none:['אין לך עדיין הרשאות','מנהל הפנימייה עוד לא הגדיר מה מותר לך לעשות. פנו אליו.'],
@@ -1900,7 +1917,7 @@ document.addEventListener('change',async e=>{
     else if(el.dataset.sact==='perm'){const s=S.staff.find(x=>x.id===id);const perms={...(s?.perms||{}),[el.dataset.k]:el.checked};await db.doc('staff/'+id).update({perms});toast('ההרשאות עודכנו')}
   }catch(err){fail(err)}
 });
-function renderAll(){netState();renderBeds();renderEm();renderDrill();renderRoster();renderAc();renderLights();renderIns();renderMt();renderLearn();renderShab();renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes();renderSched();renderHome()}
+function renderAll(){netState();renderBeds();renderEm();renderDrill();renderBud();renderRoster();renderAc();renderLights();renderIns();renderMt();renderLearn();renderShab();renderTop();renderBreakdown();renderCount();renderMorn();renderOut();renderStudents();renderSheet();renderMgr();renderStaff();renderRep();renderCalNotes();renderSched();renderHome()}
 
 /* ---------- sheet ---------- */
 function setRoomSel(sel,v){if(v&&![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.textContent=v;sel.appendChild(o)}sel.value=v}
@@ -2045,7 +2062,7 @@ document.addEventListener('click',async e=>{
   if(e.target===$('nnBg')){closeNN();return}
   if(!b)return;
   if(b.dataset.tab){S.tab=b.dataset.tab;document.body.dataset.page=S.tab;document.querySelectorAll('.drawer-list button').forEach(x=>{x.setAttribute('aria-selected',x===b);if(x===b)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});$('pageTitle').textContent=b.querySelector('.lbl').textContent;if(S.menuOpen)menu(false);
-    ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','clubs','shab','act','lights','roster','beds','meet','drill','pw','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='beds')renderBeds();if(S.tab==='out')renderGst(true);if(S.tab==='meet')renderMeet();if(S.tab==='drill')renderDrill();if(S.tab==='pw')renderPW();if(S.tab==='roster')renderRoster();if(S.tab==='lights')renderLights();if(S.tab==='act'){subAc();renderAc()}if(S.tab==='home')renderHome();if(S.tab==='rooms')subIns();if(S.tab==='maint'){subMt();renderMt()}if(S.tab==='learn'){subLn();renderLearn()}if(S.tab==='clubs'){subCl();if(has('learn')||has('count'))subLn();renderClubs(true)}if(S.tab==='shab'){subShab();renderShab()}if(S.tab==='staff')loadAudit();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
+    ['home','count','morn','out','stu','mgr','sched','cal','rooms','maint','learn','clubs','shab','act','lights','roster','beds','meet','drill','bud','pw','rep','staff'].forEach(t=>$('tab-'+t).hidden=S.tab!==t);if(S.tab==='beds')renderBeds();if(S.tab==='out')renderGst(true);if(S.tab==='meet')renderMeet();if(S.tab==='drill')renderDrill();if(S.tab==='bud')renderBud();if(S.tab==='pw')renderPW();if(S.tab==='roster')renderRoster();if(S.tab==='lights')renderLights();if(S.tab==='act'){subAc();renderAc()}if(S.tab==='home')renderHome();if(S.tab==='rooms')subIns();if(S.tab==='maint'){subMt();renderMt()}if(S.tab==='learn'){subLn();renderLearn()}if(S.tab==='clubs'){subCl();if(has('learn')||has('count'))subLn();renderClubs(true)}if(S.tab==='shab'){subShab();renderShab()}if(S.tab==='staff')loadAudit();if(S.tab==='sched')renderSched();if(S.tab==='cal')renderCal();if(S.tab==='rep')renderRep();if(S.tab==='morn')renderMorn();if(S.tab==='mgr'){$('liveAlert').hidden=true;renderMgr()}if(S.tab==='staff')renderStaff();
     try{localStorage.setItem('pn-tab',S.tab)}catch{}navMerge();renderBnav();dgrpSync();window.scrollTo(0,0);return}
   if(b.dataset.act==='grade'){S.grade=S.grade===b.dataset.g?'':b.dataset.g;try{localStorage.setItem('pn-grade',S.grade)}catch{}renderAll();return}
   if(!db&&!['close','open','nnClose','nnCat','absLen','onlyOpen','onlyOpenM','mtab','insSel','theme','bigText','go','menuOpen','bRead','bShowAll','mtF','mtImg','lnT','lnGrade','lnClr','shNew','shCancel'].includes(b.dataset.act))return;
@@ -2227,6 +2244,17 @@ document.addEventListener('click',async e=>{
     case'emMark':{const E=S.em;if(!E)break;const id=b.dataset.id,v=E.marks?.[id]?.s===b.dataset.v?firebase.firestore.FieldValue.delete():{s:b.dataset.v,at:Date.now(),by:S.me,n:S.myName||''};buzz();try{await OW(db.doc('emergency/'+E.id).update({['marks.'+id]:v}))}catch(e){fail(e)}break}
     case'emF':S.emF=b.dataset.f||'';renderEm();break;
     case'drStart':drStart(b);break;
+    case'bdK':S.bdK=b.dataset.k;bdFormSync();break;
+    case'bdPhX':S.bdPh=null;bdPhShow();break;
+    case'bdImg':{const x=(S.exp||[]).find(y=>y.id===id);if(!x?.photo)break;const v=document.createElement('div');v.className='imgview';v.innerHTML=`<img src="${esc(x.photo)}" alt="">`;v.onclick=()=>v.remove();document.body.appendChild(v);break}
+    case'bdOk':case'bdRej':{let why='';if(b.dataset.act==='bdRej'){why=prompt('למה לא מאושר? (לא חובה)','');if(why===null)break}try{await OW(db.doc('settings/budget').set({appr:{[id]:{st:b.dataset.act==='bdOk'?'ok':'rej',why:why||'',at:Date.now(),by:S.myName||''}}},{merge:true}));toast(b.dataset.act==='bdOk'?'אושר':'סומן כלא מאושר')}catch(e){fail(e)}break}
+    case'bdDel':if(armed(b,'בטוח? למחוק')){try{await OW(db.doc('shiftlog/'+id).delete());toast('נמחק')}catch(e){fail(e)}}break;
+    case'bdCatE':S.bdCatE=!S.bdCatE;renderBud();break;
+    case'bdCatAdd':{const c=bdCats();c['c'+Date.now().toString(36)]={n:'סעיף חדש',amt:0};S.bdDraft=c;renderBud();break}
+    case'bdCatSave':bdCatSave();break;
+    case'bdCatDef':{const c={};BD_DEF.forEach((n,i)=>c['c'+i]={n,amt:0});S.bdDraft=c;S.bdCatE=true;renderBud();break}
+    case'bdPr':bdReport('print');break;
+    case'bdXls':bdReport('xlsx');break;
     case'drOpen':renderEm();break;
     case'drAdd':drAdd();break;
     case'drNew':S.drNew=S.drNew?0:1;renderDrill();break;
@@ -3542,7 +3570,7 @@ document.addEventListener('change',e=>{const id=e.target.dataset?.hmc;if(!id)ret
 {const m=$('hmMore');try{if(localStorage.getItem('pn-more')==='1')m.open=true}catch{}m.addEventListener('toggle',()=>{try{localStorage.setItem('pn-more',m.open?'1':'0')}catch{}})}
 applyHm();
 /* ---------- grouped side menu ---------- */
-const DGRP=[['main','',['home','count','lights','morn','out','stu']],['kids','תלמידים והורים',['pw','beds','rooms','learn','clubs','act','shab']],['plan','תכנון',['cal','sched','roster','maint','drill']],['admin','ניהול',['mgr','meet','rep','staff']]];
+const DGRP=[['main','',['home','count','lights','morn','out','stu']],['kids','תלמידים והורים',['pw','beds','rooms','learn','clubs','act','shab']],['plan','תכנון',['cal','sched','roster','maint','drill']],['admin','ניהול',['mgr','meet','rep','bud','staff']]];
 (function(){const list=document.querySelector('.drawer-list');if(!list)return;let closed=new Set(['plan']);try{const v=localStorage.getItem('pn-dgrp');if(v)closed=new Set(JSON.parse(v))}catch{}
   DGRP.forEach(([k,l,tabs])=>{const g=document.createElement('div');g.className='dgrp'+(closed.has(k)?' closed':'');g.dataset.g=k;
     g.innerHTML=(l?`<div class="dgrp-h" role="button" tabindex="0" aria-expanded="${!closed.has(k)}"><span>${l}</span><span class="ch" aria-hidden="true">▾</span></div>`:'')+'<div class="dgrp-b"></div>';
@@ -3603,6 +3631,80 @@ addEventListener('resize',()=>{if($('tourCard'))tourStep()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('tourCard'))tourEnd();if(!$('calBg').hidden){$('calBg').hidden=true;S.calEd=null}}});
 /* ---------- emergency headcount ---------- */
 S.em=null;
+/* budget: settings/budget {y:{<year>:{cats:{id:{n,amt}}}},appr:{expId:{st,why,at,by}},warn}; expenses in shiftlog k:'exp' {kind:'out'|'in',box:'petty'|'main',amt,cat,date,desc,photo,auto} */
+const BD_DEF=['פעילויות וטיולים','כיבוד ואוכל','שבתות','ציוד ומיטות','תחזוקה ותיקונים','ניקיון','פרסים וחיזוקים','שונות'];
+const bdMoney=n=>'₪'+(Math.round((+n||0)*100)/100).toLocaleString('he-IL');
+const bdYr=()=>{const d=new Date();return d.getMonth()>=8?d.getFullYear():d.getFullYear()-1};
+const bdYear=y=>[y+'-09-01',(y+1)+'-08-31'];
+function bdCats(y){y=y??(S.bdY||bdYr());const Y=S.bud?.y||{};if(Y[y]?.cats)return JSON.parse(JSON.stringify(Y[y].cats));const p=Y[y-1]?.cats;return p?Object.fromEntries(Object.entries(p).map(([k,v])=>[k,{n:v.n,amt:v.amt}])):{}}
+const bdSt=x=>x.kind==='in'||x.box==='main'||x.auto?'ok':S.bud?.appr?.[x.id]?.st||'pend';
+const BD_ST={ok:['מאושר','ok'],pend:['ממתין לאישור','warn'],rej:['לא מאושר','bad']};
+function bdPhShow(){const t=$('bdPhT');if(t)t.innerHTML=S.bdPh?`<img src="${esc(S.bdPh)}" alt="הקבלה" style="width:48px;height:48px;object-fit:cover;border-radius:8px"><button class="btn small" type="button" data-act="bdPhX">✕ הסר</button>`:''}
+function bdShrink(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{const M=1100,r=Math.min(1,M/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);let q=.62,d=c.toDataURL('image/jpeg',q);while(d.length>500000&&q>.3){q-=.1;d=c.toDataURL('image/jpeg',q)}res(d)};img.onerror=rej;img.src=url})}
+function bdFormSync(){const full=has('budget'),k=full?(S.bdK||'out'):'out';$('bdKind').hidden=!full;$('bdKind').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.k===k)));
+  $('bdBoxL').hidden=!full||k==='in';$('bdCatL').hidden=k==='in';$('bdPhRow').hidden=k==='in';$('bdFormT').textContent=k==='in'?'💰 הפקדה לקופה הקטנה':'🧾 רישום הוצאה';
+  if(!has('petty')&&full&&$('bdBox').value==='petty'&&!S.bdBoxSet){$('bdBox').value='main'}}
+function bdStats(y){const [a,b]=bdYear(y),L=(S.exp||[]).filter(x=>x.date>=a&&x.date<=b),C=bdCats(y),out=L.filter(x=>x.kind!=='in'&&bdSt(x)!=='rej');
+  const by={};out.forEach(x=>{const k=C[x.cat]?x.cat:'_';by[k]=by[k]||{ok:0,pend:0};by[k][bdSt(x)]+=+x.amt||0});
+  const tot=Object.values(C).reduce((s,c)=>s+(+c.amt||0),0),spent=out.filter(x=>bdSt(x)==='ok').reduce((s,x)=>s+(+x.amt||0),0),pend=out.filter(x=>bdSt(x)==='pend').reduce((s,x)=>s+(+x.amt||0),0);
+  const all=S.exp||[],pin=all.filter(x=>x.kind==='in').reduce((s,x)=>s+(+x.amt||0),0),pout=all.filter(x=>x.kind!=='in'&&x.box==='petty'&&bdSt(x)!=='rej').reduce((s,x)=>s+(+x.amt||0),0);
+  return {L,C,by,tot,spent,pend,petty:pin-pout,pin,pout}}
+const bdPct=(u,a)=>a?Math.round(u/a*100):0;
+function renderBud(){if(S.tab!=='bud'||!$('bdTop'))return;const full=has('budget'),y=S.bdY||bdYr(),st=bdStats(y),warn=S.bud?.warn||80;
+  if(!$('bdDate').value)$('bdDate').value=ymd(new Date());
+  const cs=$('bdCat'),cv=cs.value,ents=Object.entries(st.C);cs.innerHTML=(ents.length?ents.map(([k,c])=>`<option value="${k}">${esc(c.n)}</option>`).join(''):'')+'<option value="_">אחר / לא משויך</option>';if(cv&&[...cs.options].some(o=>o.value===cv))cs.value=cv;
+  bdFormSync();
+  const ys=[...new Set([bdYr(),...Object.keys(S.bud?.y||{}).map(Number)])].sort((a,b)=>b-a),ysel=`<select id="bdYsel" style="width:auto">${ys.map(v=>`<option value="${v}"${v===y?' selected':''}>שנת לימודים ${v}–${String(v+1).slice(2)}</option>`).join('')}</select>`;
+  $('bdTop').innerHTML=full?`<div class="panel"><div class="row" style="justify-content:space-between;gap:8px"><h2>💼 תקציב הפנימייה</h2>${ysel}</div>
+    ${st.tot?`<div class="cnt"><span class="pill">תקציב ${bdMoney(st.tot)}</span><span class="pill ${st.spent+st.pend>st.tot?'bad':''}">נוצל ${bdMoney(st.spent)} (${bdPct(st.spent,st.tot)}%)</span>${st.pend?`<span class="pill ap">ממתין לאישור ${bdMoney(st.pend)}</span>`:''}<span class="pill ok">נשאר ${bdMoney(st.tot-st.spent-st.pend)}</span></div><div class="bdbar" role="img" aria-label="ניצול התקציב"><i style="width:${Math.min(100,bdPct(st.spent+st.pend,st.tot))}%;background:${bdPct(st.spent+st.pend,st.tot)>=100?'var(--bad)':bdPct(st.spent+st.pend,st.tot)>=warn?'var(--warn)':'var(--ok)'}"></i></div>`:`<span class="muted">עוד לא הוגדרו סכומים לסעיפים של השנה.</span> <button class="btn small" type="button" data-act="${ents.length?'bdCatE':'bdCatDef'}">הגדרת סעיפי התקציב</button>`}
+    <div class="row" style="justify-content:space-between;margin-top:8px"><span>👛 <b>קופה קטנה:</b> יתרה ${bdMoney(st.petty)} <span class="muted">(הופקדו ${bdMoney(st.pin)} · יצאו ${bdMoney(st.pout)})</span></span></div></div>`
+   :`<div class="panel"><h2>👛 קופה קטנה</h2><div class="cnt"><span class="pill ${st.petty<0?'bad':'ok'}">יתרה בקופה ${bdMoney(st.petty)}</span></div><span class="muted" style="font-size:.88rem">רושמים כל הוצאה עם צילום קבלה. מנהל הפנימייה מאשר.</span></div>`;
+  const ysl=$('bdYsel');if(ysl)ysl.onchange=()=>{S.bdY=+ysl.value;S.bdDraft=null;renderBud()};
+  const P=(S.exp||[]).filter(x=>x.kind!=='in'&&bdSt(x)==='pend').sort((a,b)=>a.at-b.at);$('bdPend').hidden=!full||!P.length;
+  if(full&&P.length)$('bdPend').innerHTML=`<h2>⏳ ממתין לאישור שלך (${P.length})</h2><div class="list">${P.map(x=>bdRow(x,true)).join('')}</div>`;
+  $('bdCats').hidden=!full;if(full){const C=S.bdDraft||st.C,E=S.bdCatE;
+    $('bdCats').innerHTML=`<div class="row" style="justify-content:space-between"><h2>📊 סעיפי התקציב</h2><button class="btn small" type="button" data-act="${Object.keys(st.C).length||E?'bdCatE':'bdCatDef'}">${E?'ביטול':'✏️ עריכת סעיפים וסכומים'}</button></div>
+     ${E?`<div style="display:grid;gap:6px">${Object.entries(C).map(([k,c])=>`<div class="row" style="gap:6px"><input data-bc="${k}" data-f="n" value="${esc(c.n)}" style="flex:2"><input data-bc="${k}" data-f="amt" type="number" min="0" inputmode="numeric" value="${+c.amt||0}" style="flex:1" aria-label="סכום"></div>`).join('')}
+       <span class="muted" style="font-size:.85rem">למחיקת סעיף – רוקנים את השם.</span><label class="row" style="gap:6px">התראה כשסעיף מגיע ל-<input id="bdWarn" type="number" min="50" max="100" value="${warn}" style="width:70px">%</label>
+       <div class="row" style="gap:6px"><button class="btn small" type="button" data-act="bdCatAdd">+ סעיף</button><button class="btn small primary" type="button" data-act="bdCatSave">שמירה</button></div></div>`
+     :Object.keys(st.C).length?`<div class="list">${Object.entries(st.C).map(([k,c])=>{const u=st.by[k]||{ok:0,pend:0},a=+c.amt||0,p=bdPct(u.ok+u.pend,a);
+        return `<div class="item" style="flex-wrap:wrap"><span class="name" style="flex:1">${esc(c.n)}<span class="meta">${bdMoney(u.ok)}${u.pend?' + '+bdMoney(u.pend)+' ממתין':''} מתוך ${bdMoney(a)} · נשאר ${bdMoney(a-u.ok-u.pend)}</span></span>${a?`<span class="chip ${p>=100?'bad':p>=warn?'warn':'ok'}">${p}%${p>=100?' חריגה':p>=warn?' שים לב':''}</span>`:''}<div class="bdbar" style="flex-basis:100%"><i style="width:${Math.min(100,p)}%;background:${p>=100?'var(--bad)':p>=warn?'var(--warn)':'var(--ok)'}"></i></div></div>`}).join('')}${st.by._?`<div class="item"><span class="name" style="flex:1">אחר / לא משויך<span class="meta">${bdMoney(st.by._.ok+st.by._.pend)}</span></span></div>`:''}</div>`:''}`}
+  const f=S.bdF||'',m=S.bdM||'',L=(full?st.L:st.L.filter(x=>x.by===S.me||x.kind==='in')).filter(x=>!f||(f==='in'?x.kind==='in':x.cat===f&&x.kind!=='in')).filter(x=>!m||x.date.slice(0,7)===m).sort((a,b)=>(b.date+b.at).localeCompare(a.date+a.at));
+  const months=[...new Set(st.L.map(x=>x.date.slice(0,7)))].sort().reverse();
+  $('bdList').innerHTML=`<div class="row" style="justify-content:space-between;gap:6px;flex-wrap:wrap"><h2>${full?'📋 כל התנועות':'📋 ההוצאות שלי'}</h2>${full?`<span class="row" style="gap:6px"><button class="btn small" type="button" data-act="bdPr">🖨 דוח</button><button class="btn small" type="button" data-act="bdXls">⬇ Excel</button></span>`:''}</div>
+   <div class="row" style="gap:6px;flex-wrap:wrap"><select id="bdFm" style="width:auto"><option value="">כל החודשים</option>${months.map(k=>`<option value="${k}"${k===m?' selected':''}>${k.slice(5)}/${k.slice(0,4)}</option>`).join('')}</select>${full?`<select id="bdFc" style="width:auto"><option value="">כל הסעיפים</option>${Object.entries(st.C).map(([k,c])=>`<option value="${k}"${k===f?' selected':''}>${esc(c.n)}</option>`).join('')}<option value="in"${f==='in'?' selected':''}>הפקדות לקופה</option></select>`:''}${L.length?`<span class="muted">${L.length} תנועות · ${bdMoney(L.filter(x=>x.kind!=='in'&&bdSt(x)!=='rej').reduce((s,x)=>s+(+x.amt||0),0))}</span>`:''}</div>
+   ${L.length?`<div class="list">${L.map(x=>bdRow(x,false)).join('')}</div>`:'<span class="muted">אין תנועות להצגה.</span>'}`;
+  const fm=$('bdFm');fm.onchange=()=>{S.bdM=fm.value;renderBud()};const fc=$('bdFc');if(fc)fc.onchange=()=>{S.bdF=fc.value;renderBud()}}
+function bdRow(x,ap){const C=bdCats(),st=bdSt(x),a=S.bud?.appr?.[x.id],full=has('budget'),own=x.by===S.me;
+  return `<div class="item" style="align-items:flex-start;flex-wrap:wrap">${x.photo?`<img src="${esc(x.photo)}" alt="קבלה" data-act="bdImg" data-id="${x.id}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;cursor:zoom-in">`:''}
+   <span class="name" style="flex:1;min-width:150px">${x.kind==='in'?'💰 הפקדה לקופה':esc(C[x.cat]?.n||'אחר')} · <b>${bdMoney(x.amt)}</b><span class="meta">${esc(fmtShort(x.date))}${x.desc?' · '+esc(x.desc):''} · ${esc(x.byName||'')}${x.kind!=='in'?' · '+(x.box==='main'?'תקציב':'קופה קטנה'):''}${!x.photo&&x.kind!=='in'?' · אין קבלה':''}${st==='rej'&&a?.why?' · '+esc(a.why):''}</span></span>
+   <span class="row" style="gap:6px">${x.kind!=='in'?`<span class="chip ${BD_ST[st][1]}">${BD_ST[st][0]}</span>`:''}${full&&ap&&!S.ro?`<button class="btn small primary" type="button" data-act="bdOk" data-id="${x.id}">✓ אשר</button><button class="btn small" type="button" data-act="bdRej" data-id="${x.id}">✗ לא מאשר</button>`:''}${!ap&&!S.ro&&(S.owner||(own&&st==='pend'))?`<button class="btn small" type="button" data-act="bdDel" data-id="${x.id}">מחק</button>`:''}</span></div>`}
+async function bdCatSave(){const C=S.bdDraft||bdCats();document.querySelectorAll('[data-bc]').forEach(i=>{const k=i.dataset.bc;if(!C[k])C[k]={n:'',amt:0};C[k][i.dataset.f]=i.dataset.f==='amt'?(+i.value||0):i.value.trim()});
+  Object.keys(C).forEach(k=>{if(!C[k].n)delete C[k]});const y=S.bdY||bdYr(),w=+($('bdWarn')?.value)||80;
+  try{await OW(db.doc('settings/budget').set({y:{[y]:{cats:C}},warn:w},{merge:true}));
+    const cur=S.bud?.y?.[y]?.cats||{},gone=Object.keys(cur).filter(k=>!C[k]);if(gone.length)await OW(db.doc('settings/budget').update(Object.fromEntries(gone.map(k=>['y.'+y+'.cats.'+k,firebase.firestore.FieldValue.delete()]))));
+    S.bdCatE=false;S.bdDraft=null;toast('סעיפי התקציב נשמרו');renderBud()}catch(e){fail(e)}}
+function bdReport(kind){const y=S.bdY||bdYr(),st=bdStats(y),m=S.bdM||'',L=st.L.filter(x=>!m||x.date.slice(0,7)===m).sort((a,b)=>(a.date+a.at).localeCompare(b.date+b.at)),C=st.C,per=m?`חודש ${m.slice(5)}/${m.slice(0,4)}`:`שנת לימודים ${y}–${y+1}`;
+  const cat=x=>x.kind==='in'?'הפקדה לקופה':C[x.cat]?.n||'אחר';
+  if(kind==='xlsx'){xlsxLoad().then(()=>{const sum=[['סעיף','תקציב שנתי','נוצל','ממתין לאישור','נשאר','% ניצול'],...Object.entries(C).map(([k,c])=>{const u=st.by[k]||{ok:0,pend:0};return [c.n,+c.amt||0,u.ok,u.pend,(+c.amt||0)-u.ok-u.pend,bdPct(u.ok+u.pend,+c.amt||0)]}),['סה"כ',st.tot,st.spent,st.pend,st.tot-st.spent-st.pend,bdPct(st.spent+st.pend,st.tot)],[],['קופה קטנה – יתרה',st.petty]];
+      const rows=[['תאריך','סוג','סעיף','סכום','תיאור','שולם מ','נרשם ע"י','סטטוס','קבלה']];L.forEach(x=>rows.push([x.date,x.kind==='in'?'הפקדה':'הוצאה',cat(x),+x.amt||0,x.desc||'',x.kind==='in'?'':x.box==='main'?'תקציב':'קופה קטנה',x.byName||'',x.kind==='in'?'':BD_ST[bdSt(x)][0],x.photo?'יש':'אין']));
+      const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};XLSX.utils.book_append_sheet(wb,sheet(sum,[22,12,12,12,12,9]),'לפי סעיפים');XLSX.utils.book_append_sheet(wb,sheet(rows,[11,8,18,10,34,11,14,12,7]),'תנועות');XLSX.writeFile(wb,`תקציב פנימייה ${m||y} .xlsx`.replace(' .','.'))});return}
+  const out=L.filter(x=>x.kind!=='in'&&bdSt(x)!=='rej'),byM={};out.forEach(x=>{const k=C[x.cat]?x.cat:'_';byM[k]=(byM[k]||0)+(+x.amt||0)});
+  const body=`<h1>דוח תקציב הפנימייה</h1><div class="mut">${esc(per)} · הופק ${esc(when(Date.now()))} ע"י ${esc(S.myName||'')}</div>
+   <p>תקציב שנתי <b>${bdMoney(st.tot)}</b> · נוצל <b>${bdMoney(st.spent)}</b>${st.pend?` · ממתין לאישור ${bdMoney(st.pend)}`:''} · נשאר <b>${bdMoney(st.tot-st.spent-st.pend)}</b> · קופה קטנה: יתרה ${bdMoney(st.petty)}</p>
+   <table><thead><tr><th>סעיף</th><th>תקציב שנתי</th><th>${m?'הוצאות בחודש':'נוצל השנה'}</th><th>נשאר לשנה</th><th>%</th></tr></thead><tbody>${Object.entries(C).map(([k,c])=>{const u=st.by[k]||{ok:0,pend:0};return `<tr><td>${esc(c.n)}</td><td>${bdMoney(c.amt)}</td><td>${bdMoney(m?(byM[k]||0):u.ok+u.pend)}</td><td>${bdMoney((+c.amt||0)-u.ok-u.pend)}</td><td>${bdPct(u.ok+u.pend,+c.amt||0)}%</td></tr>`}).join('')}</tbody></table>
+   <h2>תנועות (${L.length})</h2><table><thead><tr><th>תאריך</th><th>סעיף</th><th>סכום</th><th>תיאור</th><th>נרשם ע"י</th><th>סטטוס</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(fmtShort(x.date))}</td><td>${esc(cat(x))}</td><td>${bdMoney(x.amt)}</td><td>${esc(x.desc||'')}</td><td>${esc(x.byName||'')}</td><td>${x.kind==='in'?'':BD_ST[bdSt(x)][0]}</td></tr>`).join('')}</tbody></table>`;
+  printHtml('דוח תקציב',body,['מנהל הפנימייה','הנהלת חשבונות'])}
+['bdCam','bdPh'].forEach(i=>$(i).addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{S.bdPh=await bdShrink(f);bdPhShow()}catch{toast('לא הצלחתי לקרוא את התמונה')}e.target.value=''}));
+$('bdBox').addEventListener('change',()=>{S.bdBoxSet=1});
+$('bdForm').addEventListener('submit',async e=>{e.preventDefault();if(S.ro||!db)return;const full=has('budget'),k=full?(S.bdK||'out'):'out',amt=Math.round((+$('bdAmt').value||0)*100)/100,date=$('bdDate').value,desc=$('bdDesc').value.trim();
+  if(!(amt>0)){toast('כתבו סכום');return}if(!date){toast('בחרו תאריך');return}if(k==='out'&&!desc){toast('כתבו על מה ההוצאה');return}
+  const v={k:'exp',kind:k,amt,date,desc,at:Date.now(),by:S.me,byName:S.myName||''};if(k==='out'){v.cat=$('bdCat').value;v.box=full?$('bdBox').value:'petty';if(full)v.auto=true;if(S.bdPh)v.photo=S.bdPh}
+  const before=k==='out'&&full?bdStats(bdYr()):null;
+  $('bdBtn').disabled=true;try{await OW(db.collection('shiftlog').add(v));$('bdAmt').value='';$('bdDesc').value='';S.bdPh=null;bdPhShow();
+    let msg=k==='in'?'ההפקדה נרשמה':full?'ההוצאה נרשמה':'ההוצאה נשלחה לאישור';
+    if(before&&before.C[v.cat]){const a=+before.C[v.cat].amt||0,u=before.by[v.cat]||{ok:0,pend:0},w=S.bud?.warn||80,p0=bdPct(u.ok+u.pend,a),p1=bdPct(u.ok+u.pend+amt,a);if(a&&p1>=100&&p0<100)msg+=' · ⚠ הסעיף עבר את התקציב';else if(a&&p1>=w&&p0<w)msg+=` · שים לב: הסעיף הגיע ל-${p1}%`}
+    toast(msg)}catch(err){fail(err)}$('bdBtn').disabled=false});
 /* emergency drills (settings/drills: d.<id>={type,st:'plan'|'run'|'done',date,time,note,eid,startAt,endAt,sum,good,bad,mins,cnt}) */
 const DR_T={missile:['🚀','ירי טילים',['עם האזעקה כולם נכנסים מיד למרחב המוגן הקרוב (ממ"ד / מקלט), בלי לאסוף חפצים.','המדריך בודק שהדלת והחלון של המרחב המוגן סגורים.','ספירה שמית במרחב המוגן – מסמנים כל תלמיד באפליקציה.','ממתינים במרחב המוגן לפי הנחיות פיקוד העורף.','יוצאים רק אחרי הודעה מסודרת.']],
  quake:['🌍','רעידת אדמה',['בזמן הרעד: אם אפשר לצאת מהר ובבטחה – יוצאים לשטח פתוח, רחוק ממבנים.','אם אי אפשר – לממ"ד; אם אין – לחדר המדרגות; ואם גם זה לא – מתחת לרהיט כבד.','לא משתמשים במעלית, מתרחקים מחלונות וארונות.','אחרי הרעד: יציאה מסודרת לנקודת הכינוס.','ספירה שמית בנקודת הכינוס – מסמנים כל תלמיד באפליקציה.']],
@@ -3637,7 +3739,7 @@ function renderDrill(){if(S.tab!=='drill'||!$('drNow'))return;drSync();const ed=
      ${ed?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">${Object.entries(DR_T).map(([k,t])=>`<button class="btn" type="button" data-act="drStart" data-t="${k}" style="font-size:1.05rem;padding:14px">${t[0]} ${t[1]}</button>`).join('')}</div>`:'<span class="muted">רק מנהל יכול להתחיל תרגיל.</span>'}`;
   const done=L.filter(x=>x.st==='done').sort((a,b)=>(drDate(b)+(b.time||'')).localeCompare(drDate(a)+(a.time||''))),yr=new Date().getMonth()>=8?new Date().getFullYear():new Date().getFullYear()-1,y0=yr+'-09-01';
   $('drStat').innerHTML=`<div class="panel"><h2>📊 מצב התרגילים השנה</h2><div class="list">${Object.entries(DR_T).filter(([k])=>k!=='other'||done.some(x=>x.type==='other')).map(([k,t])=>{const D=done.filter(x=>x.type===k),last=D[0],n=D.filter(x=>drDate(x)>=y0).length,old=!last||(Date.now()-new Date(drDate(last)).getTime())>120*864e5;
-    return `<div class="item"><span class="name" style="flex:1">${t[0]} ${t[1]}<span class="meta">${n} השנה · ${last?'אחרון: '+fmtShort(drDate(last)):'עוד לא בוצע'}</span></span>${old&&k!=='other'?'<span class="chip a">כדאי לתכנן</span>':'<span class="chip p">✓</span>'}</div>`}).join('')}</div></div>`;
+    return `<div class="item"><span class="name" style="flex:1">${t[0]} ${t[1]}<span class="meta">${n} השנה · ${last?'אחרון: '+fmtShort(drDate(last)):'עוד לא בוצע'}</span></span>${old&&k!=='other'?'<span class="chip warn">כדאי לתכנן</span>':'<span class="chip ok">✓</span>'}</div>`}).join('')}</div></div>`;
   const plan=L.filter(x=>x.st==='plan').sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
   $('drPlan').innerHTML=`<div class="row" style="justify-content:space-between"><h2>📅 תרגילים מתוכננים</h2>${ed?`<button class="btn small" type="button" data-act="drNew">${S.drNew?'סגור':'+ תכנון / רישום תרגיל'}</button>`:''}</div>
    ${S.drNew&&ed?`<div class="panel" style="background:var(--soft);display:grid;gap:8px"><div class="grid2"><label>סוג<select id="drT">${Object.entries(DR_T).map(([k,t])=>`<option value="${k}">${t[0]} ${t[1]}</option>`).join('')}</select></label><label>מצב<select id="drS"><option value="plan">מתוכנן</option><option value="done">כבר בוצע (רישום ידני)</option></select></label><label>תאריך<input type="date" id="drD" value="${today}"></label><label>שעה<input type="time" id="drH"></label></div>
@@ -4209,6 +4311,9 @@ function subscribeAll(){
   S.subs.push(db.doc('settings/board').onSnapshot(d=>{S.board=d.exists?(d.data().items||[]):[];renderHome()},()=>{}));
   if(has('out')||has('count')||S.mgr)S.subs.push(db.collection('lateinc').orderBy('at','desc').limit(300).onSnapshot(q=>{S.lateinc=q.docs.map(d=>({id:d.id,...d.data()}));renderFu();if(S.sel)renderShX()},()=>{}));
   if(has('notes')||has('personal')||S.mgr)S.subs.push(db.collection('pcontact').orderBy('at','desc').limit(500).onSnapshot(q=>{S.pc=q.docs.map(d=>({id:d.id,...d.data()}));renderFu();if(S.sel)renderShX()},()=>{}));
+  if(has('budget')||has('petty')){S.subs.push(db.doc('settings/budget').onSnapshot(d=>{S.bud=d.exists?d.data():{};renderBud()},()=>{}));
+    let first=true;S.subs.push(db.collection('shiftlog').where('k','==','exp').onSnapshot(q=>{S.exp=q.docs.map(d=>({id:d.id,...d.data()}));
+      if(!first&&has('budget'))q.docChanges().forEach(c=>{const x=c.doc.data();if(c.type==='added'&&x.by!==S.me&&x.kind!=='in')notify('🧾 הוצאה חדשה לאישור',`${x.byName||''}: ${bdMoney(x.amt)}${x.desc?' – '+x.desc:''}`,'exp-'+c.doc.id)});first=false;renderBud()},()=>{}))}
   S.subs.push(db.doc('settings/drills').onSnapshot(d=>{S.drD=d.exists?d.data():{};renderDrill();renderEm()},()=>{}));
   S.subs.push(db.doc('settings/meet').onSnapshot(d=>{S.meet=d.exists?d.data():{};if(S.tab==='meet')renderMeet();if(S.sel)renderSheet()},()=>{}));
   S.subs.push(db.doc('settings/cal').onSnapshot(d=>{S.calOv=d.exists?(d.data().ev||{}):{};applyCal();renderCal();renderCalNotes();renderHome();if(S.tab==='shab')renderShab?.()},()=>{}));
