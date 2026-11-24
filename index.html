@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-23-76";
+const APP_VERSION = "2026-11-24-78";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -835,6 +835,18 @@ html.nobnav #bnav{display:none!important}html.nobnav body.has-bnav main{padding-
       <div style="display:grid;gap:12px;margin-top:10px">
         <span class="muted" style="font-size:.9rem">הדוח נבנה מנוכחות הערב שלפני ומההשכמה של הבוקר. לחיצה על "שלח" פותחת מייל מוכן באפליקציית המייל שלך, ונשאר רק ללחוץ שליחה.</span>
         <label class="row" style="gap:8px;font-size:.92rem;cursor:pointer"><input type="checkbox" id="mrLateIn"> לכלול בדוח גם מי שהגיע באיחור לפנימייה בערב</label>
+        <label class="row" style="gap:8px;font-size:.92rem;cursor:pointer"><input type="checkbox" id="mrNNIn"> לכלול בדוח הערות לילה שנרשמו על תלמידים (🌙)</label>
+        <details id="mrNotes" class="mr-notes"><summary>📝 הערות על הערב והלילה <span id="mrNotesCnt" class="muted" style="font-size:.85rem"></span></summary>
+          <div style="display:grid;gap:8px;margin-top:8px">
+            <span class="muted" style="font-size:.85rem">מה שתכתבו כאן ייכנס לדוח של המחנכים. ההערות נשמרות ומשותפות לכל הצוות.</span>
+            <label>הערה כללית לכל הכיתות<textarea id="mrN-all" data-mrn="all" rows="2" placeholder="למשל: ערב רגוע, כולם נכנסו לחדרים בזמן. היה תרגיל חירום ב-21:00."></textarea></label>
+            <label>כיתה ט<textarea id="mrN-ט" data-mrn="ט" rows="2"></textarea></label>
+            <label>כיתה י<textarea id="mrN-י" data-mrn="י" rows="2"></textarea></label>
+            <label>כיתה יא<textarea id="mrN-יא" data-mrn="יא" rows="2"></textarea></label>
+            <label>כיתה יב<textarea id="mrN-יב" data-mrn="יב" rows="2"></textarea></label>
+            <div class="row" style="gap:8px"><button class="btn small primary" type="button" data-act="mrNSave">שמירת ההערות</button><span id="mrNSt" class="muted" style="font-size:.85rem"></span></div>
+          </div>
+        </details>
         <div id="mrPreview"></div>
         <div><button class="btn small" type="button" data-act="mrPrint">🖨 הדפסת הדוח המלא</button></div>
         <details id="mrSettings"><summary>מיילים של המחנכים</summary>
@@ -1745,6 +1757,15 @@ const hm=t=>{const d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes()
 const toMin=s=>{const [h,m]=String(s).split(':').map(Number);return h*60+m};
 const isLate=m=>!!(m&&m.s==='up'&&(m.late!=null?m.late:m.t&&toMin(hm(m.t))>toMin(S.wakeTarget||'07:00')));
 const mrLateOn=()=>{try{return localStorage.getItem('pn-mrLate')==='1'}catch{return false}};
+const mrNNOn=()=>{try{return localStorage.getItem('pn-mrNN')!=='0'}catch{return true}};
+document.addEventListener('change',e=>{if(e.target.id!=='mrNNIn')return;try{localStorage.setItem('pn-mrNN',e.target.checked?'1':'0')}catch{}renderReport()});
+const mrNote=g=>(S.mrN?.[g]||'').trim();
+function mrNFill(){document.querySelectorAll('[data-mrn]').forEach(t=>{if(document.activeElement!==t&&!t.dataset.dirty)t.value=S.mrN?.[t.dataset.mrn]||''});
+  const n=['all',...GRADES].filter(mrNote).length;const c=$('mrNotesCnt');if(c)c.textContent=n?`(${n} נכתבו)`:'';
+  const st=$('mrNSt');if(st)st.textContent=S.mrN?.at?'נשמר '+hm(S.mrN.at)+(S.mrN.byName?' ע"י '+S.mrN.byName:''):''}
+document.addEventListener('input',e=>{if(e.target.dataset?.mrn){e.target.dataset.dirty='1';const st=$('mrNSt');if(st)st.textContent='יש שינויים שלא נשמרו'}});
+async function mrNSave(){if(!db||S.ro)return;const v={};document.querySelectorAll('[data-mrn]').forEach(t=>v[t.dataset.mrn]=t.value.trim());
+  try{await OW(db.collection('morning/'+S.mornDate+'/marks').doc('_mr').set({...v,at:Date.now(),by:S.me,byName:S.myName||''}));document.querySelectorAll('[data-mrn]').forEach(t=>delete t.dataset.dirty);toast('ההערות נשמרו ונכנסו לדוח')}catch(e){fail(e)}}
 document.addEventListener('change',e=>{if(e.target.id!=='mrLateIn')return;try{localStorage.setItem('pn-mrLate',e.target.checked?'1':'')}catch{}renderReport()});
 const nAbsM=id=>!isOut(id)&&S.prevNight.get(id)?.s==='a'&&S.prevLights.get(id)?.s!=='p'&&!S.wake.get(id);
 const WKR=['לא שמע את ההשכמה','לא הרגיש טוב','הלך לישון מאוחר','היה במקלחת / שירותים','קם ונרדם שוב','אחר'];
@@ -1799,6 +1820,7 @@ const prevNightOf=d=>addD(d,-1);
 function morningReport(){
   const night=prevNightOf(S.mornDate),out={};
   for(const s of allSorted()){const g=s.grade||'-';const o=out[g]||(out[g]={absent:[],noWake:[],sick:[],late:[],home:[],nightN:[],lateIn:[],apAbs:[],noRoom:[],unm:[],slept:0,woke:0});
+    if(mrNNOn())(S.notes||[]).filter(x=>x.night===night&&x.sid===s.id).sort((a,b)=>a.at-b.at).forEach(x=>o.nightN.push((x.imp?'⚠ ':'')+s.name+' – '+String(x.text||'').replace(/^הערת לילה:\s*/,'')));
     const n=S.prevNight.get(s.id),m=S.wake.get(s.id),st=S.status.get(s.id);
     if(st&&st.state==='out'){o.home.push(s.name+(st.long?' (היעדרות ממושכת'+(st.reason?': '+st.reason:'')+', עד '+fmtShort(st.to)+')':st.reason?' ('+st.reason+')':''));continue}
     if(!n||n.s==='a'){if(n?.ap)o.apAbs.push(s.name+' ('+n.r+')');else o.absent.push(s.name+(n?.r&&n.r!=='לא ידוע'?' ('+n.r+')':''))}else{o.slept++;if(m&&m.s==='up')o.woke++}
@@ -1811,7 +1833,9 @@ function reportText(g,o,dateK){
   const L=[],sec=(t,a)=>{if(a.length){L.push(t+' ('+a.length+'):');a.forEach(x=>L.push('• '+x));L.push('')}};
   L.push(`דוח נוכחות בוקר – ${g==='-'?'ללא כיתה':'כיתה '+g} – ${nf.format(new Date(dateK+'T12:00'))}`,'');
   {const dn=dutyTxt(prevNightOf(dateK));if(dn)L.push('מדריך תורן בלילה: '+dn,'')}
+  {const a=mrNote('all'),b=mrNote(g);if(a||b){L.push('הערות על הערב והלילה:');if(a)L.push(a);if(b)L.push(b);L.push('')}}
   if(allUp(o))L.push('🟢 כולם קמו בזמן הבוקר.','');
+  sec('🌙 הערות לילה על תלמידים',o.nightN);
   sec('🔴 לא נכחו בפנימייה הלילה – לא באישור',o.absent);sec('לא נכחו בפנימייה הלילה – באישור',o.apAbs);sec('הגיעו באיחור לפנימייה בערב',o.lateIn);sec('לא היו בחדר בכיבוי אורות',o.noRoom);sec('🔴 לא קמו בבוקר',o.noWake);sec('חולים / נשארו בחדר',o.sick);sec('🟠 קמו באיחור',o.late);sec('בבית / מחוץ לפנימייה',o.home);
   if(!o.unm.length&&!o.absent.length&&!o.noWake.length&&!o.sick.length&&!o.late.length&&!o.nightN.length&&!o.lateIn.length)L.push('כל התלמידים נכחו וקמו בזמן.','');
   L.push('נשלח ממערכת הנוכחות של הפנימייה');return L.join('\n')}
@@ -1821,7 +1845,7 @@ document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest
   const gs=a.dataset.mrsend==='*'?GRADES.filter(x=>E[x]):[a.dataset.mrsend],g=mrSentG();gs.forEach(x=>g[x]=(g[x]||0)+1);
   try{localStorage.setItem('mrSent:'+d,JSON.stringify(g))}catch{}
   setTimeout(()=>{db.doc('settings/app').update({mrSent:{d,g}}).catch(()=>{});renderReport()},400)});
-function renderReport(){{const c=$('mrLateIn');if(c)c.checked=mrLateOn()}
+function renderReport(){{const c=$('mrLateIn');if(c)c.checked=mrLateOn();const c2=$('mrNNIn');if(c2)c2.checked=mrNNOn()}mrNFill();
   if(S.tab!=='morn'||!$('mrPreview'))return;
   const {out}=morningReport(),E=S.settings?.educators||{},d=S.mornDate;
   const canSet=S.owner||has('mgr');$('mrSettings').hidden=!canSet;
@@ -1832,8 +1856,9 @@ function renderReport(){{const c=$('mrLateIn');if(c)c.checked=mrLateOn()}
     const txt=reportText(g,o,d);all.push(txt);const upd=sent[g]>0,subj=(upd?UPD:'')+`דוח נוכחות בוקר – ${g==='-'?'ללא כיתה':'כיתה '+g} – ${fmtShort(d)}`;
     const li=(t,a,c)=>a.length?`<div style="${c==='bad'?'color:var(--bad);font-weight:600':c==='warn'?'color:var(--warn);font-weight:600':''}"><b>${t}:</b> ${a.map(esc).join(', ')}</div>`:'';
     return `<div class="mr-grade"><div class="row"><b>${g==='-'?'ללא כיתה':'כיתה '+g}</b><span class="row" style="gap:6px">${g!=='-'?(E[g]?`<a class="btn small primary" data-mrsend="${g}" href="${mailHref(E[g],subj,(upd?updNote:'')+txt)}" title="${esc(E[g])}">${upd?'שלח עדכון למחנך':'שלח למחנך'}</a>`:(canSet?'<span class="muted" style="font-size:.85rem">אין מייל למחנך</span>':'')):''}<button class="btn small" type="button" data-act="mrCopy" data-g="${g}">העתק</button></span></div>
+      ${mrNote('all')||mrNote(g)?`<div style="white-space:pre-wrap;background:var(--soft);border-radius:8px;padding:6px 8px;margin:4px 0"><b>📝 הערות:</b> ${esc([mrNote('all'),mrNote(g)].filter(Boolean).join('\n'))}</div>`:''}
       ${allUp(o)?'<div style="font-weight:600;margin:2px 0;color:var(--ok)">🟢 כולם קמו בזמן הבוקר.</div>':''}
-      ${cnt?li('🔴 לא נכחו בפנימייה הלילה (לא באישור)',o.absent,'bad')+li('לא נכחו בפנימייה הלילה (באישור)',o.apAbs)+li('הגיעו באיחור בערב',o.lateIn)+li('לא בחדר בכיבוי אורות',o.noRoom)+li('🔴 לא קמו',o.noWake,'bad')+li('חולים',o.sick)+li('🟠 קמו באיחור',o.late,'warn')+li('בבית',o.home):`<span class="muted">כל התלמידים נכחו וקמו בזמן${o.home.length?' · '+o.home.length+' בבית':''}.</span>`}</div>`}).join('')
+      ${cnt?li('🌙 הערות לילה',o.nightN)+li('🔴 לא נכחו בפנימייה הלילה (לא באישור)',o.absent,'bad')+li('לא נכחו בפנימייה הלילה (באישור)',o.apAbs)+li('הגיעו באיחור בערב',o.lateIn)+li('לא בחדר בכיבוי אורות',o.noRoom)+li('🔴 לא קמו',o.noWake,'bad')+li('חולים',o.sick)+li('🟠 קמו באיחור',o.late,'warn')+li('בבית',o.home):`<span class="muted">כל התלמידים נכחו וקמו בזמן${o.home.length?' · '+o.home.length+' בבית':''}.</span>`}</div>`}).join('')
     +(gs.length>1?`<div class="row" style="padding-top:10px;border-top:1px solid var(--line)"><a class="btn small" data-mrsend="*" href="${mailHref(GRADES.map(g=>E[g]).filter(Boolean).join(/Windows/i.test(navigator.userAgent)?';':','),(Object.keys(sent).length?UPD:'')+'דוח נוכחות בוקר – '+fmtShort(d),(Object.keys(sent).length?updNote:'')+all.join('\n\n────────\n\n'))}">${Object.keys(sent).length?'שלח עדכון לכל המחנכים':'שלח דוח מלא לכל המחנכים'}</a><button class="btn small" type="button" data-act="mrCopy" data-g="*">העתק דוח מלא</button></div>`:'');
   S.mrTexts=Object.fromEntries(gs.map((g,i)=>[g,all[i]]));S.mrTexts['*']=all.join('\n\n────────\n\n');
   GRADES.forEach(g=>{const el=$('edu-'+g);if(el&&document.activeElement!==el)el.value=E[g]||''});{const c=$('edu-cc');if(document.activeElement!==c)c.value=E.cc||''}
@@ -1853,13 +1878,13 @@ async function wake(id,v){
 function subWake(){
   if(S.unWake)S.unWake();if(!db)return;
   subPrevNight();
-  S.unWake=db.collection('morning/'+S.mornDate+'/marks').onSnapshot(snap=>{S.wake=new Map(snap.docs.filter(d=>d.id[0]!=='_').map(d=>[d.id,d.data()]));resolveNames(snap.docs.map(d=>d.data()));renderMorn();renderHome();renderIO()},onErr);
+  S.unWake=db.collection('morning/'+S.mornDate+'/marks').onSnapshot(snap=>{S.mrN=snap.docs.find(d=>d.id==='_mr')?.data()||null;S.wake=new Map(snap.docs.filter(d=>d.id[0]!=='_').map(d=>[d.id,d.data()]));resolveNames(snap.docs.map(d=>d.data()));renderMorn();renderHome();renderIO()},onErr);
 }
 document.addEventListener('change',async e=>{
   const el=e.target;if(!db)return;
   if(el.dataset?.mact==='time'&&el.value){try{await wakeRef(el.dataset.id).update({t:new Date(S.mornDate+'T'+el.value).getTime()});toast('שעת הקימה עודכנה')}catch(err){fail(err)}}
   if(el.id==='mornTarget'&&el.value){try{await db.doc('settings/app').set({...(S.settings||{}),wakeTarget:el.value});toast('שעת ההשכמה נשמרה')}catch(err){fail(err)}}
-  if(el.id==='mornDate'&&el.value){S.mornDate=el.value;S.mornAuto=S.mornDate===ymd(new Date());S.wake=new Map();subWake();renderMorn();renderCalNotes()}
+  if(el.id==='mornDate'&&el.value){S.mornDate=el.value;S.mrN=null;document.querySelectorAll('[data-mrn]').forEach(t=>delete t.dataset.dirty);S.mornAuto=S.mornDate===ymd(new Date());S.wake=new Map();subWake();renderMorn();renderCalNotes()}
 });
 
 /* ---------- staff & permissions ---------- */
@@ -2274,6 +2299,7 @@ document.addEventListener('click',async e=>{
     case'tvOff':tvOpen(false);break;
     case'per':S.per=+b.dataset.p;renderPeriod();break;
     case'cf':S.cf=b.dataset.f||'';renderCount();break;
+    case'mrNSave':mrNSave();break;
     case'mrCopy':{const t=S.mrTexts?.[b.dataset.g]||'';try{await navigator.clipboard.writeText(t);toast('הדוח הועתק')}catch{toast('לא הצלחתי להעתיק')}break}
     case'go':$('t-'+b.dataset.to)?.click();break;
     case'calDay':if(has('mgr')&&!S.ro)calOpen(b.dataset.d);break;
@@ -4333,7 +4359,7 @@ function subMarks(){
 S.nightAuto=true;S.mornAuto=true;
 function dayRoll(){if(!db||!S.access)return;const nk=nightKey(),td=ymd(new Date());
   if(S.nightAuto&&S.night!==nk){S.night=nk;$('nightDate').value=nk;S.marks=new Map();subMarks();renderAll()}
-  if(S.mornAuto&&S.mornDate!==td){S.mornDate=td;$('mornDate').value=td;S.wake=new Map();subWake();renderMorn()}}
+  if(S.mornAuto&&S.mornDate!==td){S.mornDate=td;S.mrN=null;document.querySelectorAll('[data-mrn]').forEach(t=>delete t.dataset.dirty);$('mornDate').value=td;S.wake=new Map();subWake();renderMorn()}}
 setInterval(dayRoll,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)dayRoll()});
 const pendNote=()=>`<div class="notice" style="margin-bottom:8px">⏳ יש סימונים שעוד לא הגיעו לשרת ולא נראים אצל שאר הצוות. בדקו את החיבור לאינטרנט. הם יישלחו לבד כשהחיבור יחזור, אל תסגרו את האפליקציה.</div>`;
 function recompute(){
