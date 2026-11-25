@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-25-80";
+const APP_VERSION = "2026-11-25-81";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -715,6 +715,55 @@ html.ios .toast{border-radius:16px;-webkit-backdrop-filter:blur(20px);backdrop-f
 @media (prefers-reduced-motion:reduce){html.ios .sheet-bg:not([hidden]) .sheet,html.ios .sheet-bg:not([hidden]){animation:none}html.ios .btn:active,html.ios .seg button:active,html.ios .bnav button:active{transform:none}}
 @media (prefers-reduced-transparency:reduce){html.ios header,html.ios .bnav{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--surface)}}
 @media (prefers-contrast:more){html.ios .panel,html.ios .list,html.ios .btn,html.ios input,html.ios select,html.ios textarea{border:1px solid var(--ink)}}
+/* ===== modern v2: closer to the reference ===== */
+html.ios{--gbtn:rgba(255,255,255,.6);--bg:#EEF0F8;--accent:#2F5E9E;--accent-ink:#fff;--hdr:linear-gradient(160deg,#C7D6EE 0%,#D9E1F4 55%,#E4E3F5 100%)}
+@media (prefers-color-scheme:dark){html.ios:not([data-theme="light"]){--gbtn:rgba(255,255,255,.09);--bg:#0B0D14;--accent:#6FA0E6;--accent-ink:#0B0D14;--hdr:linear-gradient(160deg,#1C2A45 0%,#1A2238 60%,#211C33 100%)}}
+html.ios[data-theme="dark"]{--gbtn:rgba(255,255,255,.09);--bg:#0B0D14;--accent:#6FA0E6;--accent-ink:#0B0D14;--hdr:linear-gradient(160deg,#1C2A45 0%,#1A2238 60%,#211C33 100%)}
+html.ios body{background:var(--bg)}
+/* header: soft gradient card with rounded bottom, logo + greeting */
+html.ios header{background:var(--hdr);border-bottom:0;border-radius:0 0 26px 26px;box-shadow:0 10px 30px -18px rgba(30,50,90,.45);-webkit-backdrop-filter:none;backdrop-filter:none}
+html.ios header .wrap{padding-block:12px 14px!important}
+html.ios .title-block .kicker,html.ios .title-block h1{display:none}
+html.ios .ios-hi{display:grid!important;gap:2px}
+html.ios .title-block{min-width:0}html.ios .ios-hi b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--f-display);font-size:1.22rem;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+html.ios .ios-hi span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.8rem;color:var(--muted);font-weight:600}
+html.ios .ios-logo{display:block!important;width:46px;height:46px;border-radius:14px;object-fit:cover;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.12);flex:none}
+html.ios .menu-btn,html.ios #cpBtn{width:42px;height:42px;border-radius:50%!important;padding:0;display:grid;place-items:center;background:var(--gbtn);border:0}
+html.ios #acctBtn{width:42px;height:42px;padding:0;border-radius:50%;background:var(--gbtn);border:0;font-size:0;display:grid;place-items:center}html.ios #acctBtn::before{content:"👤";font-size:1.15rem}
+html.ios .kbd{display:none}
+/* big page title in the content */
+.ios-lt{display:none}
+html.ios .ios-lt{display:block;font-family:var(--f-display);font-size:2.05rem;font-weight:800;letter-spacing:-.028em;line-height:1.1;margin:10px 4px 6px;color:var(--ink)}
+html.ios .ios-lt small{font-size:1rem;font-weight:700;color:var(--muted);letter-spacing:0;margin-inline-start:6px}
+html.ios body[data-page="home"] .ios-lt{display:none}
+/* surfaces */
+html.ios .panel,html.ios .hero,html.ios .list{border-radius:22px;box-shadow:0 1px 2px rgba(20,30,60,.04),0 8px 24px -16px rgba(20,30,60,.22)}
+html.ios .room-h{padding:14px 10px 6px;font-size:.8rem;letter-spacing:.02em}
+html.ios .list .item{padding:13px 14px;gap:12px}
+html.ios .list .item+.item::before{inset-inline-start:66px}
+html.ios .list .item .name{font-size:1.04rem;font-weight:700}
+html.ios #stuList .item::after,html.ios #outList .item:has([data-act="open"])::after{content:"";width:8px;height:8px;border-left:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);opacity:.55;flex:none;margin-inline-start:2px}
+/* avatars: solid colour circles, white initials */
+html.ios .av{width:44px;height:44px;font-size:.92rem;font-weight:800;background:var(--avc,#5A6F96)!important;color:#fff!important;box-shadow:0 2px 6px -2px rgba(0,0,0,.25)!important}
+html.ios .io .avs .av{width:30px;height:30px;font-size:.66rem}
+html.ios .chip.ok{background:color-mix(in srgb,var(--ok) 13%,transparent);color:var(--ok)}
+/* search + filters */
+html.ios input[placeholder*="חיפוש"]{border-radius:999px;padding:13px 18px;font-size:1rem;background:var(--surface);box-shadow:0 1px 2px rgba(20,30,60,.05),0 6px 18px -14px rgba(20,30,60,.25)}
+html.ios #gradeFilter{gap:8px}
+html.ios #gradeFilter button{padding:9px 18px;font-size:.95rem;font-weight:700}
+html.ios #gradeFilter button:not([aria-pressed="true"]){background:var(--gbtn)}
+html.ios #gradeFilter button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:0 6px 14px -8px var(--accent)}
+html.ios .btn.primary{box-shadow:0 6px 16px -10px var(--accent)}
+/* bottom bar: floating glass with a raised round centre button */
+@media (max-width:900px){
+  html.ios .bnav{padding:6px 6px 8px;border-radius:30px;overflow:visible}
+  html.ios .bnav button{color:var(--muted);font-size:.72rem}
+  html.ios .bnav button svg{width:24px;height:24px}
+  html.ios .bnav button[aria-current="page"]{background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--accent)}
+  html.ios .bnav button:nth-child(3){background:none!important;color:var(--accent)}
+  html.ios .bnav button:nth-child(3) svg{box-sizing:content-box;width:28px;height:28px;padding:15px;margin-top:-30px;border-radius:50%;background:var(--accent);color:#fff;border:4px solid var(--bg);box-shadow:0 10px 22px -8px var(--accent)}
+  
+}
 </style>
 </head>
 <body>
@@ -726,7 +775,7 @@ html.ios .toast{border-radius:16px;-webkit-backdrop-filter:blur(20px);backdrop-f
       <button class="menu-btn" id="menuBtn" data-act="menu" type="button" aria-label="פתיחת תפריט" aria-expanded="false" aria-controls="drawer" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg><span class="badge dot" id="menuBadge" hidden></span>
       </button>
-      <div class="title-block" data-act="go" data-to="home" style="cursor:pointer" title="מסך הבית"><span class="kicker">נוכחות פנימייה</span><h1 id="pageTitle">נוכחות פנימייה</h1></div>
+      <img class="ios-logo" id="iosLogo" alt="" hidden><div class="title-block" data-act="go" data-to="home" style="cursor:pointer" title="מסך הבית"><span class="kicker">נוכחות פנימייה</span><h1 id="pageTitle">נוכחות פנימייה</h1><span class="ios-hi" id="iosHi" hidden></span></div>
       <span class="night" id="nightLabel"></span>
       <button class="btn small" id="cpBtn" data-act="cp" type="button" hidden title="חיפוש מהיר (Ctrl+K)" aria-label="חיפוש מהיר">🔍<span class="kbd desk-only" style="margin-inline-start:6px">Ctrl+K</span></button>
       <button class="btn small" id="acctBtn" data-act="acct" hidden aria-expanded="false" aria-controls="acctPanel"></button>
@@ -786,7 +835,7 @@ html.ios .toast{border-radius:16px;-webkit-backdrop-filter:blur(20px);backdrop-f
   <div class="view-opts"><button class="btn small" type="button" data-act="prefs" style="flex-basis:100%;justify-content:center">⚙ ההגדרות שלי – מראה ותפעול</button><button class="btn small tgl" type="button" data-act="view" id="vView">🌓 תצוגה: אוטומטית</button><button class="btn small tgl" type="button" data-act="theme" id="vTheme" hidden>🌙 מצב כהה</button><button class="btn small tgl" type="button" data-act="bigText" id="vBig">A+ טקסט גדול</button><button class="btn small tgl" type="button" data-act="nightMode" id="vNight" hidden>🔦 סיור לילה: אוטומטי</button></div>
   <div class="drawer-foot"><span class="muted" id="drawerUser"></span><span class="row" style="gap:6px"><button class="btn small" type="button" data-act="tour">🧭 סיור</button><button class="btn small" type="button" data-act="stMine">הכרטיס שלי</button><button class="btn small" type="button" data-act="logout">יציאה</button></span></div>
 </nav>
-<main><div class="wrap">
+<main><div class="wrap"><h1 class="ios-lt" id="iosLt" aria-hidden="true"></h1>
   <div id="sysNote" class="notice" hidden></div>
   <div id="offNote" class="offnote" hidden>📴 אין חיבור לאינטרנט. הסימונים נשמרים במכשיר ויסונכרנו אוטומטית כשהחיבור יחזור.</div>
   <div id="login" class="panel" hidden style="max-width:420px;width:100%;margin:24px auto 0;gap:14px">
@@ -1502,7 +1551,9 @@ function emptyStudents(){if(!S.ready&&!S.students.size)return SKEL;if(S.students
 const qMatch=q=>s=>{q=String(q||'').trim();if(!q)return true;return normName(s.name).includes(normName(q))||String(s.room||'')===q||String(s.room||'').startsWith(q)};
 S.photoVer=new Map();
 function setAv(id,ph){const s=S.students.get(id);document.querySelectorAll('[data-av="'+id+'"]').forEach(e=>e.innerHTML=ph?`<img src="${esc(ph)}" alt="">`:esc(initials(s?.name||'')))}
-function av(s){if(s.photoAt&&S.photoVer.get(s.id)!==s.photoAt){S.photoVer.set(s.id,s.photoAt);if(S.photos.get(s.id)!==null)S.photos.delete(s.id)}if(has('personal'))loadPhoto(s.id);const ph=S.photos.get(s.id);return `<span class="av" data-av="${s.id}" data-g="${esc(s.grade||'')}" aria-hidden="true">${ph?`<img src="${esc(ph)}" alt="">`:esc(initials(s.name))}</span>`}
+const AVC=['#B23A55','#2E8B57','#E07B24','#2A7FA8','#2D5FB0','#7A5C55','#7B4BB7','#C2477F','#3E8E7E','#A8742A'];
+function avc(id){let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))>>>0;return AVC[h%AVC.length]}
+function av(s){if(s.photoAt&&S.photoVer.get(s.id)!==s.photoAt){S.photoVer.set(s.id,s.photoAt);if(S.photos.get(s.id)!==null)S.photos.delete(s.id)}if(has('personal'))loadPhoto(s.id);const ph=S.photos.get(s.id);return `<span class="av" data-av="${s.id}" data-g="${esc(s.grade||'')}" style="--avc:${avc(s.id)}" aria-hidden="true">${ph?`<img src="${esc(ph)}" alt="">`:esc(initials(s.name))}</span>`}
 function progBar(el,parts,total,label){const done=parts.reduce((a,x)=>a+x[0],0);
   $(el).innerHTML=total?`<div class="row"><b>${label(done,total)}</b><span class="muted" style="font-size:.88rem">${parts.filter(x=>x[0]).map(x=>`${x[0]} ${x[2]}`).join(' · ')}</span></div><div class="bar" role="img" aria-label="${done} מתוך ${total}">${parts.map(([n,c])=>n?`<i style="width:${n/total*100}%;background:${c}"></i>`:'').join('')}</div>`:'';$(el).hidden=!total}
 const ABR=[['לא הודיע',0],['לא ידוע',0],['חולה בבית',1],['באישור הורים',1],['אירוע משפחתי',1],['באישור המנהל',1]];
@@ -1672,7 +1723,7 @@ function renderStudents(){
       h+=`<div class="item">${av(s)}<button class="name" data-act="open" data-id="${s.id}">${esc(s.name)}<span class="meta">${[s.room?'חדר '+esc(s.room):'',n?n+' הערות':''].filter(Boolean).join(' · ')}</span></button>${isOut(s.id)?'<span class="chip warn">בחוץ</span>':'<span class="chip ok">בפנימייה</span>'}</div>`}
     h+=`</div></div>`;
   }
-  $('stuList').innerHTML=h;
+  $('stuList').innerHTML=h;iosSync();
 }
 
 function renderSheet(){
@@ -4452,10 +4503,17 @@ const PF_DEF={style:'classic',theme:'auto',night:'auto',text:'n',dense:0,start:'
 function pfKey(){return 'pn-pf-'+(S.me||'x')}
 function pfGet(){let o={};try{o=JSON.parse(localStorage.getItem(pfKey())||'null')||{}}catch{}if(o.theme==null){try{o.theme=localStorage.getItem('pn-theme')||'auto';o.night=localStorage.getItem('pn-night')||'auto';o.text=localStorage.getItem('pn-big')?'l':'n'}catch{}}return {...PF_DEF,...o}}
 function pfSet(k,v){const o=pfGet();o[k]=v;try{localStorage.setItem(pfKey(),JSON.stringify(o))}catch{}pfApply();renderPrefs()}
+function iosSync(){if(!document.documentElement.classList.contains('ios'))return;try{const now=new Date(),h=now.getHours(),hb=heb(ymd(now));
+  const greet=h<5?'לילה טוב':h<12?'בוקר טוב':h<17?'צהריים טובים':h<21?'ערב טוב':'לילה טוב',first=(S.myName||'').split(' ')[0];
+  const wd=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'][now.getDay()];
+  $('iosHi').innerHTML=`<b>${esc(greet)}${first?', '+esc(first):''}</b><span>יום ${wd}${hb?' · '+hNum(hb.day)+' ב'+hb.m:''} · ${now.getDate()}/${now.getMonth()+1}</span>`;
+  const lg=$('iosLogo'),src=document.querySelector('.lg-logo')?.src;if(lg&&src&&lg.src!==src)lg.src=src;
+  const t=$('pageTitle').textContent,cnt=S.tab==='stu'&&S.students?.size?`<small>(${S.students.size})</small>`:'';$('iosLt').innerHTML=esc(t)+cnt}catch(e){}}
+new MutationObserver(()=>iosSync()).observe(document.getElementById('pageTitle'),{childList:true,characterData:true,subtree:true});setInterval(iosSync,60000);
 function pfApply(){const o=pfGet(),H=document.documentElement;
   try{localStorage.setItem('pn-night',o.night)}catch{}setTheme(o.theme);
   H.classList.toggle('big',o.text==='l');H.classList.toggle('xbig',o.text==='x');try{localStorage.setItem('pn-big',o.text==='l'?'1':'')}catch{}$('vBig')?.setAttribute('aria-pressed',o.text!=='n');
-  H.classList.toggle('dense',!!o.dense);H.classList.toggle('ios',o.style==='ios');H.classList.toggle('nobnav',!o.bnav);applyNight()}
+  H.classList.toggle('dense',!!o.dense);H.classList.toggle('ios',o.style==='ios');iosSync();H.classList.toggle('nobnav',!o.bnav);applyNight()}
 const PF_START=[['home','מסך הבית'],['count','נוכחות ערב'],['lights','כיבוי אורות'],['morn','השכמה'],['out','יציאות'],['stu','תלמידים'],['maint','תחזוקה']];
 function renderPrefs(){const el=$('prefBody');if(!el||$('prefBg').hidden)return;const o=pfGet();
   const seg=(k,opts)=>`<div class="pf-seg" role="group">${opts.map(([v,l])=>`<button type="button" data-act="pfSet" data-k="${k}" data-v="${v}" aria-pressed="${String(o[k])===String(v)}">${l}</button>`).join('')}</div>`;
