@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-25-81";
+const APP_VERSION = "2026-11-25-82";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -731,6 +731,7 @@ html.ios .ios-logo{display:block!important;width:46px;height:46px;border-radius:
 html.ios .menu-btn,html.ios #cpBtn{width:42px;height:42px;border-radius:50%!important;padding:0;display:grid;place-items:center;background:var(--gbtn);border:0}
 html.ios #acctBtn{width:42px;height:42px;padding:0;border-radius:50%;background:var(--gbtn);border:0;font-size:0;display:grid;place-items:center}html.ios #acctBtn::before{content:"👤";font-size:1.15rem}
 html.ios .kbd{display:none}
+@media (max-width:900px){html.ios body.has-bnav #menuBtn{display:none!important}}
 /* big page title in the content */
 .ios-lt{display:none}
 html.ios .ios-lt{display:block;font-family:var(--f-display);font-size:2.05rem;font-weight:800;letter-spacing:-.028em;line-height:1.1;margin:10px 4px 6px;color:var(--ink)}
@@ -760,8 +761,8 @@ html.ios .btn.primary{box-shadow:0 6px 16px -10px var(--accent)}
   html.ios .bnav button{color:var(--muted);font-size:.72rem}
   html.ios .bnav button svg{width:24px;height:24px}
   html.ios .bnav button[aria-current="page"]{background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--accent)}
-  html.ios .bnav button:nth-child(3){background:none!important;color:var(--accent)}
-  html.ios .bnav button:nth-child(3) svg{box-sizing:content-box;width:28px;height:28px;padding:15px;margin-top:-30px;border-radius:50%;background:var(--accent);color:#fff;border:4px solid var(--bg);box-shadow:0 10px 22px -8px var(--accent)}
+  html.ios .bnav button.bn-now{background:none!important;color:var(--accent);font-weight:800}
+  html.ios .bnav button.bn-now svg{box-sizing:content-box;width:28px;height:28px;padding:15px;margin-top:-30px;border-radius:50%;background:var(--accent);color:#fff;border:4px solid var(--bg);box-shadow:0 10px 22px -8px var(--accent)}
   
 }
 </style>
@@ -4509,11 +4510,11 @@ function iosSync(){if(!document.documentElement.classList.contains('ios'))return
   $('iosHi').innerHTML=`<b>${esc(greet)}${first?', '+esc(first):''}</b><span>יום ${wd}${hb?' · '+hNum(hb.day)+' ב'+hb.m:''} · ${now.getDate()}/${now.getMonth()+1}</span>`;
   const lg=$('iosLogo'),src=document.querySelector('.lg-logo')?.src;if(lg&&src&&lg.src!==src)lg.src=src;
   const t=$('pageTitle').textContent,cnt=S.tab==='stu'&&S.students?.size?`<small>(${S.students.size})</small>`:'';$('iosLt').innerHTML=esc(t)+cnt}catch(e){}}
-new MutationObserver(()=>iosSync()).observe(document.getElementById('pageTitle'),{childList:true,characterData:true,subtree:true});setInterval(iosSync,60000);
+new MutationObserver(()=>iosSync()).observe(document.getElementById('pageTitle'),{childList:true,characterData:true,subtree:true});setInterval(()=>{iosSync();if(document.documentElement.classList.contains('ios'))try{renderBnav()}catch(e){}},60000);
 function pfApply(){const o=pfGet(),H=document.documentElement;
   try{localStorage.setItem('pn-night',o.night)}catch{}setTheme(o.theme);
   H.classList.toggle('big',o.text==='l');H.classList.toggle('xbig',o.text==='x');try{localStorage.setItem('pn-big',o.text==='l'?'1':'')}catch{}$('vBig')?.setAttribute('aria-pressed',o.text!=='n');
-  H.classList.toggle('dense',!!o.dense);H.classList.toggle('ios',o.style==='ios');iosSync();H.classList.toggle('nobnav',!o.bnav);applyNight()}
+  H.classList.toggle('dense',!!o.dense);H.classList.toggle('ios',o.style==='ios');iosSync();try{renderBnav()}catch(e){}H.classList.toggle('nobnav',!o.bnav);applyNight()}
 const PF_START=[['home','מסך הבית'],['count','נוכחות ערב'],['lights','כיבוי אורות'],['morn','השכמה'],['out','יציאות'],['stu','תלמידים'],['maint','תחזוקה']];
 function renderPrefs(){const el=$('prefBody');if(!el||$('prefBg').hidden)return;const o=pfGet();
   const seg=(k,opts)=>`<div class="pf-seg" role="group">${opts.map(([v,l])=>`<button type="button" data-act="pfSet" data-k="${k}" data-v="${v}" aria-pressed="${String(o[k])===String(v)}">${l}</button>`).join('')}</div>`;
@@ -4533,7 +4534,18 @@ function renderPrefs(){const el=$('prefBody');if(!el||$('prefBg').hidden)return;
    +row('🏠 מסך הבית','בחירה אילו חלוניות יוצגו',`<div><button class="btn small" type="button" data-act="pfHome">⚙ התאמת מסך הבית</button></div>`)
    +`<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:10px"><span class="muted" style="font-size:.82rem">ההגדרות נשמרות לך, במכשיר הזה.</span><button class="btn small" type="button" data-act="pfReset">איפוס לברירת מחדל</button></div>`}
 const BN=['home','count','morn','out'];
-function renderBnav(){const n=$('bnav');const tabs=BN.filter(t=>{const b=$('t-'+t);return b&&!b.hidden});
+const tabOk=t=>{const b=$('t-'+t);return !!(b&&!b.hidden)};
+function nowTab(){try{const A=nowActs().filter(a=>['count','morn','lights'].includes(a[4])&&tabOk(a[4]));if(A.length)return A[0][4]}catch(e){}
+  const d=new Date(),m=d.getHours()*60+d.getMinutes(),pref=m>=300&&m<660?['morn','count','lights']:m>=1350||m<300?['lights','count','morn']:['count','lights','morn'];
+  return [...pref,'out','home'].find(tabOk)||'home'}
+function renderBnav(){const n=$('bnav');
+  if(document.documentElement.classList.contains('ios')){const c=nowTab(),side=['home',tabOk('stu')?'stu':null,'out','count','morn'].filter(t=>t&&t!==c&&tabOk(t)),L=[side[0],side[1],c,side[2]].filter(Boolean);
+    n.hidden=!S.access||L.length<2;document.body.classList.toggle('has-bnav',!n.hidden);if(n.hidden)return;
+    const ico=t=>$('t-'+t).querySelector('svg').outerHTML.replace('class="ni"',''),lb={home:'בית',stu:'תלמידים',out:'יציאות',count:'ערב',morn:'השכמה',lights:'כיבוי אורות'};
+    const btn=t=>`<button type="button" data-act="go" data-to="${t}" ${S.tab===t?'aria-current="page"':''}${t===c?' class="bn-now"':''}>${ico(t)}<span>${lb[t]}</span></button>`;
+    const mid=L.indexOf(c),arr=L.slice();if(mid!==2&&arr.length>=3){arr.splice(mid,1);arr.splice(2,0,c)}
+    n.innerHTML=arr.map(btn).join('')+`<button type="button" data-act="menuOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>עוד</span></button>`;return}
+  const tabs=BN.filter(t=>{const b=$('t-'+t);return b&&!b.hidden});
   n.hidden=!S.access||tabs.length<2;document.body.classList.toggle('has-bnav',!n.hidden);if(n.hidden)return;
   const ico=t=>$('t-'+t).querySelector('svg').outerHTML.replace('class="ni"','');const lbl={home:'בית',count:'ערב',morn:'השכמה',out:'יציאות'};
   n.innerHTML=tabs.map(t=>`<button type="button" data-act="go" data-to="${t}" ${S.tab===t?'aria-current="page"':''}>${ico(t)}<span>${lbl[t]}</span></button>`).join('')+`<button type="button" data-act="menuOpen">${'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'}<span>עוד</span></button>`}
