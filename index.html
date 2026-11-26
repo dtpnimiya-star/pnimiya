@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-26-83";
+const APP_VERSION = "2026-11-26-84";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -333,7 +333,7 @@ body.desk .sheet{max-width:640px;max-height:none;height:100%;border-radius:0;box
 .st-off{display:none!important}.sh-tabs{position:sticky;top:-1px;z-index:3;display:flex;gap:6px;overflow-x:auto;background:var(--bg);padding:8px 0;margin-bottom:2px;border-bottom:1px solid var(--line);scrollbar-width:none}.sh-tabs::-webkit-scrollbar{display:none}.sh-tabs button{flex:1 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 13px;font:inherit;font-size:.88rem;color:var(--ink);cursor:pointer;white-space:nowrap}.sh-tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}.sh-tabs small{opacity:.75;margin-inline-start:3px}#shTl .tl{margin-top:4px}
 html.nightdim body::after{content:"";position:fixed;inset:0;background:rgba(40,14,0,.38);pointer-events:none;z-index:2147483000}
 section[id^="tab-"]>*{min-width:0}.panel{min-width:0}.panel>*,#sm>*,#trends>*{min-width:0;max-width:100%}.sm-tbl .name{border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-align:right}@media (max-width:760px){.sm-tbl{font-size:.78rem}.sm-tbl th{white-space:normal;font-size:.72rem;line-height:1.15;vertical-align:bottom}.sm-tbl td,.sm-tbl th{padding:4px 3px}#tab-rep .seg,#tab-home .seg,#tab-pw .seg{flex-wrap:wrap;flex:1 1 auto}#tab-rep .row,#tab-home .row{flex-wrap:wrap}}
-body.pa-mode>*:not(#paView){display:none!important}#paView{min-height:100vh;display:grid;place-items:center;padding:16px}.pa-card{max-width:440px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:grid;gap:12px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.08)}.pa-card h1{font-size:1.35rem;margin:0}.pa-logo{max-width:170px;margin:0 auto}.pa-info{background:var(--soft);border-radius:12px;padding:12px;display:grid;gap:4px;font-size:1.05rem}.pa-btns{display:grid;gap:8px}.pa-btns .btn{padding:14px;font-size:1.05rem}
+body.pa-mode>*:not(#paView){display:none!important}.pa-f{display:grid;gap:10px;text-align:right}.pa-f fieldset{border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:8px;margin:0}.pa-f legend{font-weight:700;padding:0 6px}.pa-f .rd{display:flex;gap:8px;align-items:flex-start;font-size:.95rem;line-height:1.4;cursor:pointer}.pa-f .rd input{margin-top:3px;flex:none;width:20px;height:20px}.pa-sig{position:relative;border:2px dashed var(--line);border-radius:12px;background:#fff}.pa-sig canvas{display:block;width:100%;height:150px;touch-action:none;border-radius:10px}.pa-sig .x{position:absolute;top:6px;left:6px}.pa-sig .ph{position:absolute;inset:0;display:grid;place-items:center;color:#9aa0aa;pointer-events:none;font-size:.95rem}.pa-decl{font-size:.82rem;color:var(--muted);line-height:1.5}.pa-err{color:var(--bad);font-weight:700;font-size:.9rem}#paView{min-height:100vh;display:grid;place-items:center;padding:16px}.pa-card{max-width:440px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:grid;gap:12px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.08)}.pa-card h1{font-size:1.35rem;margin:0}.pa-logo{max-width:170px;margin:0 auto}.pa-info{background:var(--soft);border-radius:12px;padding:12px;display:grid;gap:4px;font-size:1.05rem}.pa-btns{display:grid;gap:8px}.pa-btns .btn{padding:14px;font-size:1.05rem}
 .dayline .cb{position:absolute;top:32px;height:17px;border-radius:5px;font-size:.62rem;line-height:15px;padding:0 3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:center;background:color-mix(in srgb,var(--accent) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);color:var(--ink)}.dayline .cb.done{background:var(--ok-bg);border-color:var(--ok)}.dayline .cb.cur{outline:2px solid var(--accent);z-index:1}
 .chipS .av{width:30px;height:30px;font-size:.66rem}.chipS:has(.av){padding-inline-start:3px!important}.chipS img{pointer-events:none}.bed{min-height:40px}.bed-grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
 :root{--shadow:0 1px 2px rgba(16,40,70,.06),0 8px 22px -14px rgba(16,40,70,.28)}
@@ -2303,6 +2303,7 @@ document.addEventListener('click',async e=>{
     case'grpGo':await grpCreate(b);break;
     case'grpSent':{grpMark(b.dataset.k);setTimeout(renderGrp,400);break}
     case'grpCopy':grpCopy(b.dataset.k);break;
+    case'grpPr':grpPrint(b.dataset.k);break;
     case'grpOpen':S.grpOpen=S.grpOpen===b.dataset.k?null:b.dataset.k;renderGrp();break;
     case'grpX':{if(!armed(b,'בטוח? לבטל את הבקשות שלא נענו'))break;const L=grpList().find(g=>g.k===b.dataset.k);if(!L)break;try{await Promise.all(L.items.filter(x=>x.status==='pending').map(x=>OW(db.doc('pappr/'+x.id).delete())));toast('הבקשות שלא נענו בוטלו')}catch(e){fail(e)}break}
     case'hrOk':await hrDecide(b.dataset.id,true,b);break;
@@ -2385,7 +2386,7 @@ document.addEventListener('click',async e=>{
     case'bdPhX':S.bdPh=null;bdPhShow();break;
     case'bdImg':{const x=(S.exp||[]).find(y=>y.id===id);if(!x?.photo)break;const v=document.createElement('div');v.className='imgview';v.innerHTML=`<img src="${esc(x.photo)}" alt="">`;v.onclick=()=>v.remove();document.body.appendChild(v);break}
     case'bdOk':case'bdRej':{let why='';if(b.dataset.act==='bdRej'){why=prompt('למה לא מאושר? (לא חובה)','');if(why===null)break}try{await OW(db.doc('settings/budget').set({appr:{[id]:{st:b.dataset.act==='bdOk'?'ok':'rej',why:why||'',at:Date.now(),by:S.myName||''}}},{merge:true}));toast(b.dataset.act==='bdOk'?'אושר':'סומן כלא מאושר')}catch(e){fail(e)}break}
-    case'bdDel':if(armed(b,'בטוח? למחוק')){try{await OW(db.doc('shiftlog/'+id).delete());toast('נמחק')}catch(e){fail(e)}}break;
+    case'bdDel':if(armed(b,'בטוח? למחוק')){try{const x=(S.exp||[]).find(y=>y.id===id);await OW(db.doc((x?._leg?'shiftlog/':'expenses/')+id).delete());toast('נמחק')}catch(e){fail(e)}}break;
     case'bdCatE':S.bdCatE=!S.bdCatE;renderBud();break;
     case'bdCatAdd':{const c=bdCats();c['c'+Date.now().toString(36)]={n:'סעיף חדש',amt:0};S.bdDraft=c;renderBud();break}
     case'bdCatSave':bdCatSave();break;
@@ -3312,12 +3313,25 @@ function grpMark(k){const s=grpSentK();s.add(k);try{localStorage.setItem('pn-grp
 function grpList(){const m=new Map();(S.pa||[]).filter(isGrp).forEach(x=>{const k=(x.by||'')+'|'+x.at;if(!m.has(k))m.set(k,{k,t:x.reason.slice(GRP_P.length),from:x.from,back:x.backBy,at:x.at,byName:x.byName,items:[]});m.get(k).items.push(x)});return [...m.values()].sort((a,b)=>b.at-a.at)}
 async function grpCreate(b){const t=$('grpT').value.trim(),fv=$('grpF').value,bv=$('grpB').value,note=$('grpN').value.trim();
   if(!t){toast('כתבו לאן יוצאים');return}if(!fv){toast('בחרו מתי יוצאים');return}if(!S.grpSel.size){toast('בחרו תלמידים');return}
-  const from=new Date(fv).getTime(),backBy=bv?new Date(bv).getTime():null,at=Date.now(),reason=GRP_P+t+(note?' · '+note:'');
+  const from=new Date(fv).getTime(),backBy=bv?new Date(bv).getTime():null,at=Date.now(),reason=GRP_P+t+(note?' · '+note:''),trans=$('grpTr').value,night=$('grpNi').checked||new Date(from).getHours()>=19,water=$('grpW').checked;
   if(backBy&&backBy<=from){toast('שעת החזרה צריכה להיות אחרי היציאה');return}
   const ids=[...S.grpSel].filter(id=>S.students.has(id));b.disabled=true;
   try{await Promise.all(ids.map(sid=>{const s=S.students.get(sid),id=[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(36).padStart(2,'0')).join('').slice(0,26);
-      return OW(db.doc('pappr/'+id).set({sid,first:s.firstName||String(s.name||'').split(' ')[0],reason,backBy,from,status:'pending',at,exp:Math.max(at+3*864e5,from+6*36e5),by:S.me,byName:S.myName||''}))}));
+      return OW(db.doc('pappr/'+id).set({sid,first:s.firstName||String(s.name||'').split(' ')[0],reason,backBy,from,trans,night,water,status:'pending',at,exp:Math.max(at+3*864e5,from+6*36e5),by:S.me,byName:S.myName||''}))}));
     S.grpNew=false;S.grpSel=new Set();S.grpOpen=(S.me||'')+'|'+at;toast(`נוצרו ${ids.length} בקשות. עכשיו שלחו לכל הורה את הקישור שלו`)}catch(e){fail(e)}b.disabled=false;renderGrp()}
+const PA_H={fit:'כשיר',lim:'מגבלה שאינה מונעת',no:'מגבלה שמונעת השתתפות'};
+function grpPrint(k){const g=grpList().find(x=>x.k===k);if(!g)return;const x0=g.items[0]||{};
+  const its=g.items.slice().sort((a,b)=>{const A=S.students.get(a.sid)||{},B=S.students.get(b.sid)||{};return GRADES.indexOf(A.grade)-GRADES.indexOf(B.grade)||(A.name||'').localeCompare(B.name||'','he')});
+  const ok=its.filter(x=>x.status==='ok'),pub=x0.trans==='תחבורה ציבורית';
+  const row=(x,i)=>{const s=S.students.get(x.sid)||{};return `<tr><td>${i+1}</td><td>${esc(s.name||x.first||'')}</td><td>${esc(s.grade||'')}</td><td>${x.status==='ok'?'✓ אישר':x.status==='no'?'✗ לא אישר':'ממתין'}</td><td>${esc(x.pName||'')}${x.rel?' ('+esc(x.rel)+')':''}</td><td>${x.pAt&&x.status!=='pending'?esc(when(x.pAt)):''}</td><td>${x.health?esc(PA_H[x.health]||''):''}${x.hNote?'<br><small>'+esc(x.hNote)+'</small>':''}</td>${x0.water?`<td>${x.status==='ok'?(x.swim?'כן':'<b>לא אושר</b>'):''}</td>`:''}<td>${x.sig?`<img src="${esc(x.sig)}" alt="" style="height:34px;max-width:120px">`:''}</td></tr>`};
+  const body=`<h1>תיק יציאה – אישורי הורים</h1><div class="mut">הופק ${esc(when(Date.now()))} ע"י ${esc(S.myName||'')}</div>
+   <p><b>הפעילות:</b> ${esc(g.t)}<br><b>יציאה:</b> ${g.from?esc(paWhen(g.from)):''}${g.back?' · <b>חזרה משוערת:</b> '+esc(paWhen(g.back)):''}<br><b>אמצעי הגעה:</b> ${esc(x0.trans||'—')}${x0.night?' · פעילות ערב/לילה':''}${x0.water?' · כוללת מים':''}<br><b>אחראי:</b> ${esc(g.byName||'')}</p>
+   <p>סה"כ ${its.length} תלמידים · <b>${ok.length} אישרו</b> · ${its.filter(x=>x.status==='no').length} לא אישרו · ${its.filter(x=>x.status==='pending').length} ממתינים</p>
+   ${pub?'<p><b>שימו לב:</b> בנסיעה בתחבורה ציבורית הנוהל דורש טופס הסכמה חתום בכתב יד. טפסים להחתמה מצורפים בסוף התיק.</p>':''}
+   <table><thead><tr><th>#</th><th>תלמיד</th><th>כיתה</th><th>תשובה</th><th>הורה</th><th>מועד</th><th>הצהרת בריאות</th>${x0.water?'<th>יודע לשחות</th>':''}<th>חתימה</th></tr></thead><tbody>${its.map(row).join('')}</tbody></table>
+   <p class="mut" style="font-size:.8rem">האישורים נאספו בקישור אישי שנשלח לטלפון ההורה הרשום בכרטיס התלמיד. לכל תשובה נשמרו שם ההורה, הקרבה, החתימה, המועד המדויק וסוג המכשיר.</p>
+   ${pub?ok.concat(its.filter(x=>x.status==='pending')).map(x=>{const s=S.students.get(x.sid)||{};return `<div style="page-break-before:always"><h2>טופס הסכמת הורים – יציאה לפעילות</h2><p>לכבוד הנהלת הפנימייה,</p><p>אני הח"מ ____________________ (שם ההורה), הורה של <b>${esc(s.name||'')}</b> מכיתה ${esc(s.grade||'')}, מאשר/ת את השתתפותו ב: <b>${esc(g.t)}</b>, ביום ${g.from?esc(paWhen(g.from)):'______'}, בנסיעה בתחבורה ציבורית${x0.night?', כולל פעילות בשעות הלילה':''}.</p><p>הצהרת בריאות: ☐ כשיר ולא חל שינוי במצבו ☐ יש מגבלות שאינן מונעות השתתפות (אישור רפואי מצורף) ☐ יש מגבלות שמונעות השתתפות</p><p>הערות: ________________________________________</p><p>תאריך: ___________ &nbsp;&nbsp; חתימה: ____________________</p></div>`}).join(''):''}`;
+  printHtml('תיק יציאה – '+g.t,body,['אחראי הפעילות','מנהל הפנימייה'])}
 function grpCopy(k){const g=grpList().find(x=>x.k===k);if(!g)return;const ok=g.items.filter(x=>x.status==='ok').map(x=>S.students.get(x.sid)).filter(Boolean).sort((a,b)=>GRADES.indexOf(a.grade)-GRADES.indexOf(b.grade)||(a.name||'').localeCompare(b.name||'','he'));
   const no=g.items.filter(x=>x.status!=='ok').map(x=>S.students.get(x.sid)?.name).filter(Boolean);
   const txt=`🚌 ${g.t}${g.from?' – '+paWhen(g.from):''}\nמאושרים (${ok.length}):\n${ok.map((s,i)=>`${i+1}. ${s.name}${s.grade?' ('+s.grade+')':''}`).join('\n')}${no.length?`\n\nאין אישור (${no.length}): ${no.join(', ')}`:''}`;
@@ -3329,7 +3343,10 @@ function renderGrp(){const el=$('grpBox');if(!el)return;const can=(has('out')||S
     h+=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">🚌 יציאה מאורגנת – בקשת אישור מההורים</h2><button class="btn small" type="button" data-act="grpNew">סגור</button></div>
      <label>לאן יוצאים?<input id="grpT" maxlength="80" placeholder="למשל: באולינג בבאר שבע" value="${esc(S.grpDraft?.t||'')}"></label>
      <div class="grid2"><label>יציאה<input type="datetime-local" id="grpF" value="${esc(S.grpDraft?.f||dt(d.getTime()+36e5))}"></label><label>חזרה משוערת<input type="datetime-local" id="grpB" value="${esc(S.grpDraft?.b||'')}"></label></div>
-     <label>פרטים להורים (לא חובה)<input id="grpN" maxlength="120" placeholder="למשל: בליווי 3 אנשי צוות, הסעה מאורגנת, ללא עלות" value="${esc(S.grpDraft?.n||'')}"></label>
+     <label>פרטים להורים (לא חובה)<input id="grpN" maxlength="120" placeholder="למשל: בליווי 3 אנשי צוות, ללא עלות" value="${esc(S.grpDraft?.n||'')}"></label>
+     <div class="grid2"><label>אמצעי הגעה<select id="grpTr">${['הסעה מאורגנת','הליכה ברגל','רכב של איש צוות','תחבורה ציבורית'].map(o=>`<option${(S.grpDraft?.tr||'הסעה מאורגנת')===o?' selected':''}>${o}</option>`).join('')}</select></label>
+      <div style="display:grid;gap:6px;align-content:end"><label class="row" style="gap:6px;cursor:pointer"><input type="checkbox" id="grpNi"${S.grpDraft?.ni?' checked':''}> פעילות ערב / לילה</label><label class="row" style="gap:6px;cursor:pointer"><input type="checkbox" id="grpW"${S.grpDraft?.w?' checked':''}> כוללת מים (בריכה / ים)</label></div></div>
+     <span class="muted" style="font-size:.82rem">ההורה ימלא שם מלא, קרבה, הצהרת בריאות וחתימה באצבע. בפעילות מים יתבקש לאשר שהילד יודע לשחות. בנסיעה בתחבורה ציבורית הנוהל דורש טופס חתום בכתב יד – אפשר להדפיס אותו מ"תיק היציאה".</span>
      <div><div class="row" style="justify-content:space-between;margin-bottom:6px"><b>מי משתתף? <span class="muted">(${n} נבחרו)</span></b></div>
       <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px"><button class="btn small" type="button" data-act="grpG" data-g="in">כל מי שבפנימייה</button>${GRADES.map(g=>`<button class="btn small" type="button" data-act="grpG" data-g="${g}">כיתה ${g}</button>`).join('')}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;max-height:300px;overflow:auto">${P.map(s=>`<button type="button" class="btn small" data-act="grpS" data-id="${s.id}" aria-pressed="${S.grpSel.has(s.id)}" style="${S.grpSel.has(s.id)?'background:var(--accent);color:#fff;border-color:var(--accent)':''}">${S.grpSel.has(s.id)?'✓ ':''}${esc(s.name)} <span style="opacity:.7">${esc(s.grade||'')}</span>${isOut(s.id)?' · בחוץ':''}</button>`).join('')}</div></div>
@@ -3338,16 +3355,16 @@ function renderGrp(){const el=$('grpBox');if(!el)return;const can=(has('out')||S
   for(const g of G){const ok=g.items.filter(x=>x.status==='ok').length,no=g.items.filter(x=>x.status==='no').length,pe=g.items.length-ok-no,open=S.grpOpen===g.k,sent=grpSentK();
     h+=`<div style="border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><span><b>🚌 ${esc(g.t)}</b><span class="meta" style="display:block">${g.from?esc(paWhen(g.from)):''}${g.back?' · חזרה '+esc(paWhen(g.back)):''}</span></span>
       <span class="cnt"><span class="pill ok">✓ ${ok} אישרו</span>${no?`<span class="pill bad">✗ ${no} לא אישרו</span>`:''}${pe?`<span class="pill">⏳ ${pe} ממתינים</span>`:''}</span></div>
-      <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn small ${open?'':'primary'}" type="button" data-act="grpOpen" data-k="${esc(g.k)}">${open?'הסתר':'📤 שליחה להורים ומעקב'}</button><button class="btn small" type="button" data-act="grpCopy" data-k="${esc(g.k)}">📋 העתק רשימת מאושרים</button>${can&&pe?`<button class="btn small" type="button" data-act="grpX" data-k="${esc(g.k)}">בטל בקשות שלא נענו</button>`:''}</div>`;
+      <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn small ${open?'':'primary'}" type="button" data-act="grpOpen" data-k="${esc(g.k)}">${open?'הסתר':'📤 שליחה להורים ומעקב'}</button><button class="btn small" type="button" data-act="grpCopy" data-k="${esc(g.k)}">📋 העתק רשימת מאושרים</button><button class="btn small" type="button" data-act="grpPr" data-k="${esc(g.k)}">🗂 תיק יציאה (PDF)</button>${can&&pe?`<button class="btn small" type="button" data-act="grpX" data-k="${esc(g.k)}">בטל בקשות שלא נענו</button>`:''}</div>`;
     if(open){const its=g.items.slice().sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1)||(S.students.get(a.sid)?.name||'').localeCompare(S.students.get(b.sid)?.name||'','he'));
       its.filter(x=>x.status==='pending'&&!S.grpPhL.has(x.sid)).forEach(x=>{S.grpPhL.add(x.sid);paPhones(x.sid).then(p=>{S.grpPh[x.sid]=p;renderGrp()})});
       h+=`<span class="muted" style="font-size:.85rem">לחצו על כל הורה לפתיחת וואטסאפ עם הקישור האישי שלו, ושלחו. ההודעה לא נשלחת לבד.</span><div class="list">${its.map(x=>{const s=S.students.get(x.sid);if(!s)return '';const ph=S.grpPh[x.sid]||[],st=x.status;
-        return `<div class="item" style="flex-wrap:wrap">${av(s)}<span class="name" style="flex:1">${esc(s.name)}<span class="meta">${esc(s.grade||'')}${x.pName&&st!=='pending'?' · '+esc(x.pName):''}</span></span><span class="chip ${st==='ok'?'ok':st==='no'?'bad':'warn'}">${st==='ok'?'✓ אישרו':st==='no'?'✗ לא אישרו':'⏳ ממתין'}</span>
+        return `<div class="item" style="flex-wrap:wrap">${av(s)}<span class="name" style="flex:1">${esc(s.name)}<span class="meta">${esc(s.grade||'')}${x.pName&&st!=='pending'?' · '+esc(x.pName)+(x.rel?' ('+esc(x.rel)+')':''):''}${x.health?' · '+esc(PA_H[x.health]||'')+(x.hNote?': '+esc(x.hNote):''):''}${x.water&&st==='ok'?(x.swim?' · 🏊 יודע לשחות':' · ⚠️ לא אושר שיודע לשחות'):''}${x.sig?' · ✍️ חתום':''}</span></span><span class="chip ${st==='ok'?'ok':st==='no'?'bad':'warn'}">${st==='ok'?'✓ אישרו':st==='no'?'✗ לא אישרו':'⏳ ממתין'}</span>
           ${st==='pending'?`<div class="row" style="gap:6px;flex-basis:100%;flex-wrap:wrap">${ph.map(([n,p])=>{const k=x.id+'|'+waNum(p),dn=sent.has(k);return `<a class="btn small${dn?'':' primary'}" target="_blank" rel="noopener" data-act="grpSent" data-k="${esc(k)}" href="https://wa.me/${waNum(p)}?text=${encodeURIComponent(paTxt(x,n))}">${dn?'✓ נשלח ל':'💬 שלח ל'}${esc(n||'הורה')}</a>`}).join('')}${S.grpPhL.has(x.sid)&&!ph.length?'<span class="muted" style="font-size:.85rem">אין טלפון הורה בכרטיס</span>':''}<a class="btn small" target="_blank" rel="noopener" data-act="grpSent" data-k="${esc(x.id+'|any')}" href="https://wa.me/?text=${encodeURIComponent(paTxt(x,''))}">💬 למספר אחר</a></div>`:''}</div>`}).join('')}</div>`}
     h+=`</div>`}
   if(!S.grpNew&&!G.length)h='';
-  const keep=S.grpNew?{t:$('grpT')?.value,f:$('grpF')?.value,b:$('grpB')?.value,n:$('grpN')?.value}:null;
-  el.innerHTML=h;if(keep&&keep.t!==undefined){S.grpDraft=keep;$('grpT').value=keep.t||'';if(keep.f)$('grpF').value=keep.f;$('grpB').value=keep.b||'';$('grpN').value=keep.n||''}}
+  const keep=S.grpNew?{t:$('grpT')?.value,f:$('grpF')?.value,b:$('grpB')?.value,n:$('grpN')?.value,tr:$('grpTr')?.value,ni:$('grpNi')?.checked,w:$('grpW')?.checked}:null;
+  el.innerHTML=h;if(keep&&keep.t!==undefined){S.grpDraft=keep;$('grpT').value=keep.t||'';if(keep.f)$('grpF').value=keep.f;$('grpB').value=keep.b||'';$('grpN').value=keep.n||'';if(keep.tr)$('grpTr').value=keep.tr;$('grpNi').checked=!!keep.ni;$('grpW').checked=!!keep.w}}
 async function paPhones(sid){if(!(has('personal')||S.mgr))return [];try{const p=(await db.doc('profiles/'+sid).get()).data()||{};return [[p.fatherName,p.fatherPhone],[p.motherName,p.motherPhone]].filter(x=>waNum(x[1]))}catch{return []}}
 function renderPa(){renderHr();renderHrLink();renderGrp();const el=$('paList');if(!el)return;const L=(S.pa||[]).filter(x=>!isGrp(x)&&!x.used&&S.students.has(x.sid)&&!(x.status==='ok'&&isOut(x.sid)));
   el.hidden=!L.length;if(!L.length){el.innerHTML='';return}
@@ -3367,11 +3384,36 @@ async function paPage(tok){const v=document.createElement('main');v.id='paView';
   const box=h=>{v.innerHTML=`<div class="pa-card">${logo?`<img src="${logo}" alt="" class="pa-logo">`:''}<div class="muted" style="font-size:.9rem">ישיבה לצעירים דעת תבונות · פנימייה</div>${h}</div>`};
   box('<p>טוען…</p>');let d=null;try{const s=await db.doc('pappr/'+tok).get();d=s.exists?s.data():null}catch{}
   const show=()=>{if(!d){box('<h1>הקישור אינו פעיל</h1><p>ייתכן שהבקשה בוטלה. אפשר לפנות לצוות הפנימייה.</p>');return}
-    const G=isGrp(d),info=G?`<div class="pa-info"><div>🚌 <b>יציאה מאורגנת בליווי צוות הפנימייה</b></div><div>${esc(d.reason.slice(GRP_P.length))}</div>${d.from?`<div>יציאה: ${esc(paWhen(d.from))}</div>`:''}${d.backBy?`<div>חזרה משוערת: ${esc(paWhen(d.backBy))}</div>`:''}<div>משתתף: <b>${esc(d.first||'')}</b></div><div class="muted" style="font-size:.85rem">נשלח על ידי ${esc(d.byName||'צוות הפנימייה')}</div></div>`:`<div class="pa-info"><div><b>${esc(d.first||'')}</b> מבקש לצאת מהפנימייה</div>${d.reason?`<div>סיבה: ${esc(d.reason)}</div>`:''}${d.backBy?`<div>חזרה צפויה: ${esc(paWhen(d.backBy))}</div>`:''}<div class="muted" style="font-size:.85rem">נשלח על ידי ${esc(d.byName||'צוות הפנימייה')}</div></div>`;
+    const G=isGrp(d),info=G?`<div class="pa-info"><div>🚌 <b>יציאה מאורגנת בליווי צוות הפנימייה</b></div><div>${esc(d.reason.slice(GRP_P.length))}</div>${d.from?`<div>יציאה: ${esc(paWhen(d.from))}</div>`:''}${d.backBy?`<div>חזרה משוערת: ${esc(paWhen(d.backBy))}</div>`:''}${d.trans?`<div>הגעה: ${esc(d.trans)}</div>`:''}<div>משתתף: <b>${esc(d.first||'')}</b></div><div class="muted" style="font-size:.85rem">נשלח על ידי ${esc(d.byName||'צוות הפנימייה')}</div></div>`:`<div class="pa-info"><div><b>${esc(d.first||'')}</b> מבקש לצאת מהפנימייה</div>${d.reason?`<div>סיבה: ${esc(d.reason)}</div>`:''}${d.backBy?`<div>חזרה צפויה: ${esc(paWhen(d.backBy))}</div>`:''}<div class="muted" style="font-size:.85rem">נשלח על ידי ${esc(d.byName||'צוות הפנימייה')}</div></div>`;
     if(d.status==='ok'||d.status==='no'){box(`<h1>${d.status==='ok'?(G?'✓ ההשתתפות אושרה':'✓ היציאה אושרה'):(G?'✗ ההשתתפות לא אושרה':'✗ היציאה לא אושרה')}</h1>${info}<p>תודה! התשובה נשמרה והצוות קיבל אותה.${d.status==='no'?' לשינוי אפשר להתקשר לצוות הפנימייה.':''}</p>`);return}
     if(d.exp&&Date.now()>d.exp){box(`<h1>תוקף הקישור פג</h1>${info}<p>אפשר לפנות לצוות הפנימייה.</p>`);return}
-    box(`<h1>${G?'אישור השתתפות ביציאה':'בקשת אישור יציאה'}</h1>${info}<label class="muted" style="display:grid;gap:4px;text-align:right">השם שלך (לא חובה)<input id="paName" maxlength="40" placeholder="למשל: אבא של ${esc(d.first||'')}"></label><div class="pa-btns"><button class="btn primary" type="button" id="paYes">✓ אני מאשר/ת ${G?'השתתפות':'את היציאה'}</button><button class="btn" type="button" id="paNo">✗ לא מאשר/ת</button></div>`);
-    const go=async st=>{const n=($('paName').value||'').trim().slice(0,40);v.querySelectorAll('button').forEach(x=>x.disabled=true);try{await db.doc('pappr/'+tok).update({status:st,pName:n,pAt:Date.now()});d={...d,status:st,pName:n};show()}catch(e){box('<h1>לא הצלחנו לשמור</h1><p>בדקו את החיבור לאינטרנט ונסו שוב, או התקשרו לצוות הפנימייה.</p><button class="btn" type="button" onclick="location.reload()">נסו שוב</button>')}};
+    const fn=esc(d.first||'');box(`<h1>${G?'אישור השתתפות ביציאה':'בקשת אישור יציאה'}</h1>${info}<div class="pa-f">
+      <label>שם מלא של ההורה *<input id="paName" maxlength="40" autocomplete="name"></label>
+      <label>קרבה לתלמיד<select id="paRel"><option>אב</option><option>אם</option><option>אפוטרופוס/ית</option></select></label>
+      ${G?`<fieldset><legend>הצהרת בריאות *</legend>
+        <label class="rd"><input type="radio" name="paH" value="fit"> ${fn} כשיר להשתתף בפעילות, ולא חל שינוי לאחרונה במצבו הבריאותי.</label>
+        <label class="rd"><input type="radio" name="paH" value="lim"> יש ל${fn} מגבלות בריאותיות שאינן מונעות השתתפות (פרטו למטה; אישור רפואי יימסר לצוות).</label>
+        <label class="rd"><input type="radio" name="paH" value="no"> יש ל${fn} מגבלות שמונעות את השתתפותו.</label>
+        <textarea id="paHN" rows="2" maxlength="300" placeholder="הערות: מגבלות, תרופות, רגישויות"></textarea></fieldset>
+      ${d.water?`<label class="rd"><input type="checkbox" id="paSwim"> אני מאשר/ת ש${fn} יודע לשחות.</label>`:''}
+      ${d.night?`<div class="pa-decl" style="color:var(--ink)">🌙 הפעילות מתקיימת בשעות הערב/הלילה. אישורכם מהווה אישור להשתתפות ${fn} בפעילות הלילה.</div>`:''}`:''}
+      <div><div style="font-weight:700;margin-bottom:4px">חתימה *</div><div class="pa-sig"><canvas id="paSig" width="600" height="200" aria-label="חתמו כאן באצבע"></canvas><span class="ph" id="paSigPh">חתמו כאן באצבע</span><button class="btn small x" type="button" id="paSigX">נקה</button></div></div>
+      <div class="pa-decl">בחתימתי אני מאשר/ת ${G?`את השתתפות ${fn} בפעילות המתוארת למעלה, ומצהיר/ה שהפרטים בהצהרת הבריאות נכונים`:`את יציאת ${fn} כמתואר למעלה`}. התשובה נשמרת עם התאריך והשעה.</div>
+      <div class="pa-err" id="paErr" hidden></div></div>
+      <div class="pa-btns"><button class="btn primary" type="button" id="paYes">✓ אני מאשר/ת ${G?'השתתפות':'את היציאה'}</button><button class="btn" type="button" id="paNo">✗ לא מאשר/ת</button></div>`);
+    const cv=$('paSig'),cx=cv.getContext('2d');let dr=false,inked=false;cx.lineWidth=4;cx.lineCap='round';cx.lineJoin='round';cx.strokeStyle='#0B1B3A';
+    const pt=e=>{const r=cv.getBoundingClientRect();return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]};
+    cv.addEventListener('pointerdown',e=>{dr=true;cv.setPointerCapture(e.pointerId);const [x,y]=pt(e);cx.beginPath();cx.moveTo(x,y);$('paSigPh').hidden=true});
+    cv.addEventListener('pointermove',e=>{if(!dr)return;const [x,y]=pt(e);cx.lineTo(x,y);cx.stroke();inked=true});
+    ['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>{dr=false}));
+    $('paSigX').onclick=()=>{cx.clearRect(0,0,cv.width,cv.height);inked=false;$('paSigPh').hidden=false};
+    const sigData=()=>{let u=cv.toDataURL('image/png');if(u.length>58000){const c2=document.createElement('canvas');c2.width=300;c2.height=100;const k=c2.getContext('2d');k.fillStyle='#fff';k.fillRect(0,0,300,100);k.drawImage(cv,0,0,300,100);u=c2.toDataURL('image/jpeg',.6)}return u};
+    const err=m=>{const e=$('paErr');e.textContent=m;e.hidden=!m;if(m)e.scrollIntoView({block:'center'})};
+    const go=async st=>{const n=($('paName').value||'').trim().slice(0,40),rel=$('paRel').value,hv=G?(v.querySelector('input[name=paH]:checked')?.value||''):'',hn=G?($('paHN').value||'').trim().slice(0,300):'';
+      if(n.length<2){err('כתבו שם מלא');return}if(st==='ok'&&G&&!hv){err('סמנו את הצהרת הבריאות');return}if(st==='ok'&&G&&hv==='lim'&&!hn){err('פרטו את המגבלות בשדה ההערות');return}if(st==='ok'&&!inked){err('חתמו באצבע במסגרת');return}
+      if(st==='ok'&&hv==='no')st='no';err('');
+      const u={status:st,pName:n,pAt:Date.now(),rel,ua:String(navigator.userAgent||'').slice(0,200)};if(inked)u.sig=sigData();if(G){u.health=hv;u.hNote=hn;if(d.water)u.swim=!!$('paSwim')?.checked}
+      v.querySelectorAll('button').forEach(x=>x.disabled=true);try{await db.doc('pappr/'+tok).update(u);d={...d,...u};show()}catch(e){box('<h1>לא הצלחנו לשמור</h1><p>בדקו את החיבור לאינטרנט ונסו שוב, או התקשרו לצוות הפנימייה.</p><button class="btn" type="button" onclick="location.reload()">נסו שוב</button>')}};
     $('paYes').onclick=()=>go('ok');$('paNo').onclick=()=>go('no')};
   show()}
 /* ---------- clubs: reminders and repeated absences ---------- */
@@ -3882,9 +3924,9 @@ function bdReport(kind){const y=S.bdY||bdYr(),st=bdStats(y),m=S.bdM||'',L=st.L.f
 $('bdBox').addEventListener('change',()=>{S.bdBoxSet=1});
 $('bdForm').addEventListener('submit',async e=>{e.preventDefault();if(S.ro||!db)return;const full=has('budget'),k=full?(S.bdK||'out'):'out',amt=Math.round((+$('bdAmt').value||0)*100)/100,date=$('bdDate').value,desc=$('bdDesc').value.trim();
   if(!(amt>0)){toast('כתבו סכום');return}if(!date){toast('בחרו תאריך');return}if(k==='out'&&!desc){toast('כתבו על מה ההוצאה');return}
-  const v={k:'exp',kind:k,amt,date,desc,at:Date.now(),by:S.me,byName:S.myName||''};if(k==='out'){v.cat=$('bdCat').value;v.box=full?$('bdBox').value:'petty';if(full)v.auto=true;if(S.bdPh)v.photo=S.bdPh}
+  const v={kind:k,amt,date,desc,at:Date.now(),by:S.me,byName:S.myName||''};if(k==='out'){v.cat=$('bdCat').value;v.box=full?$('bdBox').value:'petty';if(full)v.auto=true;if(S.bdPh)v.photo=S.bdPh}
   const before=k==='out'&&full?bdStats(bdYr()):null;
-  $('bdBtn').disabled=true;try{await OW(db.collection('shiftlog').add(v));$('bdAmt').value='';$('bdDesc').value='';S.bdPh=null;bdPhShow();
+  $('bdBtn').disabled=true;try{await OW(db.collection('expenses').add(v));$('bdAmt').value='';$('bdDesc').value='';S.bdPh=null;bdPhShow();
     let msg=k==='in'?'ההפקדה נרשמה':full?'ההוצאה נרשמה':'ההוצאה נשלחה לאישור';
     if(before&&before.C[v.cat]){const a=+before.C[v.cat].amt||0,u=before.by[v.cat]||{ok:0,pend:0},w=S.bud?.warn||80,p0=bdPct(u.ok+u.pend,a),p1=bdPct(u.ok+u.pend+amt,a);if(a&&p1>=100&&p0<100)msg+=' · ⚠ הסעיף עבר את התקציב';else if(a&&p1>=w&&p0<w)msg+=` · שים לב: הסעיף הגיע ל-${p1}%`}
     toast(msg)}catch(err){fail(err)}$('bdBtn').disabled=false});
@@ -4495,8 +4537,12 @@ function subscribeAll(){
   if(has('out')||has('count')||S.mgr)S.subs.push(db.collection('lateinc').orderBy('at','desc').limit(300).onSnapshot(q=>{S.lateinc=q.docs.map(d=>({id:d.id,...d.data()}));renderFu();if(S.sel)renderShX()},()=>{}));
   if(has('notes')||has('personal')||S.mgr)S.subs.push(db.collection('pcontact').orderBy('at','desc').limit(500).onSnapshot(q=>{S.pc=q.docs.map(d=>({id:d.id,...d.data()}));renderFu();if(S.sel)renderShX()},()=>{}));
   if(has('budget')||has('petty')){S.subs.push(db.doc('settings/budget').onSnapshot(d=>{S.bud=d.exists?d.data():{};renderBud()},()=>{}));
-    let first=true;S.subs.push(db.collection('shiftlog').where('k','==','exp').onSnapshot(q=>{S.exp=q.docs.map(d=>({id:d.id,...d.data()}));
-      if(!first&&has('budget'))q.docChanges().forEach(c=>{const x=c.doc.data();if(c.type==='added'&&x.by!==S.me&&x.kind!=='in')notify('🧾 הוצאה חדשה לאישור',`${x.byName||''}: ${bdMoney(x.amt)}${x.desc?' – '+x.desc:''}`,'exp-'+c.doc.id)});first=false;renderBud()},()=>{}))}
+    const P={a:[],mine:[],ins:[],leg:[]},up=()=>{const m=new Map();[...P.leg,...P.a,...P.mine,...P.ins].forEach(x=>m.set(x.id,x));S.exp=[...m.values()];renderBud()};
+    S.subs.push(db.collection('shiftlog').where('k','==','exp').onSnapshot(q=>{P.leg=q.docs.map(d=>({id:d.id,_leg:1,...d.data()})).filter(x=>has('budget')||x.by===S.me||x.kind==='in');up()},()=>{}));
+    if(has('budget')){let first=true;S.subs.push(db.collection('expenses').onSnapshot(q=>{P.a=q.docs.map(d=>({id:d.id,...d.data()}));
+      if(!first)q.docChanges().forEach(c=>{const x=c.doc.data();if(c.type==='added'&&x.by!==S.me&&x.kind!=='in')notify('🧾 הוצאה חדשה לאישור',`${x.byName||''}: ${bdMoney(x.amt)}${x.desc?' – '+x.desc:''}`,'exp-'+c.doc.id)});first=false;up()},()=>{}))}
+    else{S.subs.push(db.collection('expenses').where('by','==',S.me).onSnapshot(q=>{P.mine=q.docs.map(d=>({id:d.id,...d.data()}));up()},()=>{}));
+      S.subs.push(db.collection('expenses').where('kind','==','in').onSnapshot(q=>{P.ins=q.docs.map(d=>({id:d.id,...d.data()}));up()},()=>{}))}}
   S.subs.push(db.doc('settings/drills').onSnapshot(d=>{S.drD=d.exists?d.data():{};renderDrill();renderEm()},()=>{}));
   S.subs.push(db.doc('settings/meet').onSnapshot(d=>{S.meet=d.exists?d.data():{};if(S.tab==='meet')renderMeet();if(S.sel)renderSheet()},()=>{}));
   S.subs.push(db.doc('settings/cal').onSnapshot(d=>{S.calOv=d.exists?(d.data().ev||{}):{};applyCal();renderCal();renderCalNotes();renderHome();if(S.tab==='shab')renderShab?.()},()=>{}));
