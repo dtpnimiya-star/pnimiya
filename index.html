@@ -25,7 +25,7 @@ const FIREBASE_CONFIG = {
 };
 /* שמות המשתמש נשמרים ב-Firebase בצורה username@pnimiya.local. אין צורך לשנות. */
 const EMAIL_DOMAIN = "pnimiya.local";
-const APP_VERSION = "2026-11-25-82";
+const APP_VERSION = "2026-11-26-83";
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -979,11 +979,12 @@ html.ios .btn.primary{box-shadow:0 6px 16px -10px var(--accent)}
       </div>
       <label class="muted" for="outBack" style="font-size:.9rem">חזרה צפויה</label>
       <input type="datetime-local" id="outBack">
-      <div class="row" style="gap:8px"><button class="btn primary" type="submit">רשום יציאה</button><button class="btn" type="button" data-act="paReq">📲 שלח להורים לאישור</button></div>
+      <div class="row" style="gap:8px"><button class="btn primary" type="submit">רשום יציאה</button><button class="btn" type="button" data-act="paReq">📲 שלח להורים לאישור</button><button class="btn" type="button" data-act="grpNew">🚌 יציאה מאורגנת – אישורי הורים</button></div>
       <span class="muted" style="font-size:.85rem">אפשר לשלוח להורים קישור לאישור היציאה לפני שהתלמיד יוצא. כשההורים מאשרים, האישור נשמר ביציאה.</span>
     </form>
     <div id="hrList" hidden></div>
     <div id="paList" hidden></div>
+    <div class="panel" id="grpBox" style="display:grid;gap:10px"></div>
     <details class="panel" id="hrLinkP" hidden><summary style="font-weight:700;cursor:pointer">🔗 קישור להורים לבקשת יציאה הביתה</summary>
       <div style="display:grid;gap:10px;margin-top:10px"><span class="muted" style="font-size:.88rem">לכל תלמיד יש קישור אישי. ההורים שומרים אותו, ובכל פעם שהם רוצים שהבן ייצא הם ממלאים טופס קצר. הבקשה מגיעה לכאן, והמנהל מאשר או דוחה.</span>
       <select id="hrStu" aria-label="תלמיד"></select><div id="hrLink"></div></div></details>
@@ -2296,6 +2297,14 @@ document.addEventListener('click',async e=>{
     case'fixCopy':try{await navigator.clipboard.writeText(fixUrl(S.fixKey));toast('הקישור הועתק')}catch{toast('לא הצלחתי להעתיק')}break;
     case'fixNew':await fixNew(b);break;
     case'paReq':await paReq(b);break;
+    case'grpNew':S.grpNew=!S.grpNew;renderGrp();if(S.grpNew)$('grpBox').scrollIntoView({behavior:'smooth',block:'start'});break;
+    case'grpG':{const g=b.dataset.g,ids=grpPool().filter(s=>g==='in'?!isOut(s.id):g==='all'?true:s.grade===g).map(s=>s.id),on=ids.every(id=>S.grpSel.has(id));ids.forEach(id=>on?S.grpSel.delete(id):S.grpSel.add(id));renderGrp();break}
+    case'grpS':{const id=b.dataset.id;S.grpSel.has(id)?S.grpSel.delete(id):S.grpSel.add(id);renderGrp();break}
+    case'grpGo':await grpCreate(b);break;
+    case'grpSent':{grpMark(b.dataset.k);setTimeout(renderGrp,400);break}
+    case'grpCopy':grpCopy(b.dataset.k);break;
+    case'grpOpen':S.grpOpen=S.grpOpen===b.dataset.k?null:b.dataset.k;renderGrp();break;
+    case'grpX':{if(!armed(b,'בטוח? לבטל את הבקשות שלא נענו'))break;const L=grpList().find(g=>g.k===b.dataset.k);if(!L)break;try{await Promise.all(L.items.filter(x=>x.status==='pending').map(x=>OW(db.doc('pappr/'+x.id).delete())));toast('הבקשות שלא נענו בוטלו')}catch(e){fail(e)}break}
     case'hrOk':await hrDecide(b.dataset.id,true,b);break;
     case'hrNo':{if(!armed(b,'לדחות?'))break;await hrDecide(b.dataset.id,false,b);break}
     case'hrDel':{if(!armed(b,'בטוח?'))break;try{await OW(db.doc('hreq/'+b.dataset.id).delete());S.hr=S.hr.filter(x=>x.id!==b.dataset.id);renderHr()}catch(e){fail(e)}break}
@@ -3277,9 +3286,10 @@ async function hrPage(tok){const v=document.createElement('main');v.id='paView';
 
 const paUrl=id=>SITE_URL+'?pa='+id;
 const paWhen=t=>{try{return new Intl.DateTimeFormat('he-IL',{weekday:'long',day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(t))}catch{return new Date(t).toLocaleString('he-IL')}};
-const paTxt=(x,pn)=>`שלום${pn?' '+pn:''},\nכאן ${x.byName||'צוות הפנימייה'} מפנימיית דעת תבונות.\n${x.first||''} מבקש לצאת מהפנימייה${x.reason?' ('+x.reason+')':''}${x.backBy?', עם חזרה צפויה '+paWhen(x.backBy):''}.\nלאישור או לדחייה לחצו כאן:\n${paUrl(x.id)}\nתודה!`;
+const paTxt=(x,pn)=>isGrp(x)?`שלום${pn?' '+pn:''},\nכאן ${x.byName||'צוות הפנימייה'} מפנימיית דעת תבונות.\nאנחנו יוצאים ליציאה מאורגנת בליווי צוות הפנימייה: ${x.reason.slice(GRP_P.length)}${x.from?'\nיציאה: '+paWhen(x.from):''}${x.backBy?'\nחזרה משוערת: '+paWhen(x.backBy):''}.\nלאישור השתתפות של ${x.first||''} לחצו כאן:\n${paUrl(x.id)}\nתודה!`:`שלום${pn?' '+pn:''},\nכאן ${x.byName||'צוות הפנימייה'} מפנימיית דעת תבונות.\n${x.first||''} מבקש לצאת מהפנימייה${x.reason?' ('+x.reason+')':''}${x.backBy?', עם חזרה צפויה '+paWhen(x.backBy):''}.\nלאישור או לדחייה לחצו כאן:\n${paUrl(x.id)}\nתודה!`;
 const paFrom=x=>x.from||(x.hr?(S.hr||[]).find(h=>h.id===x.hr)?.from:null)||null;
-const paStart=x=>paFrom(x)||(x.hr?null:x.pAt||x.at);
+const GRP_P='🚌 יציאה מאורגנת: ';const isGrp=x=>String(x?.reason||'').startsWith(GRP_P);
+const paStart=x=>isGrp(x)?null:paFrom(x)||(x.hr?null:x.pAt||x.at);
 const paSoon=sid=>(S.pa||[]).find(x=>{const f=paFrom(x);return x.sid===sid&&x.status==='ok'&&!x.used&&f&&f>Date.now()});
 S.paAuto=new Set();
 async function paAuto(){if(!db||S.ro||!(has('out')||S.owner))return;const now=Date.now();
@@ -3289,13 +3299,57 @@ async function paAuto(){if(!db||S.ro||!(has('out')||S.owner))return;const now=Da
       try{await OW(db.doc('moves/pa_'+x.id).set({sid:x.sid,type:'out',reason:x.reason||'',backBy:x.backBy||null,at,by:S.me,byName:S.myName||'',...px}))}catch{}
       await OW(db.doc('pappr/'+x.id).update({used:true}));toast(`🚪 ${S.students.get(x.sid)?.name||''}: נרשמה יציאה אוטומטית לפי אישור ההורים`)}catch(e){S.paAuto.delete(x.id);fail(e)}}}
 setInterval(()=>{if(S.access)paAuto()},60000);
-function paOk(sid){return (S.pa||[]).find(x=>x.sid===sid&&x.status==='ok'&&!x.used&&Date.now()-x.at<2*864e5)}
+function paOk(sid){return (S.pa||[]).find(x=>!isGrp(x)&&x.sid===sid&&x.status==='ok'&&!x.used&&Date.now()-x.at<2*864e5)}
 function subPa(){if(!db||S.unPa||!(has('out')||S.mgr))return;S.unPa=1;
   S.subs.push(db.collection('pappr').where('at','>=',Date.now()-4*864e5).onSnapshot(q=>{const prev=new Map((S.pa||[]).map(x=>[x.id,x.status]));S.pa=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.at-a.at);
-    if(S.paLoaded)S.pa.forEach(x=>{if(prev.get(x.id)==='pending'&&(x.status==='ok'||x.status==='no')){const nm=S.students.get(x.sid)?.name||x.first||'',ok=x.status==='ok';toast(`${ok?'✓':'✗'} ההורים של ${nm} ${ok?'אישרו':'לא אישרו'} את היציאה`);notify(ok?'ההורים אישרו יציאה':'ההורים לא אישרו יציאה',`${nm}${x.pName?' · '+x.pName:''}${x.reason?' · '+x.reason:''}`,'pa-'+x.id)}});
+    if(S.paLoaded)S.pa.forEach(x=>{if(prev.get(x.id)==='pending'&&(x.status==='ok'||x.status==='no')){const nm=S.students.get(x.sid)?.name||x.first||'',ok=x.status==='ok';toast(`${ok?'✓':'✗'} ההורים של ${nm} ${ok?'אישרו':'לא אישרו'} ${isGrp(x)?'השתתפות ב'+x.reason.slice(GRP_P.length).split(' · ')[0]:'את היציאה'}`);notify(ok?'ההורים אישרו יציאה':'ההורים לא אישרו יציאה',`${nm}${x.pName?' · '+x.pName:''}${x.reason?' · '+x.reason:''}`,'pa-'+x.id)}});
     S.paLoaded=true;renderPa();paAuto();renderAll()},onErr))}
+/* organised group outing: one pappr per student, same `at`, reason prefixed GRP_P */
+S.grpSel=new Set();S.grpPh={};S.grpPhL=new Set();
+const grpPool=()=>[...S.students.values()].filter(s=>!s.left).sort((a,b)=>GRADES.indexOf(a.grade)-GRADES.indexOf(b.grade)||(a.name||'').localeCompare(b.name||'','he'));
+const grpSentK=()=>{try{return new Set(JSON.parse(localStorage.getItem('pn-grpSent')||'[]'))}catch{return new Set()}};
+function grpMark(k){const s=grpSentK();s.add(k);try{localStorage.setItem('pn-grpSent',JSON.stringify([...s].slice(-800)))}catch{}}
+function grpList(){const m=new Map();(S.pa||[]).filter(isGrp).forEach(x=>{const k=(x.by||'')+'|'+x.at;if(!m.has(k))m.set(k,{k,t:x.reason.slice(GRP_P.length),from:x.from,back:x.backBy,at:x.at,byName:x.byName,items:[]});m.get(k).items.push(x)});return [...m.values()].sort((a,b)=>b.at-a.at)}
+async function grpCreate(b){const t=$('grpT').value.trim(),fv=$('grpF').value,bv=$('grpB').value,note=$('grpN').value.trim();
+  if(!t){toast('כתבו לאן יוצאים');return}if(!fv){toast('בחרו מתי יוצאים');return}if(!S.grpSel.size){toast('בחרו תלמידים');return}
+  const from=new Date(fv).getTime(),backBy=bv?new Date(bv).getTime():null,at=Date.now(),reason=GRP_P+t+(note?' · '+note:'');
+  if(backBy&&backBy<=from){toast('שעת החזרה צריכה להיות אחרי היציאה');return}
+  const ids=[...S.grpSel].filter(id=>S.students.has(id));b.disabled=true;
+  try{await Promise.all(ids.map(sid=>{const s=S.students.get(sid),id=[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(36).padStart(2,'0')).join('').slice(0,26);
+      return OW(db.doc('pappr/'+id).set({sid,first:s.firstName||String(s.name||'').split(' ')[0],reason,backBy,from,status:'pending',at,exp:Math.max(at+3*864e5,from+6*36e5),by:S.me,byName:S.myName||''}))}));
+    S.grpNew=false;S.grpSel=new Set();S.grpOpen=(S.me||'')+'|'+at;toast(`נוצרו ${ids.length} בקשות. עכשיו שלחו לכל הורה את הקישור שלו`)}catch(e){fail(e)}b.disabled=false;renderGrp()}
+function grpCopy(k){const g=grpList().find(x=>x.k===k);if(!g)return;const ok=g.items.filter(x=>x.status==='ok').map(x=>S.students.get(x.sid)).filter(Boolean).sort((a,b)=>GRADES.indexOf(a.grade)-GRADES.indexOf(b.grade)||(a.name||'').localeCompare(b.name||'','he'));
+  const no=g.items.filter(x=>x.status!=='ok').map(x=>S.students.get(x.sid)?.name).filter(Boolean);
+  const txt=`🚌 ${g.t}${g.from?' – '+paWhen(g.from):''}\nמאושרים (${ok.length}):\n${ok.map((s,i)=>`${i+1}. ${s.name}${s.grade?' ('+s.grade+')':''}`).join('\n')}${no.length?`\n\nאין אישור (${no.length}): ${no.join(', ')}`:''}`;
+  try{navigator.clipboard.writeText(txt);toast('הרשימה הועתקה')}catch{prompt('העתיקו:',txt)}}
+function renderGrp(){const el=$('grpBox');if(!el)return;const can=(has('out')||S.mgr)&&!S.ro,G=grpList().filter(g=>(g.from||g.at)>Date.now()-864e5);
+  el.hidden=!S.grpNew&&!G.length;if(el.hidden){el.innerHTML='';return}
+  let h='';
+  if(S.grpNew&&can){const P=grpPool(),n=S.grpSel.size,d=new Date(),dt=x=>{const z=new Date(x-new Date(x).getTimezoneOffset()*6e4);return z.toISOString().slice(0,16)};
+    h+=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">🚌 יציאה מאורגנת – בקשת אישור מההורים</h2><button class="btn small" type="button" data-act="grpNew">סגור</button></div>
+     <label>לאן יוצאים?<input id="grpT" maxlength="80" placeholder="למשל: באולינג בבאר שבע" value="${esc(S.grpDraft?.t||'')}"></label>
+     <div class="grid2"><label>יציאה<input type="datetime-local" id="grpF" value="${esc(S.grpDraft?.f||dt(d.getTime()+36e5))}"></label><label>חזרה משוערת<input type="datetime-local" id="grpB" value="${esc(S.grpDraft?.b||'')}"></label></div>
+     <label>פרטים להורים (לא חובה)<input id="grpN" maxlength="120" placeholder="למשל: בליווי 3 אנשי צוות, הסעה מאורגנת, ללא עלות" value="${esc(S.grpDraft?.n||'')}"></label>
+     <div><div class="row" style="justify-content:space-between;margin-bottom:6px"><b>מי משתתף? <span class="muted">(${n} נבחרו)</span></b></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px"><button class="btn small" type="button" data-act="grpG" data-g="in">כל מי שבפנימייה</button>${GRADES.map(g=>`<button class="btn small" type="button" data-act="grpG" data-g="${g}">כיתה ${g}</button>`).join('')}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;max-height:300px;overflow:auto">${P.map(s=>`<button type="button" class="btn small" data-act="grpS" data-id="${s.id}" aria-pressed="${S.grpSel.has(s.id)}" style="${S.grpSel.has(s.id)?'background:var(--accent);color:#fff;border-color:var(--accent)':''}">${S.grpSel.has(s.id)?'✓ ':''}${esc(s.name)} <span style="opacity:.7">${esc(s.grade||'')}</span>${isOut(s.id)?' · בחוץ':''}</button>`).join('')}</div></div>
+     <button class="btn primary" type="button" data-act="grpGo">צור ${n||''} בקשות אישור</button>
+     <span class="muted" style="font-size:.85rem">לכל תלמיד נוצר קישור אישי. ההורה רואה לאן יוצאים ומתי, ומאשר או לא מאשר. האישור לא רושם את התלמיד כ"בחוץ".</span>`}
+  for(const g of G){const ok=g.items.filter(x=>x.status==='ok').length,no=g.items.filter(x=>x.status==='no').length,pe=g.items.length-ok-no,open=S.grpOpen===g.k,sent=grpSentK();
+    h+=`<div style="border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><span><b>🚌 ${esc(g.t)}</b><span class="meta" style="display:block">${g.from?esc(paWhen(g.from)):''}${g.back?' · חזרה '+esc(paWhen(g.back)):''}</span></span>
+      <span class="cnt"><span class="pill ok">✓ ${ok} אישרו</span>${no?`<span class="pill bad">✗ ${no} לא אישרו</span>`:''}${pe?`<span class="pill">⏳ ${pe} ממתינים</span>`:''}</span></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn small ${open?'':'primary'}" type="button" data-act="grpOpen" data-k="${esc(g.k)}">${open?'הסתר':'📤 שליחה להורים ומעקב'}</button><button class="btn small" type="button" data-act="grpCopy" data-k="${esc(g.k)}">📋 העתק רשימת מאושרים</button>${can&&pe?`<button class="btn small" type="button" data-act="grpX" data-k="${esc(g.k)}">בטל בקשות שלא נענו</button>`:''}</div>`;
+    if(open){const its=g.items.slice().sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1)||(S.students.get(a.sid)?.name||'').localeCompare(S.students.get(b.sid)?.name||'','he'));
+      its.filter(x=>x.status==='pending'&&!S.grpPhL.has(x.sid)).forEach(x=>{S.grpPhL.add(x.sid);paPhones(x.sid).then(p=>{S.grpPh[x.sid]=p;renderGrp()})});
+      h+=`<span class="muted" style="font-size:.85rem">לחצו על כל הורה לפתיחת וואטסאפ עם הקישור האישי שלו, ושלחו. ההודעה לא נשלחת לבד.</span><div class="list">${its.map(x=>{const s=S.students.get(x.sid);if(!s)return '';const ph=S.grpPh[x.sid]||[],st=x.status;
+        return `<div class="item" style="flex-wrap:wrap">${av(s)}<span class="name" style="flex:1">${esc(s.name)}<span class="meta">${esc(s.grade||'')}${x.pName&&st!=='pending'?' · '+esc(x.pName):''}</span></span><span class="chip ${st==='ok'?'ok':st==='no'?'bad':'warn'}">${st==='ok'?'✓ אישרו':st==='no'?'✗ לא אישרו':'⏳ ממתין'}</span>
+          ${st==='pending'?`<div class="row" style="gap:6px;flex-basis:100%;flex-wrap:wrap">${ph.map(([n,p])=>{const k=x.id+'|'+waNum(p),dn=sent.has(k);return `<a class="btn small${dn?'':' primary'}" target="_blank" rel="noopener" data-act="grpSent" data-k="${esc(k)}" href="https://wa.me/${waNum(p)}?text=${encodeURIComponent(paTxt(x,n))}">${dn?'✓ נשלח ל':'💬 שלח ל'}${esc(n||'הורה')}</a>`}).join('')}${S.grpPhL.has(x.sid)&&!ph.length?'<span class="muted" style="font-size:.85rem">אין טלפון הורה בכרטיס</span>':''}<a class="btn small" target="_blank" rel="noopener" data-act="grpSent" data-k="${esc(x.id+'|any')}" href="https://wa.me/?text=${encodeURIComponent(paTxt(x,''))}">💬 למספר אחר</a></div>`:''}</div>`}).join('')}</div>`}
+    h+=`</div>`}
+  if(!S.grpNew&&!G.length)h='';
+  const keep=S.grpNew?{t:$('grpT')?.value,f:$('grpF')?.value,b:$('grpB')?.value,n:$('grpN')?.value}:null;
+  el.innerHTML=h;if(keep&&keep.t!==undefined){S.grpDraft=keep;$('grpT').value=keep.t||'';if(keep.f)$('grpF').value=keep.f;$('grpB').value=keep.b||'';$('grpN').value=keep.n||''}}
 async function paPhones(sid){if(!(has('personal')||S.mgr))return [];try{const p=(await db.doc('profiles/'+sid).get()).data()||{};return [[p.fatherName,p.fatherPhone],[p.motherName,p.motherPhone]].filter(x=>waNum(x[1]))}catch{return []}}
-function renderPa(){renderHr();renderHrLink();const el=$('paList');if(!el)return;const L=(S.pa||[]).filter(x=>!x.used&&S.students.has(x.sid)&&!(x.status==='ok'&&isOut(x.sid)));
+function renderPa(){renderHr();renderHrLink();renderGrp();const el=$('paList');if(!el)return;const L=(S.pa||[]).filter(x=>!isGrp(x)&&!x.used&&S.students.has(x.sid)&&!(x.status==='ok'&&isOut(x.sid)));
   el.hidden=!L.length;if(!L.length){el.innerHTML='';return}
   L.filter(x=>x.status==='pending'&&!S.paPhL.has(x.sid)).forEach(x=>{S.paPhL.add(x.sid);paPhones(x.sid).then(p=>{S.paPh[x.sid]=p;if(p.length)renderPa()})});
   el.innerHTML=`<div class="panel" style="display:grid;gap:8px"><h2 style="margin:0">📲 בקשות אישור מההורים</h2><div class="list">${L.map(x=>{const s=S.students.get(x.sid),ph=S.paPh[x.sid]||[],st=x.status;
@@ -3313,10 +3367,10 @@ async function paPage(tok){const v=document.createElement('main');v.id='paView';
   const box=h=>{v.innerHTML=`<div class="pa-card">${logo?`<img src="${logo}" alt="" class="pa-logo">`:''}<div class="muted" style="font-size:.9rem">ישיבה לצעירים דעת תבונות · פנימייה</div>${h}</div>`};
   box('<p>טוען…</p>');let d=null;try{const s=await db.doc('pappr/'+tok).get();d=s.exists?s.data():null}catch{}
   const show=()=>{if(!d){box('<h1>הקישור אינו פעיל</h1><p>ייתכן שהבקשה בוטלה. אפשר לפנות לצוות הפנימייה.</p>');return}
-    const info=`<div class="pa-info"><div><b>${esc(d.first||'')}</b> מבקש לצאת מהפנימייה</div>${d.reason?`<div>סיבה: ${esc(d.reason)}</div>`:''}${d.backBy?`<div>חזרה צפויה: ${esc(paWhen(d.backBy))}</div>`:''}<div class="muted" style="font-size:.85rem">נשלח על ידי ${esc(d.byName||'צוות הפנימייה')}</div></div>`;
-    if(d.status==='ok'||d.status==='no'){box(`<h1>${d.status==='ok'?'✓ היציאה אושרה':'✗ היציאה לא אושרה'}</h1>${info}<p>תודה! התשובה נשמרה והצוות קיבל אותה.${d.status==='no'?' לשינוי אפשר להתקשר לצוות הפנימייה.':''}</p>`);return}
+    const G=isGrp(d),info=G?`<div class="pa-info"><div>🚌 <b>יציאה מאורגנת בליווי צוות הפנימייה</b></div><div>${esc(d.reason.slice(GRP_P.length))}</div>${d.from?`<div>יציאה: ${esc(paWhen(d.from))}</div>`:''}${d.backBy?`<div>חזרה משוערת: ${esc(paWhen(d.backBy))}</div>`:''}<div>משתתף: <b>${esc(d.first||'')}</b></div><div class="muted" style="font-size:.85rem">נשלח על ידי ${esc(d.byName||'צוות הפנימייה')}</div></div>`:`<div class="pa-info"><div><b>${esc(d.first||'')}</b> מבקש לצאת מהפנימייה</div>${d.reason?`<div>סיבה: ${esc(d.reason)}</div>`:''}${d.backBy?`<div>חזרה צפויה: ${esc(paWhen(d.backBy))}</div>`:''}<div class="muted" style="font-size:.85rem">נשלח על ידי ${esc(d.byName||'צוות הפנימייה')}</div></div>`;
+    if(d.status==='ok'||d.status==='no'){box(`<h1>${d.status==='ok'?(G?'✓ ההשתתפות אושרה':'✓ היציאה אושרה'):(G?'✗ ההשתתפות לא אושרה':'✗ היציאה לא אושרה')}</h1>${info}<p>תודה! התשובה נשמרה והצוות קיבל אותה.${d.status==='no'?' לשינוי אפשר להתקשר לצוות הפנימייה.':''}</p>`);return}
     if(d.exp&&Date.now()>d.exp){box(`<h1>תוקף הקישור פג</h1>${info}<p>אפשר לפנות לצוות הפנימייה.</p>`);return}
-    box(`<h1>בקשת אישור יציאה</h1>${info}<label class="muted" style="display:grid;gap:4px;text-align:right">השם שלך (לא חובה)<input id="paName" maxlength="40" placeholder="למשל: אבא של ${esc(d.first||'')}"></label><div class="pa-btns"><button class="btn primary" type="button" id="paYes">✓ אני מאשר/ת את היציאה</button><button class="btn" type="button" id="paNo">✗ לא מאשר/ת</button></div>`);
+    box(`<h1>${G?'אישור השתתפות ביציאה':'בקשת אישור יציאה'}</h1>${info}<label class="muted" style="display:grid;gap:4px;text-align:right">השם שלך (לא חובה)<input id="paName" maxlength="40" placeholder="למשל: אבא של ${esc(d.first||'')}"></label><div class="pa-btns"><button class="btn primary" type="button" id="paYes">✓ אני מאשר/ת ${G?'השתתפות':'את היציאה'}</button><button class="btn" type="button" id="paNo">✗ לא מאשר/ת</button></div>`);
     const go=async st=>{const n=($('paName').value||'').trim().slice(0,40);v.querySelectorAll('button').forEach(x=>x.disabled=true);try{await db.doc('pappr/'+tok).update({status:st,pName:n,pAt:Date.now()});d={...d,status:st,pName:n};show()}catch(e){box('<h1>לא הצלחנו לשמור</h1><p>בדקו את החיבור לאינטרנט ונסו שוב, או התקשרו לצוות הפנימייה.</p><button class="btn" type="button" onclick="location.reload()">נסו שוב</button>')}};
     $('paYes').onclick=()=>go('ok');$('paNo').onclick=()=>go('no')};
   show()}
@@ -4194,7 +4248,7 @@ function nowActs(){const A=[],n=Date.now(),d=new Date(),today=ymd(d),m0=d.getHou
   if(canMt()){const b=(S.mt||[]).filter(m=>mtS(m)==='open'&&m.urg===3).length;if(b)A.push([0,'⚠️',b===1?'תקלת בטיחות פתוחה':b+' תקלות בטיחות פתוחות','דורש טיפול מיידי','maint'])}
   if((S.mgr||S.owner)&&!S.ro){const p=gPend();if(p.length)A.push([1,'🛏',p.length===1?'אקסטרן מבקש להישאר לישון – ממתין לאישורך':p.length+' אקסטרנים ממתינים לאישור לינה',p.slice(0,3).map(g=>g.name).join(', '),'out'])}
   if(hrCan()){const p=hrPend();if(p.length)A.push([1,'🏠',p.length===1?'בקשת יציאה מההורים ממתינה לאישור':p.length+' בקשות יציאה מההורים ממתינות',p.slice(0,3).map(x=>S.students.get(x.sid)?.name||x.first).join(', '),'out'])}
-  if(has('out')||S.mgr){const ok=(S.pa||[]).filter(x=>x.status==='ok'&&!x.used&&S.students.has(x.sid)&&!isOut(x.sid)&&n-x.at<2*864e5);if(ok.length)A.push([2,'✅',ok.length===1?'הגיע אישור הורים ליציאה':ok.length+' אישורי הורים ליציאה הגיעו',ok.slice(0,3).map(x=>S.students.get(x.sid).name).join(', ')+' – אפשר לרשום יציאה','out'])}
+  if(has('out')||S.mgr){const ok=(S.pa||[]).filter(x=>!isGrp(x)&&x.status==='ok'&&!x.used&&S.students.has(x.sid)&&!isOut(x.sid)&&n-x.at<2*864e5);if(ok.length)A.push([2,'✅',ok.length===1?'הגיע אישור הורים ליציאה':ok.length+' אישורי הורים ליציאה הגיעו',ok.slice(0,3).map(x=>S.students.get(x.sid).name).join(', ')+' – אפשר לרשום יציאה','out'])}
   if(canClA()&&S.cl)clOn(today).forEach(x=>{const reg=(x.sids||[]).filter(id=>S.students.has(id));if(!reg.length||!x.from)return;const f=toMin(x.from),t=x.to?toMin(x.to):f+60;if(m0<f-20||m0>t+120)return;const At=clAttOf(x.id,today)||{},dn=reg.filter(id=>(At.came||[]).includes(id)||(At.absent||[]).includes(id)).length;if(dn>=reg.length)return;
     A.push([m0<f?3:2,x.emo||'🎯',`חוג ${x.name} – `+(m0<f?'מתחיל ב-'+x.from:'סימון נוכחות'),`${dn}/${reg.length} סומנו`,'clubs'])});
   return A.sort((a,b)=>a[0]-b[0])}
